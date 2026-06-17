@@ -1,0 +1,148 @@
+import axios from 'axios'
+import toast from 'react-hot-toast'
+import { useAuthStore } from '@/store/authStore'
+
+const DEFAULT_BASE = 'https://macropage-connect.onrender.com/api/v1'
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? DEFAULT_BASE,
+  timeout: 60000,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// ── REQUEST — attach access token ────────────────────────────────────────────
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+// ── Refresh queue — prevents duplicate refresh calls ─────────────────────────
+
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (token: string) => void
+  reject: (error: unknown) => void
+}> = []
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) reject(error)
+    else resolve(token!)
+  })
+  failedQueue = []
+}
+
+function handleLogout() {
+  useAuthStore.getState().logout()
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+}
+
+// ── RESPONSE — handle 401 with token refresh ─────────────────────────────────
+
+api.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config
+    const status = error.response?.status
+    const message = error.response?.data?.message ?? 'Something went wrong'
+
+    // Non-401 errors — show toasts as before
+    if (status !== 401) {
+      if (status === 403) {
+        const msg403 =
+          error.response?.data?.error?.message ??
+          error.response?.data?.message ??
+          'You do not have permission to do this'
+        toast.error(msg403)
+      } else if (status === 422) {
+        // validation — let calling code handle
+      } else if (status && status >= 500) {
+        toast.error('Server error. Please try again later.')
+      } else if (status !== 404) {
+        toast.error(message)
+      }
+      return Promise.reject(error)
+    }
+
+    // 401 on the refresh endpoint itself — refresh token expired → logout
+    if (originalRequest.url?.includes('/auth/refresh')) {
+      handleLogout()
+      return Promise.reject(error)
+    }
+
+    // 401 on auth endpoints — wrong credentials, not a token expiry
+    if (
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/signup') ||
+      originalRequest.url?.includes('/auth/register')
+    ) {
+      return Promise.reject(error)
+    }
+
+    // Already retried once → refresh failed → logout
+    if (originalRequest._retry) {
+      handleLogout()
+      return Promise.reject(error)
+    }
+
+    // Another refresh is in progress — queue this request
+    if (isRefreshing) {
+      return new Promise<string>((resolve, reject) => {
+        failedQueue.push({ resolve, reject })
+      })
+        .then((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          return api(originalRequest)
+        })
+        .catch((err) => Promise.reject(err))
+    }
+
+    // ── Start refresh ─────────────────────────────────────────────────────────
+
+    originalRequest._retry = true
+    isRefreshing = true
+
+    const refreshToken = useAuthStore.getState().refreshToken
+
+    if (!refreshToken) {
+      isRefreshing = false
+      handleLogout()
+      return Promise.reject(error)
+    }
+
+    try {
+      const { data } = await axios.post(
+        `${api.defaults.baseURL}/auth/refresh`,
+        { refreshToken },
+        { headers: { 'Content-Type': 'application/json' } },
+      )
+
+      const newAccessToken = data.accessToken ?? data.token
+      const newRefreshToken = data.refreshToken ?? refreshToken
+
+      if (!newAccessToken) throw new Error('No access token in refresh response')
+
+      const { user } = useAuthStore.getState()
+      useAuthStore.getState().setAuth(user!, newAccessToken, newRefreshToken)
+
+      api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`
+      processQueue(null, newAccessToken)
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+      return api(originalRequest)
+    } catch (refreshError) {
+      processQueue(refreshError, null)
+      handleLogout()
+      return Promise.reject(refreshError)
+    } finally {
+      isRefreshing = false
+    }
+  },
+)
+
+export default api

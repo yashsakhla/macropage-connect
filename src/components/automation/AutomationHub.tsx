@@ -1,0 +1,252 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Hand, Clock, Moon, Zap, Plus, GitBranch, Sparkles, MoreVertical, CheckCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import RuleCard from './RuleCard'
+import RuleForm from './RuleForm'
+import { useRules, useToggleRule, useDeleteRule, useCreateRule } from '@/hooks/useAutomation'
+import { useFlows, useToggleFlow, useDeleteFlow } from '@/hooks/useFlows'
+import type { AutomationRule } from '@/types/automation'
+import type { ConversationFlow } from '@/types/flow'
+
+const STATUS_COLORS: Record<ConversationFlow['status'], string> = {
+  active: 'badge-green',
+  draft: 'badge-gray',
+  paused: 'badge-yellow',
+}
+
+const FLOW_COLORS = ['from-blue-400 to-blue-600', 'from-green-400 to-green-600', 'from-purple-400 to-purple-600']
+
+function FlowMinimap({ nodes }: { nodes: ConversationFlow['nodes'] }) {
+  if (!nodes.length) return <div className="bg-[#f7f8f6] rounded-xl mt-3 h-24 flex items-center justify-center"><span className="text-xs text-gray-300">No nodes</span></div>
+  const maxX = Math.max(...nodes.map((n) => n.position.x)) || 1
+  const maxY = Math.max(...nodes.map((n) => n.position.y)) || 1
+  const scaleX = 220 / (maxX + 60)
+  const scaleY = 80 / (maxY + 60)
+
+  const colors: Record<string, string> = { start: '#1a5c3a', message: '#3b82f6', condition: '#a855f7', ai: '#ec4899', delay: '#6b7280', end: '#1f2937', handoff: '#1a5c3a', action: '#f59e0b' }
+
+  return (
+    <div className="bg-[#f7f8f6] rounded-xl mt-3 h-24 overflow-hidden relative">
+      <svg width="100%" height="100%" viewBox="0 0 240 88">
+        {nodes.map((node) => {
+          const x = node.position.x * scaleX + 8
+          const y = node.position.y * scaleY + 8
+          const color = colors[node.data?.nodeType ?? 'message'] ?? '#94a3b8'
+          if (node.data?.nodeType === 'condition') return <polygon key={node.id} points={`${x},${y - 6} ${x + 8},${y} ${x},${y + 6} ${x - 8},${y}`} fill={color} />
+          if (['start', 'end', 'handoff'].includes(node.data?.nodeType ?? '')) return <circle key={node.id} cx={x} cy={y} r={5} fill={color} />
+          return <rect key={node.id} x={x - 5} y={y - 4} width={10} height={8} rx={2} fill={color} />
+        })}
+      </svg>
+    </div>
+  )
+}
+
+interface Props {
+  activeTab: 'rules' | 'flows' | 'ai'
+}
+
+export default function AutomationHub({ activeTab }: Props) {
+  const navigate = useNavigate()
+  const [showRuleForm, setShowRuleForm] = useState(false)
+  const [editingRule, setEditingRule] = useState<AutomationRule | undefined>()
+  const [builtinStates, setBuiltinStates] = useState<Record<string, boolean>>({})
+  const [flowMenuOpen, setFlowMenuOpen] = useState<string | null>(null)
+
+  const { data: rulesData } = useRules()
+  const { data: flowsData } = useFlows()
+  const allRules = (rulesData ?? []) as AutomationRule[]
+  const flows = (flowsData ?? []) as ConversationFlow[]
+  const toggleRule = useToggleRule()
+  const deleteRule = useDeleteRule()
+  const createRule = useCreateRule()
+  const toggleFlow = useToggleFlow()
+  const deleteFlow = useDeleteFlow()
+
+  const builtinRules = allRules.filter((r) => r.isBuiltIn)
+  const customRules = allRules.filter((r) => !r.isBuiltIn)
+
+  const BUILT_IN_ICONS = [
+    { icon: Hand, bg: 'bg-amber-50', color: 'text-amber-600' },
+    { icon: Clock, bg: 'bg-blue-50', color: 'text-blue-600' },
+    { icon: Moon, bg: 'bg-purple-50', color: 'text-purple-600' },
+  ]
+
+  return (
+    <div>
+      {/* ── RULES TAB ── */}
+      {activeTab === 'rules' && (
+        <div className="space-y-6">
+          {/* Built-in rules */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Built-in automations</p>
+            <div className="space-y-3">
+              {builtinRules.map((rule, i) => {
+                const { icon: Icon, bg, color } = BUILT_IN_ICONS[i]
+                const isOn = builtinStates[rule.id] ?? rule.isEnabled
+                return (
+                  <div key={rule.id} className="card p-5">
+                    <div className="flex items-center gap-4">
+                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', bg)}>
+                        <Icon size={18} className={color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900">{rule.name}</p>
+                          {isOn && <span className="flex items-center gap-1 text-2xs text-green-600 font-medium"><CheckCircle size={10} /> Active</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{
+                          i === 0 ? 'Sent when a contact messages you for the first time' :
+                          i === 1 ? 'Sent when someone messages outside your business hours' :
+                          'Sent when all agents are marked Away'
+                        }</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <button
+                          onClick={() => setBuiltinStates((p) => ({ ...p, [rule.id]: !isOn }))}
+                          className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', isOn ? 'bg-[#1a5c3a]' : 'bg-gray-200')}
+                        >
+                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', isOn ? 'translate-x-4.5' : 'translate-x-0.5')} />
+                        </button>
+                        <button onClick={() => { setEditingRule(rule); setShowRuleForm(true) }} className="btn-ghost h-8 text-xs px-3">Edit</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Custom rules */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Custom rules</p>
+              <button onClick={() => { setEditingRule(undefined); setShowRuleForm(true) }} className="flex items-center gap-1 text-xs text-[#1a5c3a] font-medium hover:underline">
+                <Plus size={12} /> New rule
+              </button>
+            </div>
+
+            {customRules.length === 0 ? (
+              <div className="card p-12 text-center">
+                <Zap size={36} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-gray-700">No custom rules yet</p>
+                <p className="text-xs text-gray-400 mt-1">Create rules to auto-respond based on keywords, buttons or time</p>
+                <button onClick={() => setShowRuleForm(true)} className="btn-primary h-9 text-sm mt-4">+ Create your first rule</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {customRules.map((rule) => (
+                  <RuleCard
+                    key={rule.id}
+                    rule={rule}
+                    onEdit={() => { setEditingRule(rule); setShowRuleForm(true) }}
+                    onToggle={(enabled) => toggleRule.mutate({ id: rule.id, enabled })}
+                    onDelete={() => deleteRule.mutate(rule.id)}
+                    onDuplicate={() => createRule.mutate({ ...rule, name: `${rule.name} (copy)` })}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOWS TAB ── */}
+      {activeTab === 'flows' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-gray-800">Conversation flows</p>
+            <button onClick={() => navigate('/automation/flows/new')} className="btn-primary h-9 text-sm">+ New flow</button>
+          </div>
+
+          {(flows as ConversationFlow[]).length === 0 ? (
+            <div className="card p-12 text-center">
+              <GitBranch size={36} className="text-gray-200 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-gray-700">No flows yet</p>
+              <p className="text-xs text-gray-400 mt-1">Build visual conversation flows with drag-and-drop</p>
+              <button onClick={() => navigate('/automation/flows/new')} className="btn-primary h-9 text-sm mt-4">Create first flow</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(flows as ConversationFlow[]).map((flow, idx) => (
+                <div key={flow.id} className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer group" onClick={() => navigate(`/automation/flows/${flow.id}`)}>
+                  <div className={cn('h-1.5 bg-gradient-to-r', FLOW_COLORS[idx % FLOW_COLORS.length])} />
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{flow.name}</p>
+                        {flow.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{flow.description}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn('badge text-2xs', STATUS_COLORS[flow.status])}>{flow.status}</span>
+                        <div className="relative">
+                          <button
+                            className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#f7f8f6] opacity-0 group-hover:opacity-100"
+                            onClick={(e) => { e.stopPropagation(); setFlowMenuOpen(flowMenuOpen === flow.id ? null : flow.id) }}
+                          >
+                            <MoreVertical size={13} className="text-gray-400" />
+                          </button>
+                          {flowMenuOpen === flow.id && (
+                            <div className="absolute right-0 top-7 bg-white border border-[#e8ebe8] rounded-xl shadow-lg z-20 py-1 min-w-28" onClick={(e) => e.stopPropagation()}>
+                              {[
+                                { label: 'Edit', action: () => navigate(`/automation/flows/${flow.id}`) },
+                                { label: 'Duplicate', action: () => setFlowMenuOpen(null) },
+                                { label: 'Delete', action: () => { deleteFlow.mutate(flow.id); setFlowMenuOpen(null) }, danger: true },
+                              ].map(({ label, action, danger }) => (
+                                <button key={label} onClick={action} className={cn('w-full text-left px-3 py-1.5 text-xs hover:bg-[#f7f8f6]', danger ? 'text-red-500' : 'text-gray-700')}>{label}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <FlowMinimap nodes={flow.nodes} />
+
+                    <div className="flex justify-between mt-3 pt-3 border-t border-[#f5f5f5]">
+                      <span className="text-xs text-gray-400">{flow.nodes.length} steps</span>
+                      <span className="text-xs text-gray-400">{flow.stats.totalTriggered} triggered</span>
+                      <span className="text-xs text-gray-400">{flow.stats.completionRate}% completion</span>
+                    </div>
+                    {flow.trigger && <p className="text-2xs text-gray-400 mt-1.5">Triggered by: {flow.trigger.type.replace(/_/g, ' ')}</p>}
+                  </div>
+
+                  <div className="flex items-center justify-between px-5 py-3 border-t border-[#f5f5f5]">
+                    <button className="btn-outline text-xs h-7 px-3" onClick={(e) => { e.stopPropagation(); navigate(`/automation/flows/${flow.id}`) }}>Edit flow</button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleFlow.mutate({ id: flow.id, enabled: flow.status !== 'active' }) }}
+                      className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', flow.status === 'active' ? 'bg-[#1a5c3a]' : 'bg-gray-200')}
+                    >
+                      <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', flow.status === 'active' ? 'translate-x-4.5' : 'translate-x-0.5')} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── AI BOT TAB ── */}
+      {activeTab === 'ai' && (
+        <div className="card p-12 text-center">
+          <Sparkles size={36} className="text-purple-400 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-gray-700">AI Chatbot Configuration</p>
+          <p className="text-xs text-gray-400 mt-1">Configure your AI assistant settings</p>
+          <button onClick={() => navigate('/automation/ai')} className="btn-primary h-9 text-sm mt-4">Configure AI</button>
+        </div>
+      )}
+
+      {showRuleForm && (
+        <RuleForm
+          rule={editingRule}
+          onClose={() => { setShowRuleForm(false); setEditingRule(undefined) }}
+          onSave={(data) => {
+            createRule.mutate(data as Parameters<typeof createRule.mutate>[0])
+            setShowRuleForm(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
