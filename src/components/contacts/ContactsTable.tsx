@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreVertical, MessageSquare, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Copy } from 'lucide-react'
-import { cn, formatPhone, fromNow } from '@/lib/utils'
+import { cn, formatPhone } from '@/lib/utils'
 import type { Contact, ContactFilters } from '@/types'
 import { ContactAvatar } from './ContactCard'
 import toast from 'react-hot-toast'
@@ -73,16 +73,13 @@ export default function ContactsTable({
             <th className="cursor-pointer hover:bg-[#f0f0f0] w-32" onClick={() => setSort('createdAt')}>
               <span className="flex items-center gap-1">Added <SortIcon col="createdAt" /></span>
             </th>
-            <th className="cursor-pointer hover:bg-[#f0f0f0] w-32" onClick={() => setSort('lastSeenAt')}>
-              <span className="flex items-center gap-1">Last seen <SortIcon col="lastSeenAt" /></span>
-            </th>
             <th className="w-24 text-center">Campaigns</th>
             <th className="w-20" />
           </tr>
         </thead>
         <tbody>
           {contacts.length === 0 ? (
-            <tr><td colSpan={9} className="text-center text-gray-400 py-12 text-sm">No contacts found</td></tr>
+            <tr><td colSpan={8} className="text-center text-gray-400 py-12 text-sm">No contacts found</td></tr>
           ) : contacts.map(contact => {
             const s = STATUS_BADGE[contact.status] ?? STATUS_BADGE.inactive
             return (
@@ -105,7 +102,7 @@ export default function ContactsTable({
                   </div>
                 </td>
 
-                <td>
+                <td className="whitespace-nowrap">
                   <div className="flex items-center gap-1.5 group/phone">
                     <span className="text-[10px] text-[#25D366]">●</span>
                     <span className="font-mono text-xs text-gray-600">{formatPhone(contact.phone)}</span>
@@ -132,10 +129,6 @@ export default function ContactsTable({
 
                 <td>
                   <span className="text-xs text-gray-500">{new Date(contact.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                </td>
-
-                <td>
-                  <span className="text-xs text-gray-500">{contact.lastSeenAt ? fromNow(contact.lastSeenAt) : '—'}</span>
                 </td>
 
                 <td className="text-center">

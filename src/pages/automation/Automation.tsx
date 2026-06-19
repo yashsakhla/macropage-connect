@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Zap, GitBranch, Sparkles, FileText, X } from 'lucide-react'
+import { Zap, GitBranch, Sparkles, FileText, X, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import AutomationStats from '@/components/automation/AutomationStats'
 import AutomationHub from '@/components/automation/AutomationHub'
 import RuleForm from '@/components/automation/RuleForm'
 import { useAutomationStats, useCreateRule, useRules } from '@/hooks/useAutomation'
 import { useFlows } from '@/hooks/useFlows'
+import { useQuickReplies } from '@/hooks/useQuickReplies'
 import type { AutomationStats as AutomationStatsType } from '@/types/automation'
 
-type ActiveTab = 'rules' | 'flows' | 'ai'
+type ActiveTab = 'rules' | 'flows' | 'ai' | 'quickReplies'
 
 interface CreationOption {
   id: string
@@ -50,6 +51,15 @@ const TAB_META: { id: ActiveTab; icon: React.ElementType; label: string; iconBg:
     activeColor: 'text-purple-600',
     activeBorder: 'border-purple-500',
   },
+  {
+    id: 'quickReplies',
+    icon: MessageSquare,
+    label: 'Quick Replies',
+    iconBg: 'bg-[#e8f5ee]',
+    iconColor: 'text-[#1a5c3a]',
+    activeColor: 'text-[#1a5c3a]',
+    activeBorder: 'border-[#1a5c3a]',
+  },
 ]
 
 export default function Automation() {
@@ -61,6 +71,7 @@ export default function Automation() {
   const { data: statsData } = useAutomationStats()
   const { data: allRules = [] } = useRules()
   const { data: flows = [] } = useFlows()
+  const { data: quickRepliesData = [] } = useQuickReplies()
   const createRule = useCreateRule()
 
   const stats = (statsData as AutomationStatsType | undefined) ?? {
@@ -72,11 +83,13 @@ export default function Automation() {
   }
   const rulesCount = Array.isArray(allRules) ? allRules.length : 0
   const flowsCount = Array.isArray(flows) ? flows.length : 0
+  const quickRepliesCount = Array.isArray(quickRepliesData) ? quickRepliesData.length : 0
 
   const tabCounts: Record<ActiveTab, number | null> = {
     rules: rulesCount,
     flows: flowsCount,
     ai: null,
+    quickReplies: quickRepliesCount,
   }
 
   const CREATION_OPTIONS: CreationOption[] = [
@@ -169,7 +182,8 @@ export default function Automation() {
                   </div>
                   {count !== null && (
                     <div className="text-2xs text-gray-400 leading-tight mt-0.5">
-                      {count} {tab.id === 'rules' ? 'rules' : 'flows'}
+                      {count}{' '}
+                      {tab.id === 'rules' ? 'rules' : tab.id === 'flows' ? 'flows' : 'saved'}
                     </div>
                   )}
                   {tab.id === 'ai' && (

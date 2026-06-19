@@ -1,7 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { PLAN_FEATURES } from '@/lib/permissions'
-import { UpgradePrompt } from '@/lib/permissions'
+import { PLAN_FEATURES, normalisePlan, UpgradePrompt } from '@/lib/permissions'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -32,7 +31,7 @@ export default function ProtectedRoute({ children, roles, feature }: Props) {
   // Owner-only subscription checks
   if (userRoleUpper === 'OWNER') {
     const trialExpired =
-      normalise(user.plan) === 'TRIAL' &&
+      normalisePlan(user.plan) === 'TRIAL' &&
       user.trialEndsAt &&
       new Date(user.trialEndsAt) < new Date()
 
@@ -59,7 +58,7 @@ export default function ProtectedRoute({ children, roles, feature }: Props) {
 
   // Plan feature check
   if (feature) {
-    const plan = normalise(user.plan) as keyof typeof PLAN_FEATURES
+    const plan = normalisePlan(user.plan)
     const allowed = PLAN_FEATURES[plan]?.includes(feature) ?? false
     if (!allowed) {
       return (

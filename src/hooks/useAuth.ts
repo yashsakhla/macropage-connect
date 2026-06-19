@@ -7,6 +7,15 @@ import { useAuthStore } from '@/store/authStore'
 import { connectSocket, disconnectSocket } from '@/lib/socket'
 import type { LoginPayload } from '@/types'
 
+function decodeTokenRole(token: string): string | undefined {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.role ?? payload.userRole ?? payload.claims?.role
+  } catch {
+    return undefined
+  }
+}
+
 export function useLogin() {
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
@@ -18,16 +27,17 @@ export function useLogin() {
     onMutate: () => setFullLoader(true),
     onSettled: () => setFullLoader(false),
     onSuccess: ({ data }) => {
+      const token = data.accessToken ?? data.token
+      const refreshToken = data.refreshToken ?? ''
       const user = {
         ...(data.user || {}),
         plan: (data.user?.plan ?? 'TRIAL') as string,
+        role: data.user?.role ?? decodeTokenRole(token),
       }
-      const token = data.accessToken ?? data.token
-      const refreshToken = data.refreshToken ?? ''
       setAuth(user, token, refreshToken)
       connectSocket(token)
 
-      if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes(user.role)) {
+      if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
         navigate('/setup/whatsapp')
       } else {
         navigate('/dashboard')
@@ -75,9 +85,13 @@ export function useRegister() {
     onMutate: () => setFullLoader(true),
     onSettled: () => setFullLoader(false),
     onSuccess: ({ data }) => {
-      const user = { ...(data.user || {}), plan: (data.user?.plan ?? 'TRIAL') as string }
       const token = data.accessToken ?? data.token
       const refreshToken = data.refreshToken ?? ''
+      const user = {
+        ...(data.user || {}),
+        plan: (data.user?.plan ?? 'TRIAL') as string,
+        role: data.user?.role ?? decodeTokenRole(token),
+      }
       setAuth(user, token, refreshToken)
       connectSocket(token)
       toast.success('Account created! Check your email to verify.')
@@ -152,8 +166,14 @@ export function useRefreshToken() {
   return useMutation({
     mutationFn: () => api.post('/auth/refresh').then((r) => r.data),
     onSuccess: ({ data }) => {
-      if ((data.accessToken ?? data.token) && data.user)
-        setAuth(data.user, data.accessToken ?? data.token, data.refreshToken ?? '')
+      const token = data.accessToken ?? data.token
+      if (token && data.user) {
+        const user = {
+          ...data.user,
+          role: data.user.role ?? decodeTokenRole(token),
+        }
+        setAuth(user, token, data.refreshToken ?? '')
+      }
     },
   })
 }

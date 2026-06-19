@@ -7,8 +7,8 @@ import {
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/utils'
-import { PLAN_FEATURES } from '@/lib/permissions'
-import type { Plan } from '@/lib/permissions'
+import { PLAN_FEATURES, ROLE_PERMISSIONS, normalisePlan } from '@/lib/permissions'
+import type { Role } from '@/lib/permissions'
 import blackLogo from '@assets/macropage-connect-black.svg'
 import whiteLogo from '@assets/macropage-connect-white.svg'
 
@@ -51,7 +51,9 @@ export default function Sidebar() {
   const collapsed = !sidebarOpen
   const { user } = useAuthStore()
 
-  const plan = (((user?.plan as string) ?? 'TRIAL').toUpperCase() as Plan)
+  const plan = normalisePlan(user?.plan as string | undefined)
+  const role = (((user?.role as string) ?? 'AGENT').toUpperCase() as Role)
+  const userPerms = ROLE_PERMISSIONS[role] ?? []
   const initials = user?.name
     ? user.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('')
     : 'U'
@@ -82,7 +84,8 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-3 px-2">
         {!collapsed && <div className="text-2xs text-gray-400 uppercase px-3 mb-2">MENU</div>}
         <div className="space-y-0.5">
-          {NAV_ITEMS.map(({ to, label, Icon, feature }) => {
+          {NAV_ITEMS.map(({ to, label, Icon, permission, feature }) => {
+            if (permission && !userPerms.includes(permission)) return null
             const hasPlan = !feature || PLAN_FEATURES[plan]?.includes(feature)
             const active = location.pathname.startsWith(to)
             return (
@@ -160,12 +163,12 @@ export default function Sidebar() {
                 <div className="px-4 pb-4 pt-0 border-t border-white/10">
                   <div className="mt-3 grid grid-cols-2 gap-3 text-2xs text-white/90">
                     <div>
-                      <div className="opacity-80">Phone</div>
-                      <div className="text-sm font-medium mt-0.5">{user?.phone ?? '—'}</div>
+                      <div className="opacity-80">Role</div>
+                      <div className="text-sm font-medium mt-0.5 capitalize">{((user?.role as string) ?? 'Agent').charAt(0).toUpperCase() + ((user?.role as string) ?? 'agent').slice(1).toLowerCase()}</div>
                     </div>
                     <div className="text-right">
-                      <div className="opacity-80">Meta ID</div>
-                      <div className="text-sm font-medium mt-0.5">{user?.wabaId ?? '—'}</div>
+                      <div className="opacity-80">Company</div>
+                      <div className="text-sm font-medium mt-0.5 truncate">{user?.companyName ?? '—'}</div>
                     </div>
                   </div>
                   <div className="mt-3">

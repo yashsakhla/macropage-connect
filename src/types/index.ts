@@ -84,7 +84,7 @@ export interface WabaAccount {
 export type ConversationStatus = 'open' | 'pending' | 'resolved' | 'snoozed'
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'template' | 'interactive' | 'note' | 'system'
 export type MessageDirection = 'inbound' | 'outbound'
-export type MessageStatus = 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
+export type MessageStatus = 'SENDING' | 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
 
 export type ContactStatus = 'active' | 'inactive' | 'opted_out' | 'new'
 
@@ -262,8 +262,11 @@ export interface Message {
 
 export interface QuickReply {
   id: string
-  shortcode: string
+  shortcode?: string
+  title: string
   content: string
+  tags?: string[]
+  usageCount?: number
 }
 
 export interface Conversation {

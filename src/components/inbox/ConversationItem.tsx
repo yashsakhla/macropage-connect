@@ -20,7 +20,8 @@ const LABEL_COLORS: Record<string, string> = {
   bot: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400',
 }
 
-export function avatarGradient(name: string) {
+export function avatarGradient(name: string | undefined | null) {
+  if (!name) return GRADIENTS[0]
   const sum = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   return GRADIENTS[sum % GRADIENTS.length]
 }

@@ -6,7 +6,7 @@ export function useNotifications(page = 1, limit = 20) {
     queryKey: ['notifications', page, limit],
     queryFn: () =>
       api.get('/notifications', { params: { page, limit } })
-        .then(r => r.data?.data ?? r.data),
+        .then(r => r.data),
     staleTime: 30000,
     refetchOnWindowFocus: true,
   })

@@ -123,7 +123,7 @@ export const PLAN_FEATURES: Record<Plan, string[]> = {
   TRIAL: [
     'inbox', 'campaigns', 'contacts', 'templates',
     'team', 'automation_rules', 'flow_builder',
-    'ai_chatbot', 'api_access', 'analytics',
+    'api_access', 'analytics',
     'webhooks', 'integrations',
   ],
   STARTER: [
@@ -177,9 +177,12 @@ function normaliseRole(raw: string | undefined): Role {
   return raw.toUpperCase() as Role
 }
 
-function normalisePlan(raw: string | undefined): Plan {
+export function normalisePlan(raw: string | undefined): Plan {
   if (!raw) return 'TRIAL'
-  return raw.toUpperCase() as Plan
+  const upper = raw.toUpperCase()
+  // 'FREE' is the backend alias for the 14-day trial
+  if (upper === 'FREE') return 'TRIAL'
+  return upper as Plan
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -205,38 +208,42 @@ export function usePlanLimit(limitKey: keyof typeof PLAN_LIMITS.TRIAL): number {
 }
 
 // ─── Guard components ─────────────────────────────────────────────────────────
-// ─── Convenience hook ─────────────────────────────────────────────────────────
+// ─── Convenience hook (single store read — all permissions computed in one pass)
 export function usePermissions() {
-  const canBilling            = usePermission(PERMISSIONS.MANAGE_BILLING)
-  const canManageTeam         = usePermission(PERMISSIONS.VIEW_TEAM)
-  const canRemoveTeamMember   = usePermission(PERMISSIONS.REMOVE_MEMBERS)
-  const canChangeTeamRole     = usePermission(PERMISSIONS.MANAGE_ROLES)
-  const canAssignConversation = usePermission(PERMISSIONS.ASSIGN_CONVERSATIONS)
-  const canViewAllConvs       = usePermission(PERMISSIONS.VIEW_ALL_CONVERSATIONS)
-  const canCreateCampaign     = usePermission(PERMISSIONS.CREATE_CAMPAIGNS)
-  const canLaunchCampaign     = usePermission(PERMISSIONS.LAUNCH_CAMPAIGNS)
-  const canDeleteCampaign     = usePermission(PERMISSIONS.DELETE_CAMPAIGNS)
-  const canCreateTemplate     = usePermission(PERMISSIONS.CREATE_TEMPLATES)
-  const canDeleteTemplate     = usePermission(PERMISSIONS.DELETE_TEMPLATES)
-  const canViewWA             = usePermission(PERMISSIONS.VIEW_SETTINGS)
-  const canChangeWA           = usePermission(PERMISSIONS.MANAGE_WHATSAPP)
-  const canViewAnalytics      = usePermission(PERMISSIONS.VIEW_ANALYTICS)
+  const user = useAuthStore(s => s.user)
+  const token = useAuthStore(s => s.token)
+
+  let rawRole = (user?.role as string)?.toUpperCase()
+  if (!rawRole && token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const fromToken = payload.role ?? payload.userRole ?? payload.claims?.role
+      if (fromToken) rawRole = (fromToken as string).toUpperCase()
+    } catch { /* invalid token shape — remain as AGENT */ }
+  }
+  const role = (rawRole ?? 'AGENT') as Role
+  const perms = ROLE_PERMISSIONS[role] ?? []
 
   return {
-    canAccessBilling:          canBilling,
-    canManageTeam,
-    canRemoveTeamMember,
-    canChangeTeamRole,
-    canAssignConversation,
-    canViewAllConversations:   canViewAllConvs,
-    canCreateCampaign,
-    canLaunchCampaign,
-    canDeleteCampaign,
-    canCreateTemplate,
-    canDeleteTemplate,
-    canViewWhatsAppSettings:   canViewWA,
-    canChangeWhatsAppSettings: canChangeWA,
-    canViewTenantAnalytics:    canViewAnalytics,
+    role,
+    canAccessBilling:          perms.includes(PERMISSIONS.MANAGE_BILLING),
+    canManageTeam:             perms.includes(PERMISSIONS.VIEW_TEAM),
+    canRemoveTeamMember:       perms.includes(PERMISSIONS.REMOVE_MEMBERS),
+    canChangeTeamRole:         perms.includes(PERMISSIONS.MANAGE_ROLES),
+    canAssignConversation:     perms.includes(PERMISSIONS.ASSIGN_CONVERSATIONS),
+    canViewAllConversations:   perms.includes(PERMISSIONS.VIEW_ALL_CONVERSATIONS),
+    canCreateCampaign:         true,  // spec: everyone including Agent can create a draft
+    canLaunchCampaign:         perms.includes(PERMISSIONS.LAUNCH_CAMPAIGNS),
+    canDeleteCampaign:         perms.includes(PERMISSIONS.DELETE_CAMPAIGNS),
+    canCreateTemplate:         perms.includes(PERMISSIONS.CREATE_TEMPLATES),
+    canDeleteTemplate:         perms.includes(PERMISSIONS.DELETE_TEMPLATES),
+    canViewSettings:           perms.includes(PERMISSIONS.VIEW_SETTINGS),
+    canViewWhatsAppSettings:   perms.includes(PERMISSIONS.VIEW_SETTINGS),
+    canChangeWhatsAppSettings: perms.includes(PERMISSIONS.MANAGE_WHATSAPP),
+    canViewTenantAnalytics:    perms.includes(PERMISSIONS.VIEW_ANALYTICS),
+    canManageAutomation:       perms.includes(PERMISSIONS.MANAGE_AUTOMATION),
+    canManageApiKeys:          perms.includes(PERMISSIONS.MANAGE_API_KEYS),
+    canManageWebhooks:         perms.includes(PERMISSIONS.MANAGE_WEBHOOKS),
   }
 }
 

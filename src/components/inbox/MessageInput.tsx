@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { Smile, Paperclip, FileText, Zap, Send, X } from 'lucide-react'
-import QuickReplies from './QuickReplies'
+import React, { useRef, useState, useEffect, useMemo } from 'react'
+import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search } from 'lucide-react'
 import { useTemplates } from '@/hooks/useTemplates'
-import type { Template } from '@/types'
+import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
+import type { Template, QuickReply } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSocket } from '@/lib/socket'
 import { useInboxStore } from '@/store/inboxStore'
@@ -34,6 +34,9 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
   const [showQR, setShowQR] = useState(false)
   const [showTpl, setShowTpl] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
+  const [quickReplySearch, setQuickReplySearch] = useState('')
+  const [slashTriggerPos, setSlashTriggerPos] = useState<number | null>(null)
+
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const tplRef = useRef<HTMLDivElement>(null)
@@ -42,6 +45,20 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
   const { selectedConversationId } = useInboxStore()
   const { data: templatesData } = useTemplates()
   const allTemplates: Template[] = Array.isArray(templatesData) ? templatesData : []
+
+  const { data: quickReplies = [] } = useQuickReplies()
+  const { mutate: markUsed } = useMarkQuickReplyUsed()
+
+  const filteredQuickReplies = useMemo<QuickReply[]>(() => {
+    const q = quickReplySearch.toLowerCase().trim()
+    if (!q) return quickReplies
+    return quickReplies.filter(
+      (qr) =>
+        qr.title.toLowerCase().includes(q) ||
+        qr.tags?.some((t) => t.toLowerCase().includes(q)) ||
+        qr.content.toLowerCase().includes(q)
+    )
+  }, [quickReplies, quickReplySearch])
 
   useEffect(() => {
     if (!taRef.current) return
@@ -97,6 +114,50 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
     if (taRef.current) taRef.current.style.height = '44px'
   }
 
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const value = e.target.value
+    setText(value)
+    emitTyping()
+
+    const cursorPos = e.target.selectionStart
+    const textBeforeCursor = value.slice(0, cursorPos)
+    const slashMatch = textBeforeCursor.match(/(?:^|\s)\/(\S*)$/)
+
+    if (slashMatch) {
+      setSlashTriggerPos(cursorPos - slashMatch[1].length - 1)
+      setQuickReplySearch(slashMatch[1])
+      setShowQR(true)
+      setShowTpl(false)
+      setShowEmoji(false)
+    } else if (slashTriggerPos !== null) {
+      // Slash text was cleared — close if picker was slash-triggered
+      setShowQR(false)
+      setSlashTriggerPos(null)
+      setQuickReplySearch('')
+    }
+  }
+
+  function insertQuickReply(qr: QuickReply) {
+    let newText: string
+    if (slashTriggerPos !== null) {
+      const before = text.slice(0, slashTriggerPos)
+      const after = text.slice(slashTriggerPos + 1 + quickReplySearch.length)
+      newText = before + qr.content + after
+    } else {
+      const cursorPos = taRef.current?.selectionStart ?? text.length
+      const before = text.slice(0, cursorPos)
+      const after = text.slice(cursorPos)
+      newText = before + (before && !before.endsWith(' ') ? ' ' : '') + qr.content + after
+    }
+
+    setText(newText)
+    markUsed(qr.id)
+    setShowQR(false)
+    setQuickReplySearch('')
+    setSlashTriggerPos(null)
+    setTimeout(() => taRef.current?.focus(), 0)
+  }
+
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -106,13 +167,9 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
       setShowQR(false)
       setShowTpl(false)
       setShowEmoji(false)
+      setSlashTriggerPos(null)
+      setQuickReplySearch('')
     }
-  }
-
-  function handleQuickReplySelect(content: string) {
-    setText(content)
-    setShowQR(false)
-    taRef.current?.focus()
   }
 
   function handleTemplateSelect(tpl: Template) {
@@ -166,13 +223,46 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
           </div>
         )}
 
-        {/* Quick replies popup */}
+        {/* Quick replies picker popup */}
         {showQR && (
-          <div className="absolute bottom-full left-0 right-0">
-            <QuickReplies
-              onSelect={handleQuickReplySelect}
-              onClose={() => setShowQR(false)}
-            />
+          <div
+            className="absolute bottom-full left-0 mb-2 w-80 bg-white dark:bg-gray-800 border border-[#e8ebe8] dark:border-gray-700 rounded-2xl shadow-xl z-30 max-h-72 overflow-hidden flex flex-col"
+          >
+            <div className="px-3 py-2.5 border-b border-[#f0f0f0] dark:border-gray-700 flex-shrink-0">
+              <div className="relative">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-300" />
+                <input
+                  autoFocus={slashTriggerPos === null}
+                  value={quickReplySearch}
+                  onChange={(e) => setQuickReplySearch(e.target.value)}
+                  placeholder="Search quick replies..."
+                  className="w-full h-8 pl-7 pr-2 rounded-lg border border-[#e8ebe8] dark:border-gray-600 text-xs focus:outline-none focus:ring-1 focus:ring-[#1a5c3a]/30 dark:bg-gray-700 dark:text-gray-100"
+                />
+              </div>
+            </div>
+            <div className="overflow-y-auto flex-1 py-1">
+              {filteredQuickReplies.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-6">
+                  {quickReplies.length === 0 ? 'No quick replies yet' : 'No results'}
+                </p>
+              ) : (
+                filteredQuickReplies.map((qr) => (
+                  <button
+                    key={qr.id}
+                    type="button"
+                    onClick={() => insertQuickReply(qr)}
+                    className="w-full text-left px-3 py-2.5 hover:bg-[#f7f8f6] dark:hover:bg-gray-700 transition-colors border-b border-[#f7f8f6] dark:border-gray-700/50 last:border-0"
+                  >
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+                      /{qr.title}
+                    </p>
+                    <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">
+                      {qr.content}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         )}
 
@@ -267,12 +357,12 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
             <textarea
               ref={taRef}
               value={text}
-              onChange={(e) => { setText(e.target.value); emitTyping() }}
+              onChange={handleTextChange}
               onKeyDown={handleKey}
               placeholder={
                 isNote
                   ? 'Add a note (only visible to team)...'
-                  : 'Type a message...'
+                  : 'Type a message or / for quick replies...'
               }
               disabled={disabled}
               rows={1}
@@ -327,7 +417,13 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
                 <FileText size={16} />
               </button>
               <button
-                onClick={() => { setShowQR((v) => !v); setShowTpl(false); setShowEmoji(false) }}
+                onClick={() => {
+                  setSlashTriggerPos(null)
+                  setQuickReplySearch('')
+                  setShowQR((v) => !v)
+                  setShowTpl(false)
+                  setShowEmoji(false)
+                }}
                 className={cn(
                   'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
                   showQR
@@ -336,7 +432,7 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
                 )}
                 title="Quick replies"
               >
-                <Zap size={16} />
+                <MessageSquare size={16} />
               </button>
             </div>
 

@@ -3,6 +3,7 @@ import { MoreVertical, XCircle, CheckCircle, Clock, PauseCircle, FileText, Image
 import type { Template } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { usePermissions } from '@/lib/permissions'
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; icon: React.ElementType }> = {
   APPROVED: { label: 'Approved', bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]', dot: 'bg-[#1a5c3a]', icon: CheckCircle },
@@ -45,6 +46,7 @@ interface TemplateCardProps {
 export default function TemplateCard({ template, onUseInCampaign, onEdit, onDelete, onClick }: TemplateCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { canCreateTemplate, canDeleteTemplate } = usePermissions()
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -92,10 +94,14 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
                   {template.status === 'APPROVED' && (
                     <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onUseInCampaign?.(template); setMenuOpen(false) }}>Use in campaign</button>
                   )}
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onEdit?.(template); setMenuOpen(false) }}>
-                    {template.status === 'REJECTED' ? 'Resubmit' : 'Edit'}
-                  </button>
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500" onClick={() => { onDelete?.(template); setMenuOpen(false) }}>Delete</button>
+                  {canCreateTemplate && (
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onEdit?.(template); setMenuOpen(false) }}>
+                      {template.status === 'REJECTED' ? 'Resubmit' : 'Edit'}
+                    </button>
+                  )}
+                  {canDeleteTemplate && (
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500" onClick={() => { onDelete?.(template); setMenuOpen(false) }}>Delete</button>
+                  )}
                 </div>
               )}
             </div>
@@ -205,8 +211,8 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
           )}
         </div>
 
-        {/* right: edit / resubmit button */}
-        {template.status === 'REJECTED' ? (
+        {/* right: edit / resubmit button — hidden for roles without canCreateTemplate */}
+        {canCreateTemplate && (template.status === 'REJECTED' ? (
           <button
             className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg px-3 h-7 font-medium hover:bg-amber-100 hover:border-amber-300 transition-colors"
             onClick={() => onEdit?.(template)}
@@ -222,7 +228,7 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
             <Pencil size={11} />
             Edit
           </button>
-        )}
+        ))}
       </div>
     </div>
   )

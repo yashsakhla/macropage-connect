@@ -139,6 +139,15 @@ export function useSocket() {
     }) => {
       updateAgentPresence(data)
       qc.invalidateQueries({ queryKey: ['team'] })
+      // Update AssignModal list in-place so online dots refresh without reopening
+      qc.setQueryData(['team-assignable'], (old: any[]) => {
+        if (!old) return old
+        return old.map(m =>
+          (m._id === data.userId || m.id === data.userId)
+            ? { ...m, status: data.status }
+            : m
+        )
+      })
     })
 
     // ── CAMPAIGNS ─────────────────────────────────────────────
