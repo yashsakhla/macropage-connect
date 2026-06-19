@@ -11,6 +11,7 @@ import {
   MapPin,
   Lock,
   ZoomIn,
+  Loader2,
 } from 'lucide-react'
 import type { Message, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
@@ -42,6 +43,7 @@ function formatSize(bytes: number) {
 }
 
 function OutboundTick({ status }: { status: MessageStatus }) {
+  if (status === 'SENDING') return <Loader2 size={11} className="text-white/60 flex-shrink-0 animate-spin" />
   if (status === 'SENT') return <Check size={11} className="text-white/60 flex-shrink-0" />
   if (status === 'DELIVERED') return <CheckCheck size={11} className="text-white/60 flex-shrink-0" />
   if (status === 'READ') return <CheckCheck size={11} className="text-blue-300 flex-shrink-0" />
@@ -304,9 +306,6 @@ export default function MessageBubble({ msg, senderName }: Props) {
                 <p className={cn('text-2xs mt-1', timeColor)}>{t.footer}</p>
               )}
               <div className="flex items-center justify-end gap-1 mt-1.5">
-                {!inbound && msg.agentName && (
-                  <span className="text-2xs text-white/50">{msg.agentName}</span>
-                )}
                 <span className={cn('text-2xs', timeColor)}>{time}</span>
                 {!inbound && <OutboundTick status={msg.status} />}
               </div>
@@ -360,9 +359,6 @@ export default function MessageBubble({ msg, senderName }: Props) {
             </span>
           </div>
           <div className="flex items-center justify-end gap-1 mt-1">
-            {!inbound && msg.agentName && (
-              <span className="text-2xs text-white/50">{msg.agentName}</span>
-            )}
             <span className={cn('text-2xs', timeColor)}>{time}</span>
             {!inbound && <OutboundTick status={msg.status} />}
           </div>
@@ -406,10 +402,11 @@ export default function MessageBubble({ msg, senderName }: Props) {
       <div className={cn(bubbleCls, 'px-4 py-3')}>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
         <div className="flex items-center justify-end gap-1 mt-1">
-          {!inbound && msg.agentName && (
-            <span className="text-2xs text-white/50">{msg.agentName}</span>
+          {msg.status === 'SENDING' ? (
+            <span className="text-2xs text-white/50 italic">Sending…</span>
+          ) : (
+            <span className={cn('text-2xs', timeColor)}>{time}</span>
           )}
-          <span className={cn('text-2xs', timeColor)}>{time}</span>
           {!inbound && <OutboundTick status={msg.status} />}
         </div>
       </div>

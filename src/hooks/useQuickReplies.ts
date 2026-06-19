@@ -9,7 +9,11 @@ export function useQuickReplies() {
     queryFn: () =>
       api.get('/quick-replies').then((r) => {
         const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
-        return items.map((q) => ({ ...q, id: q._id ?? q.id })) as QuickReply[]
+        return items.map((q) => ({
+          ...q,
+          id: q._id ?? q.id,
+          title: q.title ?? q.shortcode ?? '',
+        })) as QuickReply[]
       }),
     staleTime: 60_000,
   })
@@ -18,14 +22,32 @@ export function useQuickReplies() {
 export function useCreateQuickReply() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { shortcode: string; content: string }) =>
-      api.post('/quick-replies', data).then((r) => r.data),
+    mutationFn: (data: { title: string; content: string; tags?: string[] }) =>
+      api.post('/quick-replies', data).then((r) => r.data?.data ?? r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['quick-replies'] })
-      toast.success('Quick reply saved')
+      toast.success('Quick reply created')
     },
     onError: (err: any) =>
-      toast.error(err.response?.data?.message ?? 'Failed to save quick reply'),
+      toast.error(
+        err?.response?.data?.message ??
+        err?.response?.data?.error?.message ??
+        'Could not create quick reply'
+      ),
+  })
+}
+
+export function useUpdateQuickReply() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { title?: string; content?: string; tags?: string[] } }) =>
+      api.put(`/quick-replies/${id}`, data).then((r) => r.data?.data ?? r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['quick-replies'] })
+      toast.success('Quick reply updated')
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? 'Could not update quick reply'),
   })
 }
 
@@ -38,6 +60,13 @@ export function useDeleteQuickReply() {
       toast.success('Quick reply deleted')
     },
     onError: (err: any) =>
-      toast.error(err.response?.data?.message ?? 'Failed to delete quick reply'),
+      toast.error(err?.response?.data?.message ?? 'Failed to delete quick reply'),
+  })
+}
+
+export function useMarkQuickReplyUsed() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post(`/quick-replies/${id}/use`).catch(() => {}),
   })
 }

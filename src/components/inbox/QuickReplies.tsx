@@ -18,8 +18,10 @@ export default function QuickReplies({ onSelect, onClose }: Props) {
   const filtered = quickReplies.filter(
     (r) =>
       query === '' ||
-      r.shortcode.toLowerCase().includes(query.toLowerCase()) ||
-      r.content.toLowerCase().includes(query.toLowerCase())
+      r.title.toLowerCase().includes(query.toLowerCase()) ||
+      (r.shortcode ?? '').toLowerCase().includes(query.toLowerCase()) ||
+      r.content.toLowerCase().includes(query.toLowerCase()) ||
+      r.tags?.some((t) => t.toLowerCase().includes(query.toLowerCase()))
   )
 
   // Auto-focus search
@@ -91,7 +93,7 @@ export default function QuickReplies({ onSelect, onClose }: Props) {
               )}
             >
               <span className="font-mono text-xs bg-[#f7f8f6] text-[#1a5c3a] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">
-                /{reply.shortcode}
+                /{reply.title || reply.shortcode}
               </span>
               <span className="text-sm text-gray-700 truncate">{reply.content}</span>
             </button>

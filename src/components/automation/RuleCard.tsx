@@ -34,13 +34,14 @@ function actionSummary(rule: AutomationRule): string {
 
 interface Props {
   rule: AutomationRule
-  onEdit: () => void
-  onToggle: (enabled: boolean) => void
-  onDelete: () => void
-  onDuplicate: () => void
+  readOnly?: boolean
+  onEdit?: () => void
+  onToggle?: (enabled: boolean) => void
+  onDelete?: () => void
+  onDuplicate?: () => void
 }
 
-export default function RuleCard({ rule, onEdit, onToggle, onDelete, onDuplicate }: Props) {
+export default function RuleCard({ rule, readOnly, onEdit, onToggle, onDelete, onDuplicate }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const TrigIcon = TRIGGER_ICONS[rule.trigger.type] ?? TRIGGER_ICONS.message_contains
 
@@ -79,44 +80,46 @@ export default function RuleCard({ rule, onEdit, onToggle, onDelete, onDuplicate
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={() => onToggle(!rule.isEnabled)}
-            className={cn(
-              'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-              rule.isEnabled ? 'bg-[#1a5c3a]' : 'bg-gray-200'
-            )}
-          >
-            <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', rule.isEnabled ? 'translate-x-4.5' : 'translate-x-0.5')} />
-          </button>
-
-          <div className="relative">
+        {!readOnly && (
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f7f8f6] text-gray-400 hover:text-gray-600"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => onToggle?.(!rule.isEnabled)}
+              className={cn(
+                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                rule.isEnabled ? 'bg-[#1a5c3a]' : 'bg-gray-200'
+              )}
             >
-              <MoreVertical size={15} />
+              <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', rule.isEnabled ? 'translate-x-4.5' : 'translate-x-0.5')} />
             </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-8 bg-white border border-[#e8ebe8] rounded-xl shadow-lg z-20 py-1 min-w-32">
-                {[
-                  { label: 'Edit', action: () => { onEdit(); setMenuOpen(false) } },
-                  { label: 'Duplicate', action: () => { onDuplicate(); setMenuOpen(false) } },
-                  { label: 'View logs', action: () => setMenuOpen(false) },
-                  { label: 'Delete', action: () => { onDelete(); setMenuOpen(false) }, danger: true },
-                ].map(({ label, action, danger }) => (
-                  <button
-                    key={label}
-                    onClick={action}
-                    className={cn('w-full text-left px-3 py-1.5 text-xs hover:bg-[#f7f8f6]', danger ? 'text-red-500' : 'text-gray-700')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
+
+            <div className="relative">
+              <button
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f7f8f6] text-gray-400 hover:text-gray-600"
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                <MoreVertical size={15} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-8 bg-white border border-[#e8ebe8] rounded-xl shadow-lg z-20 py-1 min-w-32">
+                  {[
+                    { label: 'Edit', action: () => { onEdit?.(); setMenuOpen(false) } },
+                    { label: 'Duplicate', action: () => { onDuplicate?.(); setMenuOpen(false) } },
+                    { label: 'View logs', action: () => setMenuOpen(false) },
+                    { label: 'Delete', action: () => { onDelete?.(); setMenuOpen(false) }, danger: true },
+                  ].map(({ label, action, danger }) => (
+                    <button
+                      key={label}
+                      onClick={action}
+                      className={cn('w-full text-left px-3 py-1.5 text-xs hover:bg-[#f7f8f6]', danger ? 'text-red-500' : 'text-gray-700')}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

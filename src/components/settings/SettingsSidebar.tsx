@@ -65,14 +65,43 @@ export default function SettingsSidebar({ activeSection }: Props) {
   const user = useAuthStore(s => s.user)
   const plan = user?.plan ?? 'trial'
   const initials = (user?.companyName ?? user?.name ?? 'M').charAt(0).toUpperCase()
-  const { canAccessBilling } = usePermissions()
+  const {
+    canAccessBilling,
+    canViewSettings,
+    canViewWhatsAppSettings,
+    canManageApiKeys,
+    canManageWebhooks,
+  } = usePermissions()
 
   function go(id: string) { navigate(`/settings/${id}`) }
 
   const visibleNav: NavGroup[] = NAV.map(group => {
+    if (group.group === 'Account') {
+      const items = group.items.filter(item => {
+        if (item.id === 'whatsapp') return canViewWhatsAppSettings
+        if (item.id === 'account')  return canViewSettings
+        return true // profile: always visible
+      })
+      return { ...group, items }
+    }
     if (group.group === 'Subscription') {
+      if (!canViewSettings) return { ...group, items: [] }
       const items = group.items.filter(item => item.id !== 'billing' || canAccessBilling)
       return { ...group, items }
+    }
+    if (group.group === 'Developers') {
+      if (!canViewSettings) return { ...group, items: [] }
+      const items = group.items.filter(item => {
+        if (item.id === 'api-keys')  return canManageApiKeys
+        if (item.id === 'webhooks')  return canManageWebhooks
+        return canViewSettings // integrations: needs at least view_settings
+      })
+      return { ...group, items }
+    }
+    if (group.group === 'Danger Zone') {
+      // Only Owner/Admin should see danger zone
+      if (!canViewSettings) return { ...group, items: [] }
+      return group
     }
     return group
   }).filter(group => group.items.length > 0)

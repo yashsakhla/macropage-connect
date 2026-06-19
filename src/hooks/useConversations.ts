@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient, useMutation, keepPreviousData } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { Conversation, ConversationStatus, Message } from '@/types'
+import { useAuthStore } from '@/store/authStore'
 
 function normalizeContact(raw: any) {
   if (!raw) return raw
@@ -23,7 +25,9 @@ function normalizeConversation(raw: any): Conversation {
     id: raw._id ?? raw.id,
     contact,
     status: ((raw.status ?? 'open') as string).toLowerCase() as ConversationStatus,
-    assignedTo: raw.assignedTo,
+    assignedTo: raw.assignedAgent
+      ? { id: raw.assignedAgent._id ?? raw.assignedAgent.id, name: raw.assignedAgent.name, avatarUrl: raw.assignedAgent.avatarUrl }
+      : undefined,
     labels: raw.labels ?? [],
     lastMessage: raw.lastMessage,
     unreadCount: raw.unreadCount ?? 0,
@@ -88,9 +92,52 @@ export function useSendMessage() {
       api
         .post(`/conversations/${conversationId}/messages`, data)
         .then((r) => r.data.data),
-    onSuccess: (_msg: Message, { conversationId }) => {
-      qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+    onMutate: async ({ conversationId, data }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId, 1] })
+      const { user } = useAuthStore.getState()
+      const tempId = `temp-${Date.now()}`
+      const optimisticMsg: Message = {
+        id: tempId,
+        conversationId,
+        direction: 'outbound',
+        type: 'text',
+        status: 'SENDING',
+        content: data.content,
+        agentId: user?.id,
+        agentName: user?.name,
+        createdAt: new Date().toISOString(),
+      }
+      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+        if (!old) return old
+        return { ...old, data: [...(old.data ?? []), optimisticMsg] }
+      })
+      return { tempId }
+    },
+    onSuccess: (realMsg: Message, { conversationId }, context: any) => {
+      if (!realMsg) {
+        qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+        qc.invalidateQueries({ queryKey: ['conversations'] })
+        return
+      }
+      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+        if (!old) return old
+        const filtered = (old.data ?? []).filter((m: any) => m && m.id !== context?.tempId)
+        const alreadyPresent = filtered.some(
+          (m: any) =>
+            (realMsg.metaMessageId && m.metaMessageId === realMsg.metaMessageId) ||
+            ((realMsg as any)._id && m._id === (realMsg as any)._id) ||
+            (realMsg.id && m.id === realMsg.id)
+        )
+        return { ...old, data: alreadyPresent ? filtered : [...filtered, realMsg] }
+      })
       qc.invalidateQueries({ queryKey: ['conversations'] })
+    },
+    onError: (_err, { conversationId }, context: any) => {
+      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+        if (!old) return old
+        return { ...old, data: (old.data ?? []).filter((m: Message) => m.id !== context?.tempId) }
+      })
+      toast.error('Failed to send message')
     },
   })
 }
@@ -156,6 +203,49 @@ export function useCreateConversation() {
       api.post('/conversations/initiate', { contactId }).then(r => r.data.data ?? r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+export function useAssignConversation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      conversationId,
+      userId,
+    }: { conversationId: string; userId: string }) =>
+      api.put(`/conversations/${conversationId}/assign`, {
+        assignToUserId: userId,
+      }).then(r => r.data?.data ?? r.data),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['conversation'] })
+      toast.success(data?.message ?? 'Conversation assigned')
+    },
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message ??
+        err?.response?.data?.error?.message ??
+        'Could not assign conversation'
+      )
+    },
+  })
+}
+
+export function useUnassignConversation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conversationId: string) =>
+      api.delete(`/conversations/${conversationId}/assign`).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['conversation'] })
+      toast.success('Conversation unassigned')
+    },
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message ?? 'Could not unassign conversation'
+      )
     },
   })
 }

@@ -3,6 +3,7 @@ import { MoreVertical, FileText, Pause, Edit2, Trash2, Copy, Users, Eye } from '
 import { cn } from '@/lib/utils'
 import type { Campaign } from '@/types'
 import { format } from 'date-fns'
+import { usePermissions } from '@/lib/permissions'
 
 const STATUS_CONFIG = {
   draft:     { label: 'Draft',     bg: 'bg-gray-200',      text: 'text-gray-600',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100',       rowBorder: 'border-gray-300',   rowHover: 'hover:border-gray-400'   },
@@ -45,6 +46,7 @@ interface CampaignCardProps {
 export default function CampaignCard({ campaign, view, onClick, onPause, onDuplicate }: CampaignCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { canLaunchCampaign, canDeleteCampaign } = usePermissions()
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -104,9 +106,11 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
                     onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}>
                     <Copy size={12} /> Duplicate
                   </button>
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2">
-                    <Trash2 size={12} /> Delete
-                  </button>
+                  {canDeleteCampaign && (
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2">
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -181,12 +185,14 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
             </span>
           </div>
 
-          <button
-            className="text-[10px] font-semibold text-[#1a5c3a] border border-[#1a5c3a]/40 rounded-lg px-2.5 py-1 hover:bg-[#1a5c3a]/10 transition-colors"
-            onClick={e => { e.stopPropagation(); onPause?.(campaign) }}
-          >
-            Pause
-          </button>
+          {canLaunchCampaign && (
+            <button
+              className="text-[10px] font-semibold text-[#1a5c3a] border border-[#1a5c3a]/40 rounded-lg px-2.5 py-1 hover:bg-[#1a5c3a]/10 transition-colors"
+              onClick={e => { e.stopPropagation(); onPause?.(campaign) }}
+            >
+              Pause
+            </button>
+          )}
         </div>
       )}
 
@@ -259,7 +265,7 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
 
         {/* col 7: actions */}
         <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
-          {campaign.status === 'running' && (
+          {campaign.status === 'running' && canLaunchCampaign && (
             <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>
               <Pause size={14} />
             </button>
@@ -283,7 +289,9 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
               <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-40 text-sm">
                 <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
                 <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] flex items-center gap-2"><Users size={12} /> View recipients</button>
-                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                {canDeleteCampaign && (
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                )}
               </div>
             )}
           </div>

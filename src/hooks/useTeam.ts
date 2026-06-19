@@ -6,6 +6,15 @@ import { useAuthStore } from '@/store/authStore'
 import type { TeamMember, TeamFilters, MemberStatus, OnlineStatus, UserRole } from '@/types'
 import type { Role } from '@/lib/permissions'
 
+export function useAssignableMembers() {
+  return useQuery({
+    queryKey: ['team-assignable'],
+    queryFn: () =>
+      api.get('/team/assignable').then(r => r.data?.data ?? r.data ?? []),
+    staleTime: 30000,
+  })
+}
+
 function normalizeMember(m: any): TeamMember {
   return {
     ...m,

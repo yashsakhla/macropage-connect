@@ -92,9 +92,9 @@ export default function NotificationPanel() {
   const { mutate: markAllRead, isPending: markingAll }   = useMarkAllAsRead()
   const { mutate: deleteNotif }                          = useDeleteNotification()
 
-  const rawList: any[]           = notifData?.notifications ?? []
+  const rawList: any[]           = notifData?.data ?? []
   const mapped: AppNotification[] = rawList.map(toAppNotification)
-  const unreadCount: number      = notifData?.unreadCount ?? mapped.filter(n => !n.isRead).length
+  const unreadCount: number      = notifData?.unread ?? mapped.filter(n => !n.isRead).length
 
   const visible = filter === 'unread' ? mapped.filter(n => !n.isRead) : mapped
   const groups  = groupByDay(visible)

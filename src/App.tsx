@@ -57,7 +57,17 @@ const router = createBrowserRouter([
       { path: '/',          element: <Navigate to="/dashboard" replace /> },
       { path: '/dashboard',    element: <Dashboard /> },
       { path: '/automation',   element: <Automation /> },
-      { path: '/automation/ai', element: <AISettings /> },
+      {
+        path: '/automation/ai',
+        element: (
+          <ProtectedRoute
+            feature="ai_chatbot"
+            roles={['OWNER', 'ADMIN', 'MANAGER']}
+          >
+            <AISettings />
+          </ProtectedRoute>
+        ),
+      },
       { path: '/inbox',        element: <Inbox /> },
       { path: '/inbox/:conversationId', element: <Inbox /> },
       { path: '/campaigns', element: <Campaigns /> },
@@ -88,7 +98,7 @@ const router = createBrowserRouter([
   {
     path: '/automation/flows/new',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute feature="flow_builder" roles={['OWNER', 'ADMIN', 'MANAGER']}>
         <Suspense fallback={null}>
           <FlowBuilder />
         </Suspense>
@@ -98,7 +108,7 @@ const router = createBrowserRouter([
   {
     path: '/automation/flows/:id',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute feature="flow_builder" roles={['OWNER', 'ADMIN', 'MANAGER']}>
         <Suspense fallback={null}>
           <FlowBuilder />
         </Suspense>

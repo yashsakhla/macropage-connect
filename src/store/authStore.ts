@@ -2,6 +2,15 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User } from '@/types'
 
+function decodeRoleFromToken(token: string): string | undefined {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.role ?? payload.userRole ?? payload.claims?.role
+  } catch {
+    return undefined
+  }
+}
+
 // Normalise role + plan to UPPERCASE so permission lookups always work
 // regardless of whether the backend returns 'owner' or 'OWNER'
 function normaliseUser(incoming: User): User {
@@ -45,14 +54,17 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      setAuth: (user, token, refreshToken) =>
+      setAuth: (user, token, refreshToken) => {
+        const resolvedRole = (user.role as string)?.toUpperCase()
+          ?? (token ? decodeRoleFromToken(token)?.toUpperCase() : undefined)
         set({
-          user: normaliseUser(user),
+          user: normaliseUser({ ...user, role: resolvedRole as User['role'] }),
           token,
           refreshToken,
           isAuthenticated: true,
           isLoading: false,
-        }),
+        })
+      },
 
       setUser: (user) => set({ user: normaliseUser(user) }),
 

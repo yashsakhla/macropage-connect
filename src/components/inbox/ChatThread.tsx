@@ -15,6 +15,8 @@ import {
   BellOff,
   Ban,
   ExternalLink,
+  UserPlus,
+  UserCheck,
 } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,9 +27,11 @@ import { getInitials, cn } from '@/lib/utils'
 import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
 import { useConversation, useMessages, useSendMessage, useAddNote, useUpdateConversation, useResolveConversation } from '@/hooks/useConversations'
+import { usePermissions } from '@/lib/permissions'
 import { avatarGradient } from './ConversationItem'
 import MessageBubble, { TypingBubble } from './MessageBubble'
 import MessageInput from './MessageInput'
+import AssignModal from './AssignModal'
 import { getSocket } from '@/lib/socket'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -55,6 +59,8 @@ interface HeaderProps {
   isUpdating: boolean
   searchActive: boolean
   onSearchToggle: () => void
+  onAssign?: () => void
+  canAssignConversation?: boolean
 }
 
 function StatusDot({ status }: { status: ConversationStatus }) {
@@ -71,6 +77,7 @@ function ChatHeader({
   conv, contactPanelOpen, toggleContactPanel, onBack,
   onStatusChange, onMarkUnread, onViewProfile, onAddLabel,
   isUpdating, searchActive, onSearchToggle,
+  onAssign, canAssignConversation,
 }: HeaderProps) {
   const [statusOpen, setStatusOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -178,6 +185,20 @@ function ChatHeader({
         ) : (
           <button className={btnBase} title="No phone number" disabled>
             <Phone size={15} className="opacity-40" />
+          </button>
+        )}
+
+        {/* Assign button */}
+        {canAssignConversation && (
+          <button
+            onClick={onAssign}
+            className="flex items-center gap-1.5 text-xs font-medium h-8 px-3 rounded-xl bg-white border border-[#e8ebe8] text-gray-600 hover:text-[#1a5c3a] hover:border-[#c8e6d4] transition-all"
+          >
+            <UserPlus size={13} />
+            {conv.assignedTo
+              ? `${conv.assignedTo.name}`
+              : 'Assign'
+            }
           </button>
         )}
 
@@ -369,6 +390,7 @@ export default function ChatThread({ mobileBack }: Props) {
 
   const seenKeys = new Set<string>()
   const allMessages = rawMessages.filter((m: any) => {
+    if (!m) return false
     const key = m.metaMessageId ?? m._id ?? m.id
     if (!key || seenKeys.has(key)) return false
     seenKeys.add(key)
@@ -377,6 +399,8 @@ export default function ChatThread({ mobileBack }: Props) {
 
   const [searchActive, setSearchActive] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const { canAssignConversation } = usePermissions()
   const messages = searchActive && searchQuery
     ? allMessages.filter((m) => m.content?.toLowerCase().includes(searchQuery.toLowerCase()))
     : allMessages
@@ -460,16 +484,26 @@ export default function ChatThread({ mobileBack }: Props) {
           ['messages', selectedConversationId, 1],
           (old: any) => {
             if (!old) return old
-            const alreadyExists = (old.data ?? []).some(
+            const data: any[] = old.data ?? []
+            const alreadyExists = data.some(
               (m: any) =>
                 (msg.metaMessageId && m.metaMessageId === msg.metaMessageId) ||
                 (m._id && m._id === msg._id) ||
                 (m.id && m.id === msg.id)
             )
             if (alreadyExists) return old
+            // Replace the optimistic SENDING bubble instead of appending alongside it
+            const sendingIdx = (msg.direction ?? '').toLowerCase() === 'outbound'
+              ? data.findIndex((m: any) => m.status === 'SENDING')
+              : -1
+            if (sendingIdx !== -1) {
+              const newData = [...data]
+              newData[sendingIdx] = msg
+              return { ...old, data: newData }
+            }
             return {
               ...old,
-              data: [...(old.data ?? []), msg],
+              data: [...data, msg],
               total: (old.total ?? 0) + 1,
             }
           }
@@ -634,9 +668,23 @@ export default function ChatThread({ mobileBack }: Props) {
         key={msg.id}
         msg={msg}
         senderName={
-          msg.direction === 'inbound' ? (selectedConv.contact?.name ?? 'Customer') : (msg.agentName ?? 'You')
+          msg.direction === 'inbound' ? (selectedConv.contact?.name ?? 'Customer') : (msg.agentName ?? 'Agent')
         }
       />
+    )
+  }
+
+  if (selectedConv.assignedTo) {
+    const isMe = selectedConv.assignedTo.id === user?.id
+    messageNodes.push(
+      <div key="assign-notice" className="flex items-center gap-3 my-3">
+        <div className="flex-1 h-px bg-[#e8ebe8] dark:bg-gray-700" />
+        <span className="flex items-center gap-1.5 text-2xs text-gray-400 dark:text-gray-500 bg-[#f7f8f6] dark:bg-gray-800 px-3 py-1 rounded-full flex-shrink-0">
+          <UserCheck size={10} className="text-[#1a5c3a]" />
+          {isMe ? 'Assigned to you' : `Assigned to ${selectedConv.assignedTo.name}`}
+        </span>
+        <div className="flex-1 h-px bg-[#e8ebe8] dark:bg-gray-700" />
+      </div>
     )
   }
 
@@ -662,6 +710,8 @@ export default function ChatThread({ mobileBack }: Props) {
         isUpdating={isUpdating}
         searchActive={searchActive}
         onSearchToggle={() => { setSearchActive((v) => !v); setSearchQuery('') }}
+        onAssign={() => setShowAssignModal(true)}
+        canAssignConversation={canAssignConversation}
       />
 
       {/* Inline search bar */}
@@ -742,6 +792,14 @@ export default function ChatThread({ mobileBack }: Props) {
         setMode={setInputMode}
         disabled={false}
       />
+
+      {showAssignModal && selectedConversationId && (
+        <AssignModal
+          conversationId={selectedConversationId}
+          currentAssigneeId={selectedConv.assignedTo?.id}
+          onClose={() => setShowAssignModal(false)}
+        />
+      )}
     </div>
   )
 }

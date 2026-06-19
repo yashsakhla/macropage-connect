@@ -96,3 +96,22 @@ export function useDeleteRule() {
       toast.error(err.response?.data?.message ?? 'Failed to delete rule'),
   })
 }
+
+export interface AutomationLimits {
+  plan: string
+  rulesEnabled: boolean
+  flowsEnabled: boolean
+  aiEnabled: boolean
+  maxCustomRules: number
+  currentRuleCount: number
+  isExpiredTrial: boolean
+}
+
+export function useAutomationLimits() {
+  return useQuery<AutomationLimits>({
+    queryKey: ['automation-limits'],
+    queryFn: () =>
+      api.get('/automation/limits').then((r) => r.data?.data ?? r.data),
+    staleTime: 60000,
+  })
+}
