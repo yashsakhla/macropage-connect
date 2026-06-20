@@ -22,7 +22,7 @@ import { format, isToday, isYesterday } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import type { Conversation, ConversationStatus, Message, MessageStatus } from '@/types'
+import type { Conversation, ConversationStatus, Message } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
@@ -477,7 +477,7 @@ export default function ChatThread({ mobileBack }: Props) {
 
   useEffect(() => {
     if (shouldAutoScroll.current) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+      endRef.current?.scrollIntoView({ behavior: 'instant' })
     }
   }, [messages.length])
 
@@ -487,74 +487,29 @@ export default function ChatThread({ mobileBack }: Props) {
 
     try {
       socket = getSocket()
-      socket.emit('join:conversation', selectedConversationId)
-
-      socket.on('message:new', (msg: any) => {
-        qc.setQueryData(
-          ['messages', selectedConversationId, 1],
-          (old: any) => {
-            if (!old) return old
-            const data: any[] = old.data ?? []
-            const alreadyExists = data.some(
-              (m: any) =>
-                (msg.metaMessageId && m.metaMessageId === msg.metaMessageId) ||
-                (m._id && m._id === msg._id) ||
-                (m.id && m.id === msg.id)
-            )
-            if (alreadyExists) return old
-            // Replace the optimistic SENDING bubble instead of appending alongside it
-            const sendingIdx = (msg.direction ?? '').toLowerCase() === 'outbound'
-              ? data.findIndex((m: any) => m.status === 'SENDING')
-              : -1
-            if (sendingIdx !== -1) {
-              const newData = [...data]
-              newData[sendingIdx] = msg
-              return { ...old, data: newData }
-            }
-            return {
-              ...old,
-              data: [...data, msg],
-              total: (old.total ?? 0) + 1,
-            }
-          }
-        )
-        if (shouldAutoScroll.current) {
-          setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-        }
-      })
-
-      socket.on(
-        'message:status',
-        ({ messageId, status }: { messageId: string; status: MessageStatus }) => {
-          qc.setQueryData<Message[]>(
-            ['messages', selectedConversationId],
-            (old = []) =>
-              old.map((m) => (m.id === messageId ? { ...m, status } : m))
-          )
-        }
-      )
-
-      socket.on('contact:typing', ({ contactId }: { contactId: string }) => {
-        useInboxStore.getState().setTyping(contactId, true)
-        setTimeout(() => useInboxStore.getState().setTyping(contactId, false), 3000)
-      })
     } catch {
-      // Socket not connected in dev — silently ignore
+      return
     }
+
+    socket.emit('join:conversation', selectedConversationId)
+
+    // message:new and message:status are handled by the global useSocket hook.
+    // Only listen for contact typing here since it needs local component state.
+    const handleTyping = ({ contactId }: { contactId: string }) => {
+      useInboxStore.getState().setTyping(contactId, true)
+      setTimeout(() => useInboxStore.getState().setTyping(contactId, false), 3000)
+    }
+    socket.on('contact:typing', handleTyping)
 
     return () => {
-      if (socket) {
-        try {
-          socket.emit('leave:conversation', selectedConversationId)
-          socket.off('message:new')
-          socket.off('message:status')
-          socket.off('contact:typing')
-        } catch {
-          // ignore
-        }
+      try {
+        socket!.emit('leave:conversation', selectedConversationId)
+        socket!.off('contact:typing', handleTyping)
+      } catch {
+        // ignore
       }
     }
-  }, [selectedConversationId, qc])
+  }, [selectedConversationId])
 
   useEffect(() => {
     function handle(e: KeyboardEvent) {
@@ -593,7 +548,7 @@ export default function ChatThread({ mobileBack }: Props) {
       })
     }
     shouldAutoScroll.current = true
-    setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    endRef.current?.scrollIntoView({ behavior: 'instant' })
   }
 
   // ── No selection ──

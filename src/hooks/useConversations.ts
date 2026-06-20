@@ -75,7 +75,8 @@ export function useMessages(conversationId: string | null, page = 1) {
         .get(`/conversations/${conversationId}/messages`, { params: { page } })
         .then((r) => r.data),
     enabled: !!conversationId,
-    staleTime: 0,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   })
 }
 

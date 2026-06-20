@@ -56,14 +56,66 @@ export function useSocket() {
 
     // ── MESSAGES ──────────────────────────────────────────────
 
-    socket.on('message:new', (message: any) => {
-      qc.invalidateQueries({ queryKey: ['conversations'] })
+    socket.on('message:new', (raw: any) => {
+      // Normalize to the same shape the Messages API returns so ChatThread
+      // filters never silently drop the message due to field name differences.
+      const msg = {
+        ...raw,
+        // id — prefer string id, fall back to _id
+        id:        raw.id        ?? raw._id,
+        // content — backends sometimes use text / body instead of content
+        content:   raw.content   ?? raw.text ?? raw.body ?? '',
+        // direction / type must be lowercase for filters & bubble rendering
+        direction: (raw.direction ?? 'inbound').toLowerCase(),
+        type:      (raw.type     ?? 'text').toLowerCase(),
+        createdAt: raw.createdAt ?? raw.timestamp ?? new Date().toISOString(),
+      }
+
+      // Resolve the conversation this message belongs to
+      const rawConv = msg.conversationId ?? msg.conversation
+      const conversationId: string | undefined =
+        typeof rawConv === 'string' ? rawConv : rawConv?._id ?? rawConv?.id
 
       const selectedId = useInboxStore.getState().selectedConversationId
-      if (
-        message.direction === 'INBOUND' &&
-        selectedId !== message.conversationId
-      ) {
+
+      // Use event's conversationId when available; fall back to the open thread
+      const targetId = conversationId ?? selectedId ?? undefined
+
+      console.log('[Socket] message:new', { conversationId, targetId, selectedId, msg })
+
+      // Push into the React Query cache — triggers an instant re-render in ChatThread
+      if (targetId) {
+        qc.setQueryData(
+          ['messages', targetId, 1],
+          (old: any) => {
+            const base = old ?? { data: [], total: 0 }
+            const data: any[] = base.data ?? []
+            const alreadyExists = data.some(
+              (m: any) =>
+                (msg.metaMessageId && m.metaMessageId === msg.metaMessageId) ||
+                (msg._id && m._id === msg._id) ||
+                (msg.id && m.id === msg.id)
+            )
+            if (alreadyExists) return base
+            // Replace optimistic SENDING bubble for outbound messages
+            const sendingIdx = msg.direction === 'outbound'
+              ? data.findIndex((m: any) => m.status === 'SENDING')
+              : -1
+            if (sendingIdx !== -1) {
+              const updated = [...data]
+              updated[sendingIdx] = msg
+              return { ...base, data: updated }
+            }
+            return { ...base, data: [...data, msg], total: (base.total ?? 0) + 1 }
+          }
+        )
+      }
+
+      // Refresh sidebar conversation list
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+
+      // Play sound only for inbound messages not in the currently open thread
+      if (msg.direction === 'inbound' && conversationId && selectedId !== conversationId) {
         playNotificationSound()
       }
     })
@@ -78,14 +130,16 @@ export function useSocket() {
       status:         string
     }) => {
       qc.setQueryData(
-        ['messages', conversationId],
+        ['messages', conversationId, 1],
         (old: any) => {
           if (!old) return old
-          const list: any[] = Array.isArray(old) ? old : (old.data ?? [])
-          const updated = list.map((m: any) =>
-            (m._id === messageId || m.id === messageId) ? { ...m, status } : m
-          )
-          return Array.isArray(old) ? updated : { ...old, data: updated }
+          const data: any[] = old.data ?? []
+          return {
+            ...old,
+            data: data.map((m: any) =>
+              (m._id === messageId || m.id === messageId) ? { ...m, status } : m
+            ),
+          }
         }
       )
     })
