@@ -389,13 +389,23 @@ export default function ChatThread({ mobileBack }: Props) {
   const isUpdating = updateConversation.isPending || resolveConversation.isPending
 
   const seenKeys = new Set<string>()
-  const allMessages = rawMessages.filter((m: any) => {
-    if (!m) return false
-    const key = m.metaMessageId ?? m._id ?? m.id
-    if (!key || seenKeys.has(key)) return false
-    seenKeys.add(key)
-    return true
-  })
+  const allMessages = rawMessages
+    .filter((m: any) => {
+      if (!m) return false
+      const key = m.metaMessageId ?? m._id ?? m.id
+      if (!key || seenKeys.has(key)) return false
+      seenKeys.add(key)
+      return true
+    })
+    .map((m: any) => ({ ...m, id: m.id ?? m._id ?? m.metaMessageId }))
+    .filter((m: any) => {
+      const type = (m.type ?? 'text').toLowerCase()
+      if (['image', 'document', 'audio', 'video', 'location', 'template'].includes(type)) return true
+      return !!(m.content && (m.content as string).trim())
+    })
+    .sort((a: any, b: any) =>
+      new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime()
+    )
 
   const [searchActive, setSearchActive] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -654,7 +664,7 @@ export default function ChatThread({ mobileBack }: Props) {
     if (label !== lastDateLabel) {
       lastDateLabel = label
       messageNodes.push(
-        <div key={`sep-${msg.id}`} className="flex items-center gap-3 my-4">
+        <div key={`sep-${label}`} className="flex items-center gap-3 my-4">
           <div className="flex-1 h-px bg-[#e8ebe8] dark:bg-gray-700" />
           <span className="text-2xs text-gray-400 dark:text-gray-500 bg-[#f7f8f6] dark:bg-gray-800 px-3 py-1 rounded-full flex-shrink-0">
             {label}

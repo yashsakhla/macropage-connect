@@ -187,10 +187,10 @@ export default function Templates() {
         <div className="flex items-center gap-3">
           <button
             className="btn btn-outline h-9 gap-2"
-            onClick={() => syncTemplates.mutate()}
-            disabled={syncTemplates.isPending}
+            onClick={() => syncTemplates.refetch()}
+            disabled={syncTemplates.isFetching}
           >
-            <RefreshCw size={15} className={cn(syncTemplates.isPending && 'animate-spin')} />
+            <RefreshCw size={15} className={cn(syncTemplates.isFetching && 'animate-spin')} />
             Sync from Meta
           </button>
           {canCreateTemplate && (
