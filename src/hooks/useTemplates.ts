@@ -106,13 +106,19 @@ export function useUpdateDraft() {
 
 export function useSyncTemplates() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: () => api.post('/templates/sync').then((r) => r.data),
-    onSuccess: (res: { data?: { updated?: number } }) => {
-      qc.invalidateQueries({ queryKey: ['templates'] })
-      toast.success(`Synced ${res.data?.updated ?? 0} template statuses`)
-    },
-    onError: (err: any) =>
-      toast.error(apiError(err, 'Failed to sync templates')),
+  return useQuery({
+    queryKey: ['templates', 'sync'],
+    queryFn: () =>
+      api
+        .get('/templates/sync')
+        .then((r) => r.data)
+        .then((res: { data?: { updated?: number } }) => {
+          qc.invalidateQueries({ queryKey: ['templates'] })
+          toast.success(`Synced ${res.data?.updated ?? 0} template statuses`)
+          return res
+        }),
+    enabled: false,
+    retry: false,
+    meta: { onError: (err: any) => toast.error(apiError(err, 'Failed to sync templates')) },
   })
 }
