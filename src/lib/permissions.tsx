@@ -137,13 +137,13 @@ export const PLAN_FEATURES: Record<Plan, string[]> = {
   ],
   BUSINESS: [
     'inbox', 'campaigns', 'contacts', 'templates',
-    'team', 'automation_rules', 'flow_builder',
+    'team', 'automation_rules', 'flow_builder', 'flow_ai_actions',
     'ai_chatbot', 'api_access', 'analytics',
     'advanced_analytics', 'webhooks', 'integrations', 'crm_integrations',
   ],
   ENTERPRISE: [
     'inbox', 'campaigns', 'contacts', 'templates',
-    'team', 'automation_rules', 'flow_builder',
+    'team', 'automation_rules', 'flow_builder', 'flow_ai_actions',
     'ai_chatbot', 'api_access', 'analytics',
     'advanced_analytics', 'webhooks', 'integrations',
     'crm_integrations', 'white_label', 'custom_domain', 'reseller_dashboard',
@@ -278,6 +278,7 @@ export function PlanGate({
 
 const FEATURE_LABELS: Record<string, string> = {
   flow_builder:       'Visual Flow Builder',
+  flow_ai_actions:    'AI Actions',
   ai_chatbot:         'AI Chatbot',
   api_access:         'API Access',
   advanced_analytics: 'Advanced Analytics',

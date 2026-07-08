@@ -1,11 +1,11 @@
-import { Check, CheckCircle, Zap, TrendingUp, Crown } from 'lucide-react'
+import { Check, CheckCircle, Zap, TrendingUp, Crown, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { BillingPlan } from '@/types'
+import type { BillingCycle, BillingPlan } from '@/types'
 
 interface Props {
   plan: BillingPlan
   isCurrentPlan: boolean
-  isAnnual: boolean
+  billingCycle: BillingCycle
   onSelect: (planId: string) => void
   currentPlanOrder: number
   thisPlanOrder: number
@@ -18,34 +18,38 @@ const PLAN_META: Record<string, {
   iconColor: string
   checkBg: string
   checkColor: string
-  description: string
 }> = {
-  starter: {
+  STARTER: {
     icon: Zap,
     accentBg: 'bg-sky-500',
     iconBg: 'bg-sky-50',
     iconColor: 'text-sky-500',
     checkBg: 'bg-sky-50',
     checkColor: 'text-sky-500',
-    description: 'Perfect for small teams getting started',
   },
-  growth: {
+  GROWTH: {
     icon: TrendingUp,
     accentBg: 'bg-[#1a5c3a]',
     iconBg: 'bg-[#e8f5ee]',
     iconColor: 'text-[#1a5c3a]',
     checkBg: 'bg-[#e8f5ee]',
     checkColor: 'text-[#1a5c3a]',
-    description: 'Scale your outreach with powerful tools',
   },
-  enterprise: {
+  BUSINESS: {
     icon: Crown,
     accentBg: 'bg-purple-600',
     iconBg: 'bg-purple-50',
     iconColor: 'text-purple-600',
     checkBg: 'bg-purple-50',
     checkColor: 'text-purple-600',
-    description: 'Full control with dedicated support',
+  },
+  ENTERPRISE: {
+    icon: Globe,
+    accentBg: 'bg-gray-600',
+    iconBg: 'bg-gray-100',
+    iconColor: 'text-gray-600',
+    checkBg: 'bg-gray-100',
+    checkColor: 'text-gray-600',
   },
 }
 
@@ -56,16 +60,14 @@ const DEFAULT_META = {
   iconColor: 'text-gray-500',
   checkBg: 'bg-gray-100',
   checkColor: 'text-gray-500',
-  description: 'Enterprise-grade power and flexibility',
 }
 
-export default function PlanCard({ plan, isCurrentPlan, isAnnual, onSelect, currentPlanOrder, thisPlanOrder }: Props) {
-  const price    = isAnnual ? Math.round(plan.price.annual / 12) : plan.price.monthly
-  const isPopular = plan.name === 'growth'
+export default function PlanCard({ plan, isCurrentPlan, billingCycle, onSelect, currentPlanOrder, thisPlanOrder }: Props) {
+  const tier      = plan.pricing[billingCycle]
+  const isPopular = plan.highlight
   const isUpgrade = thisPlanOrder > currentPlanOrder
-  const meta     = PLAN_META[plan.name] ?? DEFAULT_META
-  const Icon     = meta.icon
-  const annualSavings = plan.price.monthly * 12 - plan.price.annual
+  const meta      = PLAN_META[plan.id] ?? DEFAULT_META
+  const Icon      = meta.icon
 
   return (
     <div className={cn(
@@ -88,8 +90,8 @@ export default function PlanCard({ plan, isCurrentPlan, isAnnual, onSelect, curr
               <Icon size={15} className={meta.iconColor} />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 capitalize leading-tight">{plan.name}</p>
-              <p className="text-2xs text-gray-400 leading-tight mt-0.5">{meta.description}</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">{plan.name}</p>
+              <p className="text-2xs text-gray-400 leading-tight mt-0.5">{plan.desc}</p>
             </div>
           </div>
 
@@ -110,31 +112,23 @@ export default function PlanCard({ plan, isCurrentPlan, isAnnual, onSelect, curr
 
         {/* Price block */}
         <div className="mb-4">
-          <div className="flex items-end gap-1">
-            <span className="text-3xl font-black text-gray-900 leading-none">
-              ₹{price.toLocaleString('en-IN')}
-            </span>
-            <span className="text-xs text-gray-400 mb-0.5">/ mo</span>
-          </div>
-
-          {isAnnual ? (
-            <p className="text-2xs text-gray-400 mt-1">
-              ₹{plan.price.annual.toLocaleString('en-IN')} billed yearly
-              {annualSavings > 0 && (
-                <span className="ml-1.5 font-semibold text-[#1a5c3a]">
-                  Save ₹{annualSavings.toLocaleString('en-IN')}
-                </span>
-              )}
-            </p>
+          {plan.custom ? (
+            <span className="text-3xl font-black text-gray-900 leading-none">Custom</span>
           ) : (
-            <p className="text-2xs text-gray-400 mt-1">
-              or{' '}
-              <span className="font-medium text-gray-600">
-                ₹{Math.round(plan.price.annual / 12).toLocaleString('en-IN')}/mo
+            <div className="flex items-end gap-1">
+              <span className="text-3xl font-black text-gray-900 leading-none">
+                ₹{tier.price.toLocaleString('en-IN')}
               </span>
-              {' '}billed annually
-            </p>
+              <span className="text-xs text-gray-400 mb-0.5">/ mo</span>
+            </div>
           )}
+
+          <p className="text-2xs text-gray-400 mt-1">
+            {tier.billedAs}
+            {tier.savings && (
+              <span className="ml-1.5 font-semibold text-[#1a5c3a]">{tier.savings}</span>
+            )}
+          </p>
         </div>
 
         {/* Divider */}

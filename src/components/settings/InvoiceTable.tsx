@@ -32,9 +32,21 @@ export default function InvoiceTable({ invoices }: Props) {
               <td className="text-sm font-medium">₹{inv.amount.toLocaleString('en-IN')}</td>
               <td><span className={cn('badge text-2xs capitalize', STATUS_STYLE[inv.status])}>{inv.status}</span></td>
               <td>
-                <button className="btn-ghost w-8 h-8 flex items-center justify-center rounded-lg" title="Download PDF">
-                  <Download size={14} className="text-gray-400" />
-                </button>
+                {inv.downloadUrl ? (
+                  <a
+                    href={inv.downloadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-ghost w-8 h-8 flex items-center justify-center rounded-lg"
+                    title="Download PDF"
+                  >
+                    <Download size={14} className="text-gray-400" />
+                  </a>
+                ) : (
+                  <span className="w-8 h-8 flex items-center justify-center opacity-30" title="No invoice available">
+                    <Download size={14} className="text-gray-400" />
+                  </span>
+                )}
               </td>
             </tr>
           ))}

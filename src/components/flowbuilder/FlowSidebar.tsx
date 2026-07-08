@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Lock } from 'lucide-react'
 import { MessageSquare, Image, MousePointer2, List, FileText, GitBranch, Hourglass, Timer, CornerDownRight, UserCheck, Tag, Edit3, CheckCircle, Webhook, Sparkles, Brain, Heart, Square, UserPlus, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { FlowNodeType } from '@/types/flow'
+import { usePlanFeature } from '@/lib/permissions'
+import LockedFeaturePopup from '@/components/plans/LockedFeaturePopup'
 
 interface NodeDef {
   type: FlowNodeType
@@ -74,6 +76,8 @@ interface Props {
 export default function FlowSidebar({ onDragStart }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [varsOpen, setVarsOpen] = useState(false)
+  const [showLockedPopup, setShowLockedPopup] = useState(false)
+  const aiActionsAllowed = usePlanFeature('flow_ai_actions')
 
   function toggleGroup(id: string) {
     setCollapsed((p) => ({ ...p, [id]: !p[id] }))
@@ -92,6 +96,7 @@ export default function FlowSidebar({ onDragStart }: Props) {
         {NODE_GROUPS.map((group) => {
           const GIcon = group.icon
           const isOpen = !collapsed[group.id]
+          const isLockedGroup = group.id === 'ai' && !aiActionsAllowed
           return (
             <div key={group.id} className="mb-2">
               <button
@@ -100,6 +105,7 @@ export default function FlowSidebar({ onDragStart }: Props) {
               >
                 <GIcon size={13} className={group.iconColor} />
                 <span className="text-xs font-semibold text-gray-700 flex-1">{group.label}</span>
+                {isLockedGroup && <Lock size={11} className="text-amber-500" />}
                 {isOpen ? <ChevronDown size={12} className="text-gray-400" /> : <ChevronRight size={12} className="text-gray-400" />}
               </button>
 
@@ -107,6 +113,24 @@ export default function FlowSidebar({ onDragStart }: Props) {
                 <div className="mt-1 space-y-1">
                   {group.nodes.map((node, i) => {
                     const Icon = node.icon
+                    if (isLockedGroup) {
+                      return (
+                        <div
+                          key={`${node.type}-${i}`}
+                          onClick={() => setShowLockedPopup(true)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#e8ebe8] bg-gray-50 opacity-60 cursor-pointer"
+                        >
+                          <div className={cn('w-7 h-7 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0', node.iconBg)}>
+                            <Icon size={13} className={node.iconColor} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-gray-700 leading-tight">{node.label}</p>
+                            <p className="text-2xs text-gray-400 leading-tight truncate">{node.desc}</p>
+                          </div>
+                          <Lock size={12} className="text-amber-500 flex-shrink-0" />
+                        </div>
+                      )
+                    }
                     return (
                       <div
                         key={`${node.type}-${i}`}
@@ -154,6 +178,10 @@ export default function FlowSidebar({ onDragStart }: Props) {
           </div>
         )}
       </div>
+
+      {showLockedPopup && (
+        <LockedFeaturePopup feature="flow_ai_actions" onClose={() => setShowLockedPopup(false)} />
+      )}
     </div>
   )
 }

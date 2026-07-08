@@ -27,6 +27,8 @@ const businessSchema = z.object({
   address: z.string().max(256).optional(),
 })
 
+const embeddedSignupEnabled = import.meta.env.VITE_EMBEDDED_SIGNUP_ENABLED === 'true'
+
 export default function WhatsAppSetup() {
   const navigate = useNavigate()
   const [showMobilePreview, setShowMobilePreview] = useState(false)
@@ -437,14 +439,27 @@ export default function WhatsAppSetup() {
                   <p className="text-sm text-gray-500 mt-1">This authorises Macropage Connect to send and receive WhatsApp messages on behalf of your business.</p>
                 </div>
 
-                <EmbeddedSignupFlow
-                  onConnected={(wId, pId) => {
-                    setMetaConnected(true)
-                    setWabaId(wId)
-                    setPhoneNumberId(pId)
-                    refetchStatus()
-                  }}
-                />
+                {embeddedSignupEnabled ? (
+                  <EmbeddedSignupFlow
+                    onConnected={(wId, pId) => {
+                      setMetaConnected(true)
+                      setWabaId(wId)
+                      setPhoneNumberId(pId)
+                      refetchStatus()
+                    }}
+                  />
+                ) : (
+                  <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-2xl px-5 py-8 text-center">
+                    <AlertCircle size={20} className="text-amber-500 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-gray-900">
+                      WhatsApp connection isn't open yet
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                      We're finishing Meta's Tech Provider approval for self-serve setup.
+                      Contact support@macropage.in and we'll connect your account manually.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-2">
                   <button onClick={() => {}} className="btn-ghost">← Back</button>

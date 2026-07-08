@@ -1,4 +1,5 @@
 import { useParams, Navigate } from 'react-router-dom'
+import RequireRole from '@/components/auth/RequireRole'
 import SettingsSidebar from '@/components/settings/SettingsSidebar'
 import AccountSettingsPage from './sections/AccountSettings'
 import WhatsAppSettings from './sections/WhatsAppSettings'
@@ -64,7 +65,13 @@ export default function Settings() {
       {/* Right content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-10 py-8">
-          <ActiveSection />
+          {section === 'billing' ? (
+            <RequireRole allowedRoles={['OWNER']}>
+              <ActiveSection />
+            </RequireRole>
+          ) : (
+            <ActiveSection />
+          )}
         </div>
       </div>
     </div>

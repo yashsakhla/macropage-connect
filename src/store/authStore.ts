@@ -43,6 +43,7 @@ interface AuthState {
   isInTrial: () => boolean
   trialDaysLeft: () => number
   effectivePlan: () => string
+  isPlanExpired: () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -77,8 +78,9 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       isInTrial: () => {
-        const plan = get().user?.plan ?? 'TRIAL'
-        return plan === 'TRIAL'
+        // 'FREE' is backend's alias for the trial plan — treat both as TRIAL
+        const plan = (get().user?.plan ?? 'TRIAL').toUpperCase()
+        return plan === 'TRIAL' || plan === 'FREE'
       },
 
       trialDaysLeft: () => {
@@ -91,6 +93,21 @@ export const useAuthStore = create<AuthState>()(
       },
 
       effectivePlan: () => get().user?.plan ?? 'TRIAL',
+
+      isPlanExpired: () => {
+        const u = get().user
+        if (!u) return false
+        const status = (u.status as string ?? '').toUpperCase()
+        if (status === 'SUSPENDED') return true
+        if (u.subscriptionActive === false) return true
+        // 'FREE' is the backend alias for the 14-day trial — treat same as 'TRIAL'
+        const plan = (u.plan ?? 'TRIAL').toUpperCase()
+        if (plan === 'TRIAL' || plan === 'FREE') {
+          const daysLeft = get().trialDaysLeft()
+          return daysLeft <= 0
+        }
+        return false
+      },
     }),
     {
       name: 'macropage-auth',

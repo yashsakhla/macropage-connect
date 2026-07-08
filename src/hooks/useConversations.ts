@@ -145,16 +145,47 @@ export function useSendMessage() {
 
 export function useAddNote() {
   const qc = useQueryClient()
-  return useMutation<unknown, Error, { conversationId: string; content: string }>({
+  const { user } = useAuthStore()
+  return useMutation({
     mutationFn: ({
       conversationId,
       content,
+    }: {
+      conversationId: string
+      content: string
     }) =>
       api
         .post(`/conversations/${conversationId}/notes`, { content })
         .then((r) => r.data.data),
-    onSuccess: (_: unknown, { conversationId }: { conversationId: string }) =>
-      qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
+    onSuccess: (note: any, { conversationId }) => {
+      if (!note) {
+        qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+        return
+      }
+      // Directly inject the note into the cache instead of invalidating.
+      // The messages API endpoint does not return internal notes, so a refetch
+      // would wipe any note the socket handler already added to the cache.
+      const normalized = {
+        ...note,
+        id: note.id ?? note._id,
+        type: 'note',
+        direction: 'outbound',
+        content: note.content ?? '',
+        agentName: note.agentName ?? user?.name,
+        createdAt: note.createdAt ?? new Date().toISOString(),
+      }
+      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+        const base = old ?? { data: [], total: 0 }
+        const data: any[] = base.data ?? []
+        const alreadyExists = data.some(
+          (m: any) =>
+            (normalized._id && m._id === normalized._id) ||
+            (normalized.id && m.id === normalized.id)
+        )
+        if (alreadyExists) return base
+        return { ...base, data: [...data, normalized] }
+      })
+    },
   })
 }
 

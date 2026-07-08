@@ -154,11 +154,9 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
         connectMetaMutation.mutate(payload)
       },
       {
-        scope: [
-          'whatsapp_business_management',
-          'whatsapp_business_messaging',
-          'business_management',
-        ].join(','),
+        config_id:                       import.meta.env.VITE_META_CONFIG_ID,
+        response_type:                   'code',
+        override_default_response_type:  true,
         extras: {
           feature:            'whatsapp_embedded_signup',
           sessionInfoVersion: 3,

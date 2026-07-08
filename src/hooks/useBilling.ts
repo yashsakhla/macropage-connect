@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { Subscription, BillingPlan } from '@/types'
+import { useAuthStore } from '@/store/authStore'
+import type { Subscription, BillingPlan, Payment } from '@/types'
 
 const STATUS_MAP: Record<string, Subscription['status']> = {
   ACTIVE: 'active', TRIALING: 'trial', CANCELLED: 'cancelled', PAST_DUE: 'past_due',
@@ -40,18 +41,16 @@ export function useBillingPlans() {
         const raw: any[] = Array.isArray(payload) ? payload : []
         return raw.map((p) => ({
           ...p,
-          name: (p.name ?? '').toLowerCase() as BillingPlan['name'],
-          price: typeof p.price === 'number'
-            ? { monthly: p.price, annual: Math.round(p.price * 12 * 0.8) }
-            : (p.price ?? { monthly: 0, annual: 0 }),
           features: Array.isArray(p.features) ? p.features : [],
-          limits: p.limits ?? {},
+          notIncluded: Array.isArray(p.notIncluded) ? p.notIncluded : [],
         })) as BillingPlan[]
       }),
     staleTime: Infinity,
   })
 }
 
+// Kept for backwards compatibility with any other invoice-style consumers —
+// payment history now comes from usePaymentHistory() (GET /billing/payments).
 export function useInvoices() {
   return useQuery({
     queryKey: ['billing', 'invoices'],
@@ -59,44 +58,58 @@ export function useInvoices() {
   })
 }
 
-export function useCreateCheckout() {
+export function usePaymentHistory(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: ['billing', 'payments', page],
+    queryFn: (): Promise<{ payments: Payment[]; total: number }> =>
+      api.get('/billing/payments', { params: { page, limit } }).then((r) => {
+        const d = unwrap(r)
+        return { payments: d?.payments ?? [], total: d?.total ?? 0 }
+      }),
+    staleTime: 60000,
+  })
+}
+
+// Step 1 of checkout — creates the Razorpay subscription on the backend.
+// Step 2 (opening the checkout popup) and step 3 (verify-payment) live in useRazorpay().
+export function useCreateSubscription() {
   return useMutation({
-    mutationFn: (planId: string) =>
-      api.post('/billing/subscribe', { planId }).then((r) => r.data),
-    onSuccess: (resp: unknown) => {
-      const respData = (resp as { data?: Record<string, unknown> })?.data ?? {}
-      type RazorpayConstructor = (
-        opts: Record<string, unknown>
-      ) => { open: () => void }
-      const RazorpayClass = (
-        window as unknown as { Razorpay: RazorpayConstructor }
-      ).Razorpay
-      const instance = new (
-        RazorpayClass as unknown as new (
-          opts: Record<string, unknown>
-        ) => { open: () => void }
-      )({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        subscription_id: respData.subscriptionId,
-        name: 'Macropage Connect',
-        description: respData.planName,
-        handler: (response: unknown) =>
-          api.post('/billing/verify-payment', response),
-      })
-      instance.open()
-    },
+    mutationFn: ({ planId, billingCycle }: { planId: string; billingCycle: string }) =>
+      api.post('/billing/subscription', { plan: planId, billingCycle }).then((r) => unwrap(r)),
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Failed to initiate checkout'),
+  })
+}
+
+// Step 3 of checkout — the ONLY step that actually confirms payment.
+// The popup's handler() callback just collects the Razorpay IDs; never trust it alone.
+export function useVerifyPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      razorpay_subscription_id: string
+      razorpay_payment_id: string
+      razorpay_signature: string
+    }) => api.post('/billing/verify-payment', data).then((r) => unwrap(r)),
+    onSuccess: async () => {
+      const me = await api.get('/auth/me')
+      useAuthStore.getState().setUser(me.data.data)
+      qc.invalidateQueries({ queryKey: ['billing'] })
+      toast.success('Plan activated successfully!')
+    },
+    onError: () =>
+      toast.error('Payment verification failed. Please contact support.'),
   })
 }
 
 export function useCancelSubscription() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => api.post('/billing/cancel').then((r) => r.data),
-    onSuccess: () => {
+    mutationFn: (cancelImmediately: boolean) =>
+      api.delete('/billing/subscription', { data: { cancelImmediately } }).then((r) => unwrap(r)),
+    onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: ['billing'] })
-      toast.success('Subscription cancelled')
+      toast.success(data?.message ?? 'Subscription cancelled')
     },
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Failed to cancel subscription'),

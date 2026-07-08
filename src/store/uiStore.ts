@@ -5,6 +5,7 @@ interface UIState {
   sidebarOpen: boolean
   theme: 'light' | 'dark'
   notificationPanelOpen: boolean
+  planExpiredModalOpen: boolean
 
   // global full-page loader
   fullLoader: boolean
@@ -15,6 +16,7 @@ interface UIState {
   setFullLoader: (v: boolean) => void
   toggleNotificationPanel: () => void
   setNotificationPanelOpen: (open: boolean) => void
+  setPlanExpiredModalOpen: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -23,6 +25,7 @@ export const useUIStore = create<UIState>()(
       sidebarOpen: true,
       theme: 'light',
       notificationPanelOpen: false,
+      planExpiredModalOpen: false,
       fullLoader: false,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
@@ -36,6 +39,7 @@ export const useUIStore = create<UIState>()(
       setFullLoader: (v: boolean) => set({ fullLoader: v }),
       toggleNotificationPanel: () => set({ notificationPanelOpen: !get().notificationPanelOpen }),
       setNotificationPanelOpen: (open) => set({ notificationPanelOpen: open }),
+      setPlanExpiredModalOpen: (v) => set({ planExpiredModalOpen: v }),
     }),
     {
       name: 'macropage-ui',

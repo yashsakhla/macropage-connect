@@ -3,7 +3,6 @@ import { lazy, Suspense } from 'react'
 import MainLayout from '@/components/layout/MainLayout'
 import AuthLayout from '@/components/layout/AuthLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
-import RequireRole from '@/components/auth/RequireRole'
 
 // Auth pages
 const Login          = lazy(() => import('@/pages/auth/Login'))
@@ -80,14 +79,6 @@ const router = createBrowserRouter([
       { path: '/setup/whatsapp', element: <WhatsAppSetup /> },
       { path: '/setup/complete', element: <SetupComplete /> },
       { path: '/settings', element: <Settings /> },
-      {
-        path: '/settings/billing',
-        element: (
-          <RequireRole allowedRoles={['OWNER']}>
-            <Settings />
-          </RequireRole>
-        ),
-      },
       { path: '/settings/:section', element: <Settings /> },
       { path: '/help', element: <Help /> },
       { path: '/help/articles/:slug', element: <ArticleDetail /> },

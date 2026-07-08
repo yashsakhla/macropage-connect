@@ -24,22 +24,33 @@ export default function ProtectedRoute({ children, roles, feature }: Props) {
   const userRoleUpper = normalise(user.role)
   const userStatusUpper = normalise(user.status)
 
+  // Inbox + Settings (incl. Billing) + Plans + Help + Setup must stay reachable
+  // no matter why the account is restricted — otherwise a suspended/expired
+  // tenant has no way to fix payment and get back in.
+  const ALLOWED_WHEN_EXPIRED = ['/inbox', '/settings', '/plans', '/help', '/setup']
+  const isAllowedWhenRestricted = ALLOWED_WHEN_EXPIRED.some(p => location.pathname.startsWith(p))
+
   if (userStatusUpper === 'SUSPENDED') {
-    return <Navigate to="/suspended" replace />
+    if (!isAllowedWhenRestricted) {
+      return <Navigate to="/plans" replace />
+    }
+    return <>{children}</>
   }
 
-  // Owner-only subscription checks
-  if (userRoleUpper === 'OWNER') {
-    const trialExpired =
-      normalisePlan(user.plan) === 'TRIAL' &&
-      user.trialEndsAt &&
-      new Date(user.trialEndsAt) < new Date()
+  // Trial/subscription expiry restricts every role — agents and managers
+  // must not be able to explore blocked pages just because the check used
+  // to only run for OWNER.
+  const trialExpired =
+    normalisePlan(user.plan) === 'TRIAL' &&
+    user.trialEndsAt &&
+    new Date(user.trialEndsAt) < new Date()
 
-    if (trialExpired || user.subscriptionActive === false) {
-      if (location.pathname !== '/billing/upgrade') {
-        return <Navigate to="/billing/upgrade" replace />
-      }
+  if (trialExpired || user.subscriptionActive === false) {
+    if (!isAllowedWhenRestricted) {
+      return <Navigate to="/inbox" replace />
     }
+    // On an allowed page — skip WhatsApp-setup and other redirects below
+    return <>{children}</>
   }
 
   // WhatsApp setup required for OWNER/ADMIN

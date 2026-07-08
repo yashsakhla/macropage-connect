@@ -2,7 +2,7 @@ import { NavLink, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Megaphone, FileText,
   Users, Users2, Settings, ChevronLeft, ChevronRight,
-  HelpCircle, ArrowRight, Zap, Lock,
+  HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard,
 } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -46,10 +46,19 @@ function Logo({ collapsed }: { collapsed: boolean }) {
 }
 
 export default function Sidebar() {
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, setPlanExpiredModalOpen } = useUIStore()
   const location = useLocation()
   const collapsed = !sidebarOpen
   const { user } = useAuthStore()
+
+  // Mirror ProtectedRoute's exact expiry check so sidebar and route guard stay in sync
+  const isOwner = (((user?.role as string) ?? '').toUpperCase()) === 'OWNER'
+  const trialExpiredForOwner =
+    isOwner &&
+    normalisePlan(user?.plan as string | undefined) === 'TRIAL' &&
+    !!user?.trialEndsAt &&
+    new Date(user.trialEndsAt) < new Date()
+  const planExpired = isOwner && (trialExpiredForOwner || user?.subscriptionActive === false)
 
   const plan = normalisePlan(user?.plan as string | undefined)
   const role = (((user?.role as string) ?? 'AGENT').toUpperCase() as Role)
@@ -88,6 +97,28 @@ export default function Sidebar() {
             if (permission && !userPerms.includes(permission)) return null
             const hasPlan = !feature || PLAN_FEATURES[plan]?.includes(feature)
             const active = location.pathname.startsWith(to)
+
+            // Lock all main nav items except Inbox when plan has expired
+            const isLockedByExpiry = planExpired && to !== '/inbox'
+            if (isLockedByExpiry) {
+              return (
+                <button
+                  key={to}
+                  onClick={() => setPlanExpiredModalOpen(true)}
+                  title={collapsed ? label : undefined}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+                    'text-gray-400 hover:bg-gray-50 hover:text-gray-500 dark:text-gray-600 dark:hover:bg-gray-800/50',
+                    collapsed && 'justify-center px-2'
+                  )}
+                >
+                  <Icon size={18} className="shrink-0 opacity-50" />
+                  {!collapsed && <span className="opacity-70">{label}</span>}
+                  {!collapsed && <Lock size={11} className="text-gray-300 ml-auto flex-shrink-0" />}
+                </button>
+              )
+            }
+
             return (
               <NavLink
                 key={to}
@@ -127,6 +158,53 @@ export default function Sidebar() {
             <Settings size={18} className="shrink-0" />
             {!collapsed && <span>Settings</span>}
           </NavLink>
+
+          {/* Billing — golden accent */}
+          <NavLink
+            to="/settings/billing"
+            title={collapsed ? 'Billing' : undefined}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-50 text-amber-600 border-l-4 border-l-amber-500 font-semibold'
+                  : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20'
+              )
+            }
+          >
+            <CreditCard size={18} className="shrink-0" />
+            {!collapsed && <span>Billing</span>}
+          </NavLink>
+
+          {/* Upgrade Plan — golden CTA, pulsing crown when expired */}
+          <NavLink
+            to="/plans"
+            title={collapsed ? 'Upgrade Plan' : undefined}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-50 text-amber-600 border-l-4 border-l-amber-500 font-semibold'
+                  : 'text-amber-500 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20'
+              )
+            }
+          >
+            <Crown
+              size={18}
+              className={cn('shrink-0', planExpired && 'animate-pulse')}
+            />
+            {!collapsed && (
+              <span className="font-semibold">
+                {planExpired ? 'Upgrade Now' : 'Upgrade Plan'}
+              </span>
+            )}
+            {!collapsed && planExpired && (
+              <span className="ml-auto text-2xs bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-full leading-tight">
+                !
+              </span>
+            )}
+          </NavLink>
+
           <Link
             to="/help"
             className={cn(
@@ -145,10 +223,18 @@ export default function Sidebar() {
         <div className={cn('px-3 pb-3 pt-4')}>
           {!collapsed ? (
             <div className="rounded-2xl overflow-hidden p-0">
-              <div className="bg-gradient-to-tr from-[var(--primary)] to-[var(--primary-light)] text-white rounded-2xl shadow-lg profile-card">
+              <div className={cn(
+                'text-white rounded-2xl shadow-lg profile-card transition-all duration-300',
+                planExpired
+                  ? 'bg-gradient-to-tr from-red-800 to-red-600'
+                  : 'bg-gradient-to-tr from-[var(--primary)] to-[var(--primary-light)]'
+              )}>
                 <div className="p-4 flex items-start gap-3 justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold text-white ring-1 ring-white/20">
+                    <div className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold text-white ring-1',
+                      planExpired ? 'bg-white/20 ring-red-300/30' : 'bg-white/20 ring-white/20'
+                    )}>
                       {initials}
                     </div>
                     <div className="min-w-0">
@@ -157,28 +243,52 @@ export default function Sidebar() {
                     </div>
                   </div>
                   <div className="min-w-0 flex items-start ml-2">
-                    <span className="company-badge small starter">{planLabel}</span>
+                    {planExpired ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold bg-red-900/60 border border-red-300/30 text-red-100">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-300 animate-pulse inline-block" />
+                        Expired
+                      </span>
+                    ) : (
+                      <span className="company-badge small starter">{planLabel}</span>
+                    )}
                   </div>
                 </div>
                 <div className="px-4 pb-4 pt-0 border-t border-white/10">
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-2xs text-white/90">
-                    <div>
-                      <div className="opacity-80">Role</div>
-                      <div className="text-sm font-medium mt-0.5 capitalize">{((user?.role as string) ?? 'Agent').charAt(0).toUpperCase() + ((user?.role as string) ?? 'agent').slice(1).toLowerCase()}</div>
+                  {planExpired ? (
+                    <div className="mt-3">
+                      <p className="text-xs text-red-200 mb-2.5 leading-relaxed">
+                        Your plan has expired. Upgrade to restore full access.
+                      </p>
+                      <Link
+                        to="/plans"
+                        className="flex items-center justify-center gap-1.5 w-full h-8 bg-amber-400 hover:bg-amber-300 text-amber-900 text-xs font-bold rounded-xl transition-colors"
+                      >
+                        <Crown size={12} />
+                        Upgrade Now
+                      </Link>
                     </div>
-                    <div className="text-right">
-                      <div className="opacity-80">Company</div>
-                      <div className="text-sm font-medium mt-0.5 truncate">{user?.companyName ?? '—'}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <Link
-                      to="/settings"
-                      className="inline-flex items-center gap-2 text-xs font-medium text-white/90 hover:text-white"
-                    >
-                      View details <ArrowRight size={14} />
-                    </Link>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-2xs text-white/90">
+                        <div>
+                          <div className="opacity-80">Role</div>
+                          <div className="text-sm font-medium mt-0.5 capitalize">{((user?.role as string) ?? 'Agent').charAt(0).toUpperCase() + ((user?.role as string) ?? 'agent').slice(1).toLowerCase()}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="opacity-80">Company</div>
+                          <div className="text-sm font-medium mt-0.5 truncate">{user?.companyName ?? '—'}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <Link
+                          to="/settings"
+                          className="inline-flex items-center gap-2 text-xs font-medium text-white/90 hover:text-white"
+                        >
+                          View details <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
