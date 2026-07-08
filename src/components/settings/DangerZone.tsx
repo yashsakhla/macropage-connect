@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
+import api from '@/lib/axios'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 
@@ -9,22 +12,37 @@ interface DangerAction {
   btnLabel: string
   confirm?: 'simple' | 'type' | 'multi'
   confirmMessage?: string
+  onConfirm?: () => Promise<void>
 }
-
-const ACTIONS: DangerAction[] = [
-  { title: 'Export all data', desc: 'Download everything — contacts, conversations, campaigns — as a ZIP file.', btnLabel: 'Export data' },
-  { title: 'Disconnect WhatsApp', desc: 'Remove your WhatsApp Business Account connection. You can reconnect later.', btnLabel: 'Disconnect', confirm: 'simple', confirmMessage: 'You will lose access to all WhatsApp features until you reconnect.' },
-  { title: 'Delete all contacts', desc: 'Permanently delete all contacts and their conversation history.', btnLabel: 'Delete contacts', confirm: 'type' },
-  { title: 'Reset automation', desc: 'Delete all rules, flows, and AI configuration.', btnLabel: 'Reset automation', confirm: 'simple' },
-  { title: 'Delete account', desc: 'Permanently delete your entire Macropage Connect account and all data. This CANNOT be undone.', btnLabel: 'Delete account', confirm: 'multi' },
-]
 
 export default function DangerZone() {
   const user = useAuthStore(s => s.user)
+  const qc = useQueryClient()
   const [activeAction, setActiveAction] = useState<DangerAction | null>(null)
   const [step, setStep] = useState(1)
   const [typeValue, setTypeValue] = useState('')
   const [password, setPassword] = useState('')
+  const [confirming, setConfirming] = useState(false)
+
+  const ACTIONS: DangerAction[] = [
+    { title: 'Export all data', desc: 'Download everything — contacts, conversations, campaigns — as a ZIP file.', btnLabel: 'Export data' },
+    {
+      title: 'Disconnect WhatsApp',
+      desc: 'Remove your WhatsApp Business Account connection. You can reconnect later.',
+      btnLabel: 'Disconnect',
+      confirm: 'simple',
+      confirmMessage: 'You will lose access to all WhatsApp features until you reconnect.',
+      onConfirm: async () => {
+        await api.delete('/whatsapp/setup/disconnect')
+        qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
+        qc.invalidateQueries({ queryKey: ['waba-details'] })
+        toast.success('WhatsApp disconnected')
+      },
+    },
+    { title: 'Delete all contacts', desc: 'Permanently delete all contacts and their conversation history.', btnLabel: 'Delete contacts', confirm: 'type' },
+    { title: 'Reset automation', desc: 'Delete all rules, flows, and AI configuration.', btnLabel: 'Reset automation', confirm: 'simple' },
+    { title: 'Delete account', desc: 'Permanently delete your entire Macropage Connect account and all data. This CANNOT be undone.', btnLabel: 'Delete account', confirm: 'multi' },
+  ]
 
   function openAction(action: DangerAction) {
     if (!action.confirm) return
@@ -35,6 +53,21 @@ export default function DangerZone() {
   }
 
   function close() { setActiveAction(null); setStep(1) }
+
+  async function confirmActiveAction() {
+    if (!activeAction) return
+    if (!activeAction.onConfirm) { close(); return }
+
+    setConfirming(true)
+    try {
+      await activeAction.onConfirm()
+      close()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? `Could not complete: ${activeAction.title}`)
+    } finally {
+      setConfirming(false)
+    }
+  }
 
   return (
     <>
@@ -69,8 +102,15 @@ export default function DangerZone() {
                 <>
                   <p className="text-sm text-gray-700">{activeAction.confirmMessage ?? 'Are you sure you want to continue?'}</p>
                   <div className="flex gap-3">
-                    <button onClick={close} className="btn-ghost flex-1 h-9 text-sm">Cancel</button>
-                    <button onClick={close} className="btn-danger flex-1 h-9 text-sm">{activeAction.btnLabel}</button>
+                    <button onClick={close} disabled={confirming} className="btn-ghost flex-1 h-9 text-sm disabled:opacity-40">Cancel</button>
+                    <button
+                      onClick={confirmActiveAction}
+                      disabled={confirming}
+                      className="btn-danger flex-1 h-9 text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {confirming && <Loader2 size={14} className="animate-spin" />}
+                      {activeAction.btnLabel}
+                    </button>
                   </div>
                 </>
               )}

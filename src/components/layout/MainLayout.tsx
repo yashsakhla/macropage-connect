@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import EmailVerificationBanner from '@/components/shared/EmailVerificationBanner'
 import WhatsAppSetupBanner from '@/components/shared/WhatsAppSetupBanner'
 import ReconnectBanner from '@/components/setup/ReconnectBanner'
+import PlanExpiredBanner from '@/components/shared/PlanExpiredBanner'
+import PlanExpiredModal from '@/components/shared/PlanExpiredModal'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import FullPageLoader from '@/components/shared/FullPageLoader'
@@ -21,7 +23,7 @@ export default function MainLayout() {
   useTokenRefresh()
 
   const { sidebarOpen } = useUIStore()
-  const { user, isInTrial, trialDaysLeft } = useAuthStore()
+  const { user, isInTrial, trialDaysLeft, isPlanExpired } = useAuthStore()
   useAuthGuard()
   const location = useLocation()
   const navigate = useNavigate()
@@ -40,6 +42,7 @@ export default function MainLayout() {
   // Determine highest-priority banner to show (only one at a time)
   const activeBanner = (() => {
     if (!user) return null
+    if (isPlanExpired()) return 'planExpired'
     const role = (user.role as string ?? '').toUpperCase()
     if (isInTrial() && trialDaysLeft() <= 7 && ['OWNER', 'ADMIN'].includes(role))
       return 'trial'
@@ -66,6 +69,9 @@ export default function MainLayout() {
         <div className="flex-1 overflow-y-auto flex flex-col">
 
           {/* Priority banner stack — only the highest-priority one renders */}
+          {activeBanner === 'planExpired' && (
+            <PlanExpiredBanner />
+          )}
           {activeBanner === 'trial' && user?.trialEndsAt && (
             <TrialExpiryBanner daysLeft={trialDaysLeft()} />
           )}
@@ -83,7 +89,7 @@ export default function MainLayout() {
           )}
 
           {/* WhatsApp setup banner — shown independently below priority banners */}
-          {activeBanner !== 'waba' && activeBanner !== 'quality' && (
+          {activeBanner !== 'waba' && activeBanner !== 'quality' && activeBanner !== 'planExpired' && (
             <WhatsAppSetupBanner />
           )}
 
@@ -97,6 +103,7 @@ export default function MainLayout() {
 
       {!location.pathname.startsWith('/help') && <HelpWidget />}
       <NotificationPanel />
+      <PlanExpiredModal />
     </div>
   )
 }

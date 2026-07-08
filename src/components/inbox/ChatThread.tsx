@@ -392,7 +392,8 @@ export default function ChatThread({ mobileBack }: Props) {
   const allMessages = rawMessages
     .filter((m: any) => {
       if (!m) return false
-      const key = m.metaMessageId ?? m._id ?? m.id
+      // Use || (not ??) so empty-string metaMessageId is treated as absent
+      const key = m.metaMessageId || m._id || m.id
       if (!key || seenKeys.has(key)) return false
       seenKeys.add(key)
       return true

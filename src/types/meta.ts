@@ -87,6 +87,9 @@ declare global {
         callback: (response: FBLoginResponse) => void,
         options?: {
           scope?: string
+          config_id?: string
+          response_type?: string
+          override_default_response_type?: boolean
           extras?: {
             feature?: string
             sessionInfoVersion?: number

@@ -486,13 +486,27 @@ export interface NotificationPreferences {
   digest: { enabled: boolean; frequency: 'daily' | 'weekly' | 'never' }
 }
 
+export type BillingCycle = 'monthly' | 'quarterly' | 'yearly'
+
+export interface PlanPricingTier {
+  price: number
+  billedAs: string
+  savings?: string
+}
+
 export interface BillingPlan {
   id: string
-  name: 'starter' | 'growth' | 'enterprise'
-  price: { monthly: number; annual: number }
+  name: string
+  desc: string
+  badge: string | null
+  highlight: boolean
+  cta: string
+  ctaHref: string
   currency: string
+  custom?: boolean
+  pricing: Record<BillingCycle, PlanPricingTier>
   features: string[]
-  limits: { teamMembers: number | 'unlimited'; messagesPerMonth: number | 'unlimited'; contacts: number | 'unlimited'; storage: number; campaigns: number | 'unlimited'; aiBot: boolean; flowBuilder: boolean }
+  notIncluded: string[]
 }
 
 export interface Subscription {
@@ -504,6 +518,16 @@ export interface Subscription {
   cancelAtPeriodEnd: boolean
   trialEndsAt?: string
   usage: { messages: number; contacts: number; storage: number; teamMembers: number; campaigns: number }
+}
+
+export interface Payment {
+  _id: string
+  plan: string
+  billingCycle: string
+  amount: number // paise
+  status: 'success' | 'failed' | 'pending'
+  invoiceUrl?: string
+  createdAt: string
 }
 
 export interface Invoice {

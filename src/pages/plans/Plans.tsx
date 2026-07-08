@@ -1,219 +1,37 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
+import { useBillingPlans } from '@/hooks/useBilling'
+import { useRazorpay } from '@/hooks/useRazorpay'
 import { loadRazorpay } from '@/lib/razorpay'
-import api from '@/lib/axios'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+import type { BillingCycle, BillingPlan } from '@/types'
 import {
   CheckCircle, Zap, ArrowLeft, Crown,
   MessageSquare, Globe, Headphones,
-  Sparkles, Check, Minus, Loader2
+  Sparkles, Check, X, Loader2
 } from 'lucide-react'
 
-// ─── Plan data ────────────────────────────────────────────────────────────────
+// ─── Presentation metadata only — icon/colour per plan id.                    ──
+// ─── Price, features, badges and highlight always come from the API.         ──
 
-const PLAN_ORDER = ['STARTER', 'GROWTH', 'BUSINESS', 'ENTERPRISE']
+const PLAN_META: Record<string, { icon: React.ElementType; iconBg: string; iconColor: string }> = {
+  STARTER:    { icon: MessageSquare, iconBg: 'bg-blue-50',   iconColor: 'text-blue-600' },
+  GROWTH:     { icon: Zap,           iconBg: 'bg-[#e8f5ee]', iconColor: 'text-[#1a5c3a]' },
+  BUSINESS:   { icon: Crown,         iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+  ENTERPRISE: { icon: Globe,         iconBg: 'bg-gray-50',   iconColor: 'text-gray-600' },
+}
+const DEFAULT_META = { icon: MessageSquare, iconBg: 'bg-gray-50', iconColor: 'text-gray-600' }
 
-const PLAN_DATA = [
-  {
-    id:           'STARTER',
-    name:         'Starter',
-    tagline:      'For small teams',
-    monthlyPrice: 999,
-    annualPrice:  833,
-    icon:         MessageSquare,
-    iconBg:       'bg-blue-50',
-    iconColor:    'text-blue-600',
-    features: [
-      { label: '3 team members',       included: true  },
-      { label: '5,000 contacts',        included: true  },
-      { label: '1 WhatsApp number',     included: true  },
-      { label: 'Live inbox',            included: true  },
-      { label: 'Unlimited campaigns',   included: true  },
-      { label: 'Message templates',     included: true  },
-      { label: 'Basic auto-replies',    included: true  },
-      { label: 'Flow builder',          included: false },
-      { label: 'AI chatbot',            included: false },
-      { label: 'API access',            included: false },
-      { label: 'Advanced analytics',    included: false },
-      { label: 'CRM integrations',      included: false },
-    ],
-  },
-  {
-    id:           'GROWTH',
-    name:         'Growth',
-    tagline:      'Most popular',
-    monthlyPrice: 2499,
-    annualPrice:  2083,
-    icon:         Zap,
-    iconBg:       'bg-[#e8f5ee]',
-    iconColor:    'text-[#1a5c3a]',
-    features: [
-      { label: '10 team members',       included: true  },
-      { label: '25,000 contacts',        included: true  },
-      { label: '2 WhatsApp numbers',     included: true  },
-      { label: 'Everything in Starter', included: true  },
-      { label: 'Visual flow builder',   included: true  },
-      { label: 'AI chatbot (500/mo)',    included: true  },
-      { label: 'REST API access',       included: true  },
-      { label: 'Webhooks',              included: true  },
-      { label: 'Zapier integration',    included: true  },
-      { label: 'Advanced analytics',    included: false },
-      { label: 'CRM integrations',      included: false },
-    ],
-  },
-  {
-    id:           'BUSINESS',
-    name:         'Business',
-    tagline:      'For larger teams',
-    monthlyPrice: 5999,
-    annualPrice:  4999,
-    icon:         Crown,
-    iconBg:       'bg-purple-50',
-    iconColor:    'text-purple-600',
-    features: [
-      { label: '25 team members',         included: true },
-      { label: '1,00,000 contacts',        included: true },
-      { label: '5 WhatsApp numbers',       included: true },
-      { label: 'Everything in Growth',     included: true },
-      { label: 'AI chatbot (5,000/mo)',     included: true },
-      { label: 'Advanced analytics',       included: true },
-      { label: 'CRM integrations',         included: true },
-      { label: 'Custom knowledge base',    included: true },
-      { label: 'Dedicated onboarding',     included: true },
-      { label: 'Phone support',            included: true },
-    ],
-  },
-  {
-    id:           'ENTERPRISE',
-    name:         'Enterprise',
-    tagline:      'Custom everything',
-    monthlyPrice: 0,
-    annualPrice:  0,
-    icon:         Globe,
-    iconBg:       'bg-gray-50',
-    iconColor:    'text-gray-600',
-    features: [
-      { label: 'Unlimited team members',    included: true },
-      { label: 'Unlimited contacts',        included: true },
-      { label: 'Unlimited WA numbers',      included: true },
-      { label: 'Everything in Business',    included: true },
-      { label: 'White-label portal',        included: true },
-      { label: 'Custom domain',             included: true },
-      { label: 'Reseller dashboard',        included: true },
-      { label: 'SLA guarantee',             included: true },
-      { label: 'Dedicated account manager', included: true },
-      { label: 'Custom integrations',       included: true },
-    ],
-  },
-]
-
-// ─── Feature comparison rows ──────────────────────────────────────────────────
-
-const COMPARISON_ROWS = [
-  { label: 'Team members',       values: ['3', '10', '25', 'Unlimited'] },
-  { label: 'Contacts',           values: ['5,000', '25,000', '1,00,000', 'Unlimited'] },
-  { label: 'WhatsApp numbers',   values: ['1', '2', '5', 'Unlimited'] },
-  { label: 'Live inbox',         values: [true, true, true, true] },
-  { label: 'Campaigns',          values: [true, true, true, true] },
-  { label: 'Templates',          values: [true, true, true, true] },
-  { label: 'Basic auto-replies', values: [true, true, true, true] },
-  { label: 'Flow builder',       values: [false, true, true, true] },
-  { label: 'AI chatbot',         values: [false, '500/mo', '5,000/mo', 'Unlimited'] },
-  { label: 'REST API & webhooks',values: [false, true, true, true] },
-  { label: 'Zapier integration', values: [false, true, true, true] },
-  { label: 'Advanced analytics', values: [false, false, true, true] },
-  { label: 'CRM integrations',   values: [false, false, true, true] },
-  { label: 'Custom knowledge base', values: [false, false, true, true] },
-  { label: 'White label',        values: [false, false, false, true] },
-  { label: 'Custom domain',      values: [false, false, false, true] },
-  { label: 'Dedicated support',  values: [false, false, 'Phone', 'Account manager'] },
-]
-
-function ComparisonCell({ value }: { value: boolean | string }) {
-  if (value === true)
-    return <CheckCircle size={16} className="text-[#1a5c3a] mx-auto" />
-  if (value === false)
-    return <Minus size={14} className="text-gray-200 mx-auto" />
-  return <span className="text-xs text-gray-700 font-medium">{value}</span>
+function metaFor(plan: BillingPlan) {
+  return PLAN_META[plan.id] ?? DEFAULT_META
 }
 
-function FeatureComparisonTable({
-  billingCycle,
-  currentPlan,
-  onSelectPlan,
-  processing,
-}: {
-  billingCycle: 'monthly' | 'annual'
-  currentPlan?: string
-  onSelectPlan: (id: string) => void
-  processing: string | null
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-[#e8ebe8] overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-[#e8ebe8]">
-            <th className="text-left p-4 text-gray-500 font-medium w-48">Feature</th>
-            {PLAN_DATA.map(plan => {
-              const price = billingCycle === 'annual' ? plan.annualPrice : plan.monthlyPrice
-              const isCurrent = currentPlan === plan.id
-              return (
-                <th key={plan.id} className={cn('p-4 text-center', isCurrent && 'bg-[#f0faf5]')}>
-                  <div className="font-bold text-gray-900">{plan.name}</div>
-                  {plan.id !== 'ENTERPRISE' ? (
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      ₹{price.toLocaleString('en-IN')}/mo
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-400 mt-0.5">Custom</div>
-                  )}
-                  {!isCurrent && (
-                    <button
-                      onClick={() => onSelectPlan(plan.id)}
-                      disabled={!!processing}
-                      className={cn(
-                        'mt-2 h-7 px-3 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50',
-                        plan.id === 'ENTERPRISE'
-                          ? 'bg-[#1a5c3a] text-white hover:bg-[#2d7a4f]'
-                          : 'border border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
-                      )}
-                    >
-                      {processing === plan.id
-                        ? 'Processing…'
-                        : plan.id === 'ENTERPRISE'
-                        ? 'Contact sales'
-                        : 'Select'}
-                    </button>
-                  )}
-                  {isCurrent && (
-                    <span className="mt-2 inline-block text-xs bg-[#1a5c3a] text-white rounded-lg px-3 py-1 font-semibold">
-                      Current
-                    </span>
-                  )}
-                </th>
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {COMPARISON_ROWS.map((row, i) => (
-            <tr key={row.label} className={cn('border-b border-[#f0f0f0]', i % 2 === 0 && 'bg-[#fafafa]')}>
-              <td className="p-4 text-gray-600 text-xs font-medium">{row.label}</td>
-              {row.values.map((v, ci) => (
-                <td key={ci} className={cn('p-4 text-center', currentPlan === PLAN_DATA[ci].id && 'bg-[#f0faf5]/60')}>
-                  <ComparisonCell value={v} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+const CYCLE_LABEL: Record<BillingCycle, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
 }
 
 // ─── Main Plans page ──────────────────────────────────────────────────────────
@@ -221,11 +39,32 @@ function FeatureComparisonTable({
 export default function Plans() {
   const navigate    = useNavigate()
   const location    = useLocation()
-  const qc          = useQueryClient()
-  const { user, setUser } = useAuthStore()
+  const { user, isPlanExpired, isInTrial, trialDaysLeft, effectivePlan } = useAuthStore()
 
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
+  const { data: plans, isLoading: plansLoading, isError: plansError } = useBillingPlans()
+  const { openCheckout } = useRazorpay()
+
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [processing, setProcessing]     = useState<string | null>(null)
+
+  // Cheapest first, custom (enterprise) plans always last
+  const orderedPlans = [...(plans ?? [])].sort((a, b) => {
+    const aVal = a.custom ? Infinity : a.pricing.monthly.price
+    const bVal = b.custom ? Infinity : b.pricing.monthly.price
+    return aVal - bVal
+  })
+  const planIndex = (id?: string) => orderedPlans.findIndex(p => p.id === id)
+
+  // Cycle toggle savings badge — same discount % across plans, so read it off the first non-custom plan
+  const referencePlan = orderedPlans.find(p => !p.custom)
+  const cycleSavings = (cycle: BillingCycle) => referencePlan?.pricing[cycle]?.savings
+
+  const expiredPlanLabel = (() => {
+    if (!isPlanExpired()) return null
+    if (isInTrial() && trialDaysLeft() <= 0) return 'Free Trial'
+    const p = effectivePlan()
+    return p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : 'Plan'
+  })()
 
   const highlightPlan = (location.state as { highlightPlan?: string } | null)?.highlightPlan
 
@@ -233,59 +72,22 @@ export default function Plans() {
 
   const handleSelectPlan = async (planId: string) => {
     if (user?.plan === planId) return
-    if (planId === 'ENTERPRISE') {
-      window.open('mailto:sales@macropage.in?subject=Enterprise%20Plan%20Inquiry', '_blank')
+    const plan = orderedPlans.find(p => p.id === planId)
+    if (plan?.custom) {
+      window.open(plan.ctaHref || 'mailto:sales@macropage.in?subject=Enterprise%20Plan%20Inquiry', '_blank')
       return
     }
 
     setProcessing(planId)
-    try {
-      const { data: resp } = await api.post('/billing/subscribe', { planId, billingCycle })
-      const subscriptionData = resp.data ?? resp
-
-      const rzp = new (window as any).Razorpay({
-        key:             import.meta.env.VITE_RAZORPAY_KEY_ID,
-        subscription_id: subscriptionData.subscriptionId,
-        name:            'Macropage Connect',
-        description:     `${planId} Plan — ${billingCycle}`,
-        image:           '/logo.png',
-        prefill: {
-          name:    user?.name,
-          email:   user?.email,
-          contact: user?.phone ?? '',
-        },
-        notes: {
-          planId,
-          billingCycle,
-          tenantId: user?.companyId,
-        },
-        theme: { color: '#1a5c3a' },
-
-        handler: async (response: any) => {
-          try {
-            await api.post('/billing/verify-payment', { ...response, planId, billingCycle })
-            const meRes = await api.get('/auth/me')
-            setUser(meRes.data.data)
-            qc.invalidateQueries({ queryKey: ['me'] })
-            toast.success('Plan activated successfully!')
-            navigate('/dashboard')
-          } catch {
-            toast.error('Payment verification failed. Please contact support.')
-          } finally {
-            setProcessing(null)
-          }
-        },
-
-        modal: {
-          ondismiss: () => setProcessing(null),
-          escape: false,
-        },
-      })
-      rzp.open()
-    } catch {
-      setProcessing(null)
-      toast.error('Could not start checkout. Please try again.')
-    }
+    await openCheckout(
+      planId,
+      billingCycle,
+      () => {
+        setProcessing(null)
+        navigate('/dashboard')
+      },
+      () => setProcessing(null)
+    )
   }
 
   return (
@@ -317,6 +119,30 @@ export default function Plans() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
+        {/* Expired plan alert */}
+        {expiredPlanLabel && (
+          <div className="mb-6 rounded-2xl overflow-hidden border border-red-200 shadow-sm">
+            <div className="bg-gradient-to-r from-red-700 to-red-600 px-5 py-4 flex items-center gap-4 flex-wrap">
+              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-2xl flex-shrink-0">
+                ⏰
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white leading-tight">
+                  Your <span className="underline decoration-red-300 underline-offset-2">{expiredPlanLabel}</span> has expired
+                </p>
+                <p className="text-xs text-red-200 mt-1 leading-relaxed">
+                  Your portal is running in limited mode — only Inbox and Settings are available.
+                  Pick a plan below to restore full access instantly.
+                </p>
+              </div>
+              <div className="flex-shrink-0 flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-base">🔒</span>
+                <span className="text-xs font-semibold text-red-100">Access restricted</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Trial status banner */}
         {user?.plan === 'TRIAL' && user?.trialEndsAt && (
           <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 flex-wrap">
@@ -340,167 +166,157 @@ export default function Plans() {
         {/* Billing toggle */}
         <div className="flex justify-center mb-8">
           <div className="bg-white border border-[#e8ebe8] rounded-2xl p-1.5 flex gap-1 shadow-sm">
-            <button
-              onClick={() => setBillingCycle('monthly')}
-              className={cn(
-                'px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200',
-                billingCycle === 'monthly' ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle('annual')}
-              className={cn(
-                'px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2',
-                billingCycle === 'annual' ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              )}
-            >
-              Annual
-              <span className={cn(
-                'text-2xs font-bold px-2 py-0.5 rounded-full',
-                billingCycle === 'annual' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-              )}>
-                2 months free
-              </span>
-            </button>
+            {(Object.keys(CYCLE_LABEL) as BillingCycle[]).map(cycle => {
+              const savings = cycleSavings(cycle)
+              return (
+                <button
+                  key={cycle}
+                  onClick={() => setBillingCycle(cycle)}
+                  className={cn(
+                    'px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2',
+                    billingCycle === cycle ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  )}
+                >
+                  {CYCLE_LABEL[cycle]}
+                  {savings && (
+                    <span className={cn(
+                      'text-2xs font-bold px-2 py-0.5 rounded-full',
+                      billingCycle === cycle ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                    )}>
+                      {savings}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Plan cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {PLAN_DATA.map(plan => {
-            const price        = billingCycle === 'annual' ? plan.annualPrice : plan.monthlyPrice
-            const isCurrent    = user?.plan === plan.id
-            const isPopular    = plan.id === 'GROWTH'
-            const isProcessing = processing === plan.id
-            const isEnterprise = plan.id === 'ENTERPRISE'
-            const isHighlighted = highlightPlan === plan.id
+        {plansLoading ? (
+          <div className="py-24 text-center text-gray-400 text-sm">Loading plans…</div>
+        ) : plansError || orderedPlans.length === 0 ? (
+          <div className="py-24 text-center text-red-400 text-sm">Failed to load plans. Please try again later.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {orderedPlans.map(plan => {
+              const meta          = metaFor(plan)
+              const tier           = plan.pricing[billingCycle]
+              const isCurrent     = user?.plan === plan.id
+              const isPopular     = plan.highlight
+              const isProcessing  = processing === plan.id
+              const isHighlighted = highlightPlan === plan.id
+              const ribbon        = isCurrent ? '✓ Current plan' : plan.badge
 
-            return (
-              <div
-                key={plan.id}
-                className={cn(
-                  'bg-white rounded-2xl border-2 flex flex-col transition-all duration-200 relative',
-                  isCurrent
-                    ? 'border-[#1a5c3a] bg-[#f0faf5]'
-                    : isPopular || isHighlighted
-                    ? 'border-[#1a5c3a] shadow-xl shadow-[#1a5c3a]/10'
-                    : 'border-[#e8ebe8] hover:border-[#c8e6d4] hover:shadow-md'
-                )}
-              >
-                {(isPopular || isCurrent) && (
-                  <div className="absolute -top-3.5 left-0 right-0 flex justify-center">
-                    <span className={cn(
-                      'text-xs font-bold px-4 py-1 rounded-full',
-                      isCurrent ? 'bg-[#1a5c3a] text-white' : 'bg-amber-400 text-amber-900'
-                    )}>
-                      {isCurrent ? '✓ Current plan' : '⭐ Most popular'}
-                    </span>
-                  </div>
-                )}
-
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', plan.iconBg)}>
-                      <plan.icon size={18} className={plan.iconColor} />
+              return (
+                <div
+                  key={plan.id}
+                  className={cn(
+                    'bg-white rounded-2xl border-2 flex flex-col transition-all duration-200 relative',
+                    isCurrent
+                      ? 'border-[#1a5c3a] bg-[#f0faf5]'
+                      : isPopular || isHighlighted
+                      ? 'border-[#1a5c3a] shadow-xl shadow-[#1a5c3a]/10'
+                      : 'border-[#e8ebe8] hover:border-[#c8e6d4] hover:shadow-md'
+                  )}
+                >
+                  {ribbon && (
+                    <div className="absolute -top-3.5 left-0 right-0 flex justify-center">
+                      <span className={cn(
+                        'text-xs font-bold px-4 py-1 rounded-full',
+                        isCurrent ? 'bg-[#1a5c3a] text-white' : 'bg-amber-400 text-amber-900'
+                      )}>
+                        {isCurrent ? ribbon : `⭐ ${ribbon}`}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-base font-bold text-gray-900">{plan.name}</h3>
-                      <p className="text-xs text-gray-400">{plan.tagline}</p>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="mb-5">
-                    {isEnterprise ? (
-                      <div>
-                        <span className="text-2xl font-black text-gray-900">Custom</span>
-                        <p className="text-xs text-gray-400 mt-0.5">Talk to our sales team</p>
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', meta.iconBg)}>
+                        <meta.icon size={18} className={meta.iconColor} />
                       </div>
-                    ) : (
                       <div>
-                        <div className="flex items-end gap-1">
-                          <span className="text-xs text-gray-400 mb-1">₹</span>
-                          <span className="text-3xl font-black text-gray-900">
-                            {price.toLocaleString('en-IN')}
-                          </span>
-                          <span className="text-sm text-gray-400 mb-1">/mo</span>
+                        <h3 className="text-base font-bold text-gray-900">{plan.name}</h3>
+                        <p className="text-xs text-gray-400">{plan.desc}</p>
+                      </div>
+                    </div>
+
+                    <div className="mb-5">
+                      {plan.custom ? (
+                        <div>
+                          <span className="text-2xl font-black text-gray-900">Custom</span>
+                          <p className="text-xs text-gray-400 mt-0.5">Talk to our sales team</p>
                         </div>
-                        {billingCycle === 'annual' && (
-                          <p className="text-xs text-[#1a5c3a] mt-0.5">
-                            ₹{(price * 10).toLocaleString('en-IN')} billed annually
-                          </p>
-                        )}
-                        {billingCycle === 'monthly' && plan.annualPrice > 0 && (
+                      ) : (
+                        <div>
+                          <div className="flex items-end gap-1">
+                            <span className="text-xs text-gray-400 mb-1">₹</span>
+                            <span className="text-3xl font-black text-gray-900">
+                              {tier.price.toLocaleString('en-IN')}
+                            </span>
+                            <span className="text-sm text-gray-400 mb-1">/mo</span>
+                          </div>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            Save ₹{((plan.monthlyPrice - plan.annualPrice) * 12).toLocaleString('en-IN')}/yr with annual
+                            {tier.billedAs}
+                            {tier.savings && (
+                              <span className="ml-1.5 font-semibold text-[#1a5c3a]">{tier.savings}</span>
+                            )}
                           </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                        </div>
+                      )}
+                    </div>
 
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    disabled={isCurrent || !!processing}
-                    className={cn(
-                      'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2',
-                      'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
-                      isCurrent
-                        ? 'bg-[#e8f5ee] text-[#1a5c3a] cursor-default'
-                        : isPopular || isEnterprise
-                        ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
-                        : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
-                    )}
-                  >
-                    {isCurrent ? (
-                      <><Check size={15} /> Current plan</>
-                    ) : isProcessing ? (
-                      <><Loader2 size={15} className="animate-spin" /> Processing...</>
-                    ) : isEnterprise ? (
-                      <><Headphones size={15} /> Contact sales</>
-                    ) : (
-                      <>
-                        <Zap size={15} />
-                        {user?.plan && user.plan !== 'TRIAL' &&
-                          PLAN_ORDER.indexOf(plan.id) > PLAN_ORDER.indexOf(user.plan)
-                          ? 'Upgrade'
-                          : 'Select plan'
-                        }
-                      </>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={isCurrent || !!processing}
+                      className={cn(
+                        'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2',
+                        'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
+                        isCurrent
+                          ? 'bg-[#e8f5ee] text-[#1a5c3a] cursor-default'
+                          : isPopular || plan.custom
+                          ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
+                          : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
+                      )}
+                    >
+                      {isCurrent ? (
+                        <><Check size={15} /> Current plan</>
+                      ) : isProcessing ? (
+                        <><Loader2 size={15} className="animate-spin" /> Processing...</>
+                      ) : plan.custom ? (
+                        <><Headphones size={15} /> Contact sales</>
+                      ) : (
+                        <>
+                          <Zap size={15} />
+                          {user?.plan && user.plan !== 'TRIAL' &&
+                            planIndex(plan.id) > planIndex(user.plan)
+                            ? 'Upgrade'
+                            : 'Select plan'
+                          }
+                        </>
+                      )}
+                    </button>
 
-                  <ul className="space-y-2.5 flex-1">
-                    {plan.features.map(f => (
-                      <li key={f.label} className="flex items-start gap-2 text-xs">
-                        {f.included ? (
+                    <ul className="space-y-2.5 flex-1">
+                      {plan.features.map(f => (
+                        <li key={f} className="flex items-start gap-2 text-xs">
                           <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <Minus size={14} className="text-gray-200 flex-shrink-0 mt-0.5" />
-                        )}
-                        <span className={cn('leading-relaxed', f.included ? 'text-gray-600' : 'text-gray-300')}>
-                          {f.label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                          <span className="leading-relaxed text-gray-600">{f}</span>
+                        </li>
+                      ))}
+                      {plan.notIncluded.map(f => (
+                        <li key={f} className="flex items-start gap-2 text-xs opacity-40">
+                          <X size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                          <span className="leading-relaxed text-gray-400 line-through">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Feature comparison table — desktop only */}
-        <div className="hidden lg:block">
-          <h2 className="text-lg font-bold text-gray-900 text-center mb-5">Full feature comparison</h2>
-          <FeatureComparisonTable
-            billingCycle={billingCycle}
-            currentPlan={user?.plan}
-            onSelectPlan={handleSelectPlan}
-            processing={processing}
-          />
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-10 space-y-2">

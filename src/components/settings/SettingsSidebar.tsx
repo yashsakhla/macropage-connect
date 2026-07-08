@@ -63,6 +63,7 @@ interface Props { activeSection: Section }
 export default function SettingsSidebar({ activeSection }: Props) {
   const navigate = useNavigate()
   const user = useAuthStore(s => s.user)
+  const isPlanExpired = useAuthStore(s => s.isPlanExpired)
   const plan = user?.plan ?? 'trial'
   const initials = (user?.companyName ?? user?.name ?? 'M').charAt(0).toUpperCase()
   const {
@@ -85,6 +86,9 @@ export default function SettingsSidebar({ activeSection }: Props) {
       return { ...group, items }
     }
     if (group.group === 'Subscription') {
+      // Once the account is suspended/expired, every role needs a way to reach
+      // Billing & Plans — don't hide it behind the owner-only permission.
+      if (isPlanExpired()) return group
       if (!canViewSettings) return { ...group, items: [] }
       const items = group.items.filter(item => item.id !== 'billing' || canAccessBilling)
       return { ...group, items }

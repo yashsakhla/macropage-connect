@@ -59,6 +59,20 @@ export const LOCKED_FEATURES: Record<string, {
       'Swagger documentation',
     ],
   },
+  flow_ai_actions: {
+    name:         'AI Actions',
+    description:  'Add AI-powered nodes to your flows — auto-reply, intent classification and sentiment detection right inside the flow builder.',
+    requiredPlan: 'Scale',
+    planId:       'BUSINESS',
+    icon:         Sparkles,
+    color:        'text-pink-600',
+    benefits: [
+      'AI auto-reply node',
+      'AI classify intent node',
+      'AI sentiment check node',
+      'Combine with any flow logic',
+    ],
+  },
   advanced_analytics: {
     name:         'Advanced Analytics',
     description:  'Deep insights into agent performance, campaign ROI, contact behaviour and conversation quality metrics.',

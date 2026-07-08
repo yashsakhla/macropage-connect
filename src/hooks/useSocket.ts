@@ -92,9 +92,9 @@ export function useSocket() {
             const data: any[] = base.data ?? []
             const alreadyExists = data.some(
               (m: any) =>
-                (msg.metaMessageId && m.metaMessageId === msg.metaMessageId) ||
-                (msg._id && m._id === msg._id) ||
-                (msg.id && m.id === msg.id)
+                (msg.metaMessageId && msg.metaMessageId === m.metaMessageId) ||
+                (msg._id && msg._id === m._id) ||
+                (msg.id && msg.id === m.id)
             )
             if (alreadyExists) return base
             // Replace optimistic SENDING bubble for outbound messages
