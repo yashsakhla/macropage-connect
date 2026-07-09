@@ -34,6 +34,13 @@ const QUALITY_CONFIG = {
     border:'border-red-200',
     dot:   'bg-red-500',
   },
+  UNKNOWN: {
+    label: 'Not yet rated',
+    color: 'text-gray-600',
+    bg:    'bg-gray-50',
+    border:'border-gray-200',
+    dot:   'bg-gray-400',
+  },
 } as const
 
 const TIER_LABELS: Record<WABAAccount['messagingTier'], string> = {
@@ -49,7 +56,7 @@ function copyToClipboard(value: string, label: string) {
 }
 
 export default function WABADetails({ account, onDisconnect }: WABADetailsProps) {
-  const quality = QUALITY_CONFIG[account.qualityRating]
+  const quality = QUALITY_CONFIG[account.qualityRating] ?? QUALITY_CONFIG.UNKNOWN
 
   const fields = [
     { icon: Building2, label: 'Business name',    value: account.wabaName,      copyable: false, mono: false },

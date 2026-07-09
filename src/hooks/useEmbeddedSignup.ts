@@ -62,7 +62,9 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
         phoneNumberId: data.phoneNumberId ?? '',
         phoneNumber:   data.phoneNumber   ?? '',
         displayName:   data.displayName   ?? '',
-        qualityRating: data.qualityRating ?? 'GREEN',
+        qualityRating: ['GREEN', 'YELLOW', 'RED'].includes(data.qualityRating)
+          ? data.qualityRating
+          : 'UNKNOWN',
         messagingTier: data.messagingTier ?? 'TIER_1K',
         isVerified:    data.isVerified    ?? false,
         currency:      data.currency      ?? '',
