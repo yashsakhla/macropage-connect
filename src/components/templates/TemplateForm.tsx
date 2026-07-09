@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import type { CreateTemplatePayload, TemplateCategory } from '@/types'
 import TemplatePreview from './TemplatePreview'
 import { useCreateTemplate, useSaveDraft, useUpdateDraft } from '@/hooks/useTemplates'
+import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 
 const LANGUAGES = [
   { code: 'en_US', label: 'English', flag: '🇬🇧' },
@@ -55,6 +56,7 @@ interface TemplateFormProps {
 
 export default function TemplateForm({ onClose, initialData, templateId }: TemplateFormProps) {
   const createTemplate = useCreateTemplate()
+  const { requireConnected } = useRequireWhatsApp()
   const saveDraft = useSaveDraft()
   const updateDraft = useUpdateDraft()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
@@ -151,6 +153,7 @@ export default function TemplateForm({ onClose, initialData, templateId }: Templ
   }
 
   const onSubmit = (data: FormValues) => {
+    if (!requireConnected()) return
     createTemplate.mutate(buildPayload(data), { onSuccess: onClose })
   }
 
