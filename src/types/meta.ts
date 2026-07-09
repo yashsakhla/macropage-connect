@@ -39,7 +39,7 @@ export interface WABAAccount {
   phoneNumberId: string
   phoneNumber: string
   displayName: string
-  qualityRating: 'GREEN' | 'YELLOW' | 'RED'
+  qualityRating: 'GREEN' | 'YELLOW' | 'RED' | 'UNKNOWN'
   messagingTier: 'TIER_1K' | 'TIER_10K' | 'TIER_100K' | 'TIER_UNLIMITED'
   isVerified: boolean
   currency: string
