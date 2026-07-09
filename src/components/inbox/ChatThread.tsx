@@ -28,6 +28,7 @@ import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
 import { useConversation, useMessages, useSendMessage, useAddNote, useUpdateConversation, useResolveConversation } from '@/hooks/useConversations'
 import { usePermissions } from '@/lib/permissions'
+import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 import { avatarGradient } from './ConversationItem'
 import MessageBubble, { TypingBubble } from './MessageBubble'
 import MessageInput from './MessageInput'
@@ -383,6 +384,7 @@ export default function ChatThread({ mobileBack }: Props) {
   } = useMessages(selectedConversationId ?? null)
   const rawMessages: Message[] = (messagesData as any)?.data ?? []
   const sendMessage = useSendMessage()
+  const { requireConnected } = useRequireWhatsApp()
   const addNote = useAddNote()
   const updateConversation = useUpdateConversation()
   const resolveConversation = useResolveConversation()
@@ -543,6 +545,7 @@ export default function ChatThread({ mobileBack }: Props) {
     if (inputMode === 'note') {
       addNote.mutate({ conversationId: selectedConversationId, content })
     } else {
+      if (!requireConnected()) return
       sendMessage.mutate({
         conversationId: selectedConversationId,
         data: { content, type: 'TEXT' },

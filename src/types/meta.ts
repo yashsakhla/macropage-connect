@@ -91,8 +91,8 @@ declare global {
           response_type?: string
           override_default_response_type?: boolean
           extras?: {
-            feature?: string
-            sessionInfoVersion?: number
+            sessionInfoVersion?: string
+            version?: string
             setup?: Record<string, unknown>
           }
           auth_type?: string

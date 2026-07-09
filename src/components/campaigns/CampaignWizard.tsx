@@ -7,6 +7,7 @@ import type { Template } from '@/types'
 import type { AudienceType } from './WizardStep2Audience'
 import type { SendSpeed } from './WizardStep3Schedule'
 import { useCreateCampaign, useLaunchCampaign, useContactsCount } from '@/hooks/useCampaigns'
+import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 import WizardStep1Template from './WizardStep1Template'
 import WizardStep2Audience from './WizardStep2Audience'
 import WizardStep3Schedule from './WizardStep3Schedule'
@@ -28,6 +29,7 @@ interface CampaignWizardProps {
 export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: CampaignWizardProps) {
   const navigate = useNavigate()
   const { canLaunchCampaign } = usePermissions()
+  const { requireConnected } = useRequireWhatsApp()
   const [step, setStep] = useState(0)
 
   // Step 1
@@ -99,6 +101,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
 
   const handleLaunch = async () => {
     if (!selectedTemplate) return
+    if (!requireConnected()) return
     resetCreate()
     resetLaunch()
     try {

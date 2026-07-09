@@ -10,6 +10,7 @@ import WhatsAppSetupBanner from '@/components/shared/WhatsAppSetupBanner'
 import ReconnectBanner from '@/components/setup/ReconnectBanner'
 import PlanExpiredBanner from '@/components/shared/PlanExpiredBanner'
 import PlanExpiredModal from '@/components/shared/PlanExpiredModal'
+import WhatsAppRequiredModal from '@/components/shared/WhatsAppRequiredModal'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import FullPageLoader from '@/components/shared/FullPageLoader'
@@ -104,6 +105,7 @@ export default function MainLayout() {
       {!location.pathname.startsWith('/help') && <HelpWidget />}
       <NotificationPanel />
       <PlanExpiredModal />
+      <WhatsAppRequiredModal />
     </div>
   )
 }

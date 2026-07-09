@@ -53,14 +53,9 @@ export default function ProtectedRoute({ children, roles, feature }: Props) {
     return <>{children}</>
   }
 
-  // WhatsApp setup required for OWNER/ADMIN
-  if (
-    ['OWNER', 'ADMIN'].includes(userRoleUpper) &&
-    !user.whatsappSetupDone &&
-    location.pathname !== '/setup/whatsapp'
-  ) {
-    return <Navigate to="/setup/whatsapp" replace />
-  }
+  // WhatsApp not connected no longer blocks navigation — the user can browse
+  // every page, but WhatsApp-facing actions (send message, launch campaign,
+  // submit template) are guarded individually via useRequireWhatsApp().
 
   // Role check
   if (roles && !roles.map(normalise).includes(userRoleUpper)) {

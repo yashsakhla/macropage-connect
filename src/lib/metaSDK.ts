@@ -45,10 +45,11 @@ export function loadFacebookSDK(): Promise<void> {
     }
 
     const script = document.createElement('script')
-    script.id    = 'facebook-jssdk'
-    script.src   = 'https://connect.facebook.net/en_US/sdk.js'
-    script.async = true
-    script.defer = true
+    script.id          = 'facebook-jssdk'
+    script.src         = 'https://connect.facebook.net/en_US/sdk.js'
+    script.async       = true
+    script.defer       = true
+    script.crossOrigin = 'anonymous'
 
     script.onerror = () => {
       sdkLoading = false
