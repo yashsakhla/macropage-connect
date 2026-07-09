@@ -158,11 +158,8 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
         response_type:                   'code',
         override_default_response_type:  true,
         extras: {
-          sessionInfoVersion: '3',
-          version:             'v4',
+          version: 'v4',
         },
-        auth_type:     'rerequest',
-        return_scopes: true,
       }
     )
   }, [sdkLoaded, connectMetaMutation])
