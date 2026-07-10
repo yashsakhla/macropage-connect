@@ -7,6 +7,8 @@ interface UIState {
   notificationPanelOpen: boolean
   planExpiredModalOpen: boolean
   whatsappRequiredModalOpen: boolean
+  paymentIssueModalOpen: boolean
+  paymentIssueReferenceId: string | null
 
   // global full-page loader
   fullLoader: boolean
@@ -19,6 +21,8 @@ interface UIState {
   setNotificationPanelOpen: (open: boolean) => void
   setPlanExpiredModalOpen: (v: boolean) => void
   setWhatsappRequiredModalOpen: (v: boolean) => void
+  openPaymentIssueModal: (referenceId?: string | null) => void
+  setPaymentIssueModalOpen: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -29,6 +33,8 @@ export const useUIStore = create<UIState>()(
       notificationPanelOpen: false,
       planExpiredModalOpen: false,
       whatsappRequiredModalOpen: false,
+      paymentIssueModalOpen: false,
+      paymentIssueReferenceId: null,
       fullLoader: false,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
@@ -44,6 +50,9 @@ export const useUIStore = create<UIState>()(
       setNotificationPanelOpen: (open) => set({ notificationPanelOpen: open }),
       setPlanExpiredModalOpen: (v) => set({ planExpiredModalOpen: v }),
       setWhatsappRequiredModalOpen: (v) => set({ whatsappRequiredModalOpen: v }),
+      openPaymentIssueModal: (referenceId) =>
+        set({ paymentIssueModalOpen: true, paymentIssueReferenceId: referenceId ?? null }),
+      setPaymentIssueModalOpen: (v) => set({ paymentIssueModalOpen: v }),
     }),
     {
       name: 'macropage-ui',

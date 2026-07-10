@@ -7,13 +7,11 @@ import { useNavigate } from 'react-router-dom'
 import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
 import { cn } from '@/lib/utils'
-import EmbeddedSignupFlow from '@/components/setup/EmbeddedSignupFlow'
+import EmbeddedSignupFlow, { type EmbeddedSignupConnectedData } from '@/components/setup/EmbeddedSignupFlow'
 import toast from 'react-hot-toast'
 import {
   useWhatsAppSetupStatus,
   useSaveBusinessInfo,
-  useRequestPhoneOTP,
-  useConfirmPhoneOTP,
   useSendTestMessage,
   useCompleteSetup,
 } from '@/hooks/useWhatsApp'
@@ -36,22 +34,15 @@ export default function WhatsAppSetup() {
   const [wabaId, setWabaId] = useState('')
   const [phoneNumberId, setPhoneNumberId] = useState('')
 
-  // Step 3 specific fields
-  const [phoneNumber, setPhoneNumber] = useState<string>('')
-  const [waDisplayName, setWaDisplayName] = useState<string>('')
-  const [verificationMethod, setVerificationMethod] = useState<'SMS'|'VOICE'>('SMS')
-
-  // OTP state
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
-  const otpCode = otpDigits.join('')
-  const [cooldown, setCooldown] = useState(0)
-
-  useEffect(() => {
-    if (cooldown <= 0) return
-    const t = setTimeout(() => setCooldown(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [cooldown])
+  // Connection details captured directly from Embedded Signup — used to
+  // populate the confirmation step immediately, before status refetch lands
+  const [connectedWaba, setConnectedWaba] = useState<{
+    phoneNumber:   string
+    displayName:   string
+    wabaId:        string
+    phoneNumberId: string
+    qualityRating: string
+  } | null>(null)
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BusinessInfoPayload>({
     resolver: zodResolver(businessSchema),
@@ -69,15 +60,14 @@ export default function WhatsAppSetup() {
     isFetching: statusFetching,
   } = useWhatsAppSetupStatus()
 
-  // Backend's currentStep is source of truth; fallback derives from boolean flags
+  // 3-step wizard: Business info → Connect Meta → Confirm.
+  // Phone number/display name now come from Embedded Signup automatically,
+  // so there's no separate manual phone step to gate on.
   const currentStep = (() => {
     if (!status) return 1
-    if (status.currentStep) return status.currentStep
     if (!status.businessInfoSaved) return 1
     if (!status.metaConnected)     return 2
-    if (!status.phoneVerified)     return 3
-    if (!status.testMessageSent)   return 4
-    return 5
+    return 3
   })()
 
   // Redirect immediately if setup is already complete
@@ -89,7 +79,6 @@ export default function WhatsAppSetup() {
 
   // Derived states — prefer API truth, fall back to local session state
   const isMetaConnected = (status?.metaConnected ?? false) || metaConnected
-  const phoneVerified   = status?.phoneVerified ?? false
   const testSent        = status?.testMessageSent ?? false
 
   // Business info mutation
@@ -100,23 +89,6 @@ export default function WhatsAppSetup() {
     error:     saveErr,
     reset:     resetSaveError,
   } = useSaveBusinessInfo()
-
-  // OTP mutations
-  const {
-    mutate:    requestOTP,
-    isPending: requesting,
-    isError:   requestError,
-    error:     requestErr,
-    reset:     resetRequest,
-  } = useRequestPhoneOTP()
-
-  const {
-    mutate:    confirmOTP,
-    isPending: confirming,
-    isError:   confirmError,
-    error:     confirmErr,
-    reset:     resetConfirm,
-  } = useConfirmPhoneOTP()
 
   // Test message
   const {
@@ -137,8 +109,7 @@ export default function WhatsAppSetup() {
     const stepFlags = [
       { num: 1, label: 'Business info', done: status?.businessInfoSaved ?? false },
       { num: 2, label: 'Connect Meta',  done: status?.metaConnected     ?? false },
-      { num: 3, label: 'Verify phone',  done: status?.phoneVerified      ?? false },
-      { num: 4, label: 'Test message',  done: status?.testMessageSent    ?? false },
+      { num: 3, label: 'Confirm',       done: status?.testMessageSent   ?? false },
     ]
     return (
       <div className="flex items-center gap-6 justify-center">
@@ -171,49 +142,6 @@ export default function WhatsAppSetup() {
       {
         onSuccess: () => {
           toast.success('Business info saved!')
-          refetchStatus()
-        },
-      }
-    )
-  }
-
-  const handleRequestOTP = () => {
-    resetRequest()
-    requestOTP(
-      {
-        phoneNumberId: status?.wabaAccount?.phoneNumberId ?? phoneNumberId,
-        method: verificationMethod,
-      },
-      {
-        onSuccess: () => {
-          setOtpSent(true)
-          setCooldown(60)
-          toast.success('OTP sent to your number')
-        },
-      }
-    )
-  }
-
-  const handleOtpChange = (i: number, val: string) => {
-    const next = [...otpDigits]
-    next[i] = val.replace(/\D/g, '').slice(-1)
-    setOtpDigits(next)
-  }
-
-  const handleConfirmOTP = () => {
-    if (!otpCode || otpCode.length !== 6) {
-      toast.error('Enter the 6-digit OTP code')
-      return
-    }
-    resetConfirm()
-    confirmOTP(
-      {
-        phoneNumberId: status?.wabaAccount?.phoneNumberId ?? phoneNumberId,
-        code: otpCode,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Phone verified!')
           refetchStatus()
         },
       }
@@ -279,7 +207,7 @@ export default function WhatsAppSetup() {
               <div className="grid grid-cols-1 gap-8 items-start">
                 <div className="lg:col-span-3">
                   <div className="mb-4">
-                    <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 4</div>
+                    <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 3</div>
                     <h2 className="text-2xl font-bold text-gray-900">Tell us about your business</h2>
                     <p className="text-sm text-gray-500 mt-1 mb-8">This information will appear on your WhatsApp Business profile and is shown to your customers.</p>
                   </div>
@@ -434,17 +362,24 @@ export default function WhatsAppSetup() {
             {currentStep === 2 && (
               <div className="animate-fade-in space-y-6">
                 <div>
-                  <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 4</div>
+                  <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 3</div>
                   <h2 className="text-2xl font-bold text-gray-900">Connect your Meta Business Account</h2>
                   <p className="text-sm text-gray-500 mt-1">This authorises Macropage Connect to send and receive WhatsApp messages on behalf of your business.</p>
                 </div>
 
                 {embeddedSignupEnabled ? (
                   <EmbeddedSignupFlow
-                    onConnected={(wId, pId) => {
+                    onConnected={(data: EmbeddedSignupConnectedData) => {
                       setMetaConnected(true)
-                      setWabaId(wId)
-                      setPhoneNumberId(pId)
+                      setWabaId(data.wabaId)
+                      setPhoneNumberId(data.phoneNumberId)
+                      setConnectedWaba({
+                        phoneNumber:   data.phoneNumber   ?? '',
+                        displayName:   data.displayName   ?? '',
+                        wabaId:        data.wabaId,
+                        phoneNumberId: data.phoneNumberId,
+                        qualityRating: data.qualityRating ?? 'GREEN',
+                      })
                       refetchStatus()
                     }}
                   />
@@ -468,167 +403,16 @@ export default function WhatsAppSetup() {
                     disabled={!isMetaConnected}
                     className="btn-primary h-12 px-5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Continue to Phone Number
+                    Continue to Confirmation
                     <ArrowRight size={16} />
                   </button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="animate-fade-in">
-                <div className="mb-4">
-                  <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 3 of 4</div>
-                  <h2 className="text-2xl font-bold text-gray-900">Add your WhatsApp phone number</h2>
-                  <p className="text-sm text-gray-500 mt-1 mb-8">This is the number your customers will see and message you on.</p>
-                </div>
-
-                {status?.wabaAccount && (
-                  <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-[#25D366] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.374 0 0 5.373 0 12c0 2.122.554 4.136 1.534 5.9L0 24l6.286-1.534A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.8 0-3.49-.467-4.963-1.285l-.354-.21-3.73.91.932-3.629-.228-.37A9.971 9.971 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#085041] truncate">
-                        {status.wabaAccount.displayName}
-                      </p>
-                      <p className="text-xs text-[#1a5c3a]/70">
-                        {status.wabaAccount.phoneNumber}
-                      </p>
-                    </div>
-                    <span className="text-xs bg-[#1a5c3a] text-white rounded-full px-2.5 py-1 font-medium flex-shrink-0">
-                      Connected
-                    </span>
-                  </div>
-                )}
-
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">⚠️ Important: This number must NOT be registered on WhatsApp or WhatsApp Business App</div>
-
-                <div className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6 space-y-4">
-                  <div className="grid grid-cols-12 gap-3 items-center">
-                    <div className="col-span-3 text-sm">Phone number *</div>
-                    <div className="col-span-9 flex">
-                      <div className="bg-[#f7f8f6] border border-[#e8ebe8] border-r-0 rounded-l-xl px-3 h-11 flex items-center">+91</div>
-                      <input value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} className="input rounded-l-none border-l-0 flex-1 h-11" placeholder="9876543210" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-12 gap-3 items-center">
-                    <div className="col-span-3 text-sm">WhatsApp display name *</div>
-                    <div className="col-span-9">
-                      <input value={waDisplayName} onChange={e=>setWaDisplayName(e.target.value)} className="input" placeholder="e.g. Sharma Electronics Support" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-12 gap-3 items-center">
-                    <div className="col-span-3 text-sm">Verification method</div>
-                    <div className="col-span-9 flex gap-3">
-                      <button onClick={()=>setVerificationMethod('SMS')} className={verificationMethod==='SMS'? 'btn-primary h-10 px-4': 'btn-outline h-10 px-4'}>SMS</button>
-                      <button onClick={()=>setVerificationMethod('VOICE')} className={verificationMethod==='VOICE'? 'btn-primary h-10 px-4': 'btn-outline h-10 px-4'}>Voice call</button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <button
-                      onClick={handleRequestOTP}
-                      disabled={requesting || cooldown > 0}
-                      className="btn-primary w-full h-10 flex items-center justify-center gap-2"
-                    >
-                      {requesting ? (
-                        <><Loader2 size={15} className="animate-spin" /> Sending...</>
-                      ) : cooldown > 0 ? (
-                        `Resend in ${cooldown}s`
-                      ) : otpSent ? (
-                        'Resend verification code'
-                      ) : (
-                        'Send verification code'
-                      )}
-                    </button>
-                  </div>
-
-                  {requestError && (
-                    <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mt-3">
-                      <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-xs text-red-600">
-                          {(requestErr as any)?.response?.data?.error?.message ?? 'Could not send OTP. Try again.'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleRequestOTP}
-                        disabled={requesting}
-                        className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white border border-red-200 text-red-600 disabled:opacity-50"
-                      >
-                        <RefreshCw size={11} className={cn(requesting && 'animate-spin')} />
-                        Retry
-                      </button>
-                    </div>
-                  )}
-
-                  {otpSent && (
-                    <div className="mt-4">
-                      <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-xl p-3 mb-4">✓ Code sent to <span>{status?.wabaAccount?.phoneNumber || phoneNumber || 'your WhatsApp number'}</span></div>
-                      <div className="mb-3">Enter 6-digit verification code</div>
-                      <div className="flex gap-2">
-                        {otpDigits.map((digit, i) => (
-                          <input
-                            key={i}
-                            maxLength={1}
-                            value={digit}
-                            onChange={e => handleOtpChange(i, e.target.value)}
-                            className="w-11 h-12 text-center text-lg font-bold border border-[#e8ebe8] rounded-xl"
-                          />
-                        ))}
-                      </div>
-                      <div className="mt-4">
-                        <button
-                          onClick={handleConfirmOTP}
-                          disabled={confirming || otpCode.length !== 6}
-                          className="btn-primary w-full h-10 flex items-center justify-center gap-2"
-                        >
-                          {confirming ? <><Loader2 size={15} className="animate-spin" /> Verifying...</> : 'Verify code'}
-                        </button>
-                      </div>
-                      {confirmError && (
-                        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mt-3">
-                          <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-xs text-red-600">
-                              {(confirmErr as any)?.response?.data?.error?.message ?? 'Invalid OTP. Check the code and try again.'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={handleConfirmOTP}
-                            disabled={confirming}
-                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white border border-red-200 text-red-600 disabled:opacity-50"
-                          >
-                            <RefreshCw size={11} className={cn(confirming && 'animate-spin')} />
-                            Retry
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex items-center justify-between">
-                    <button onClick={() => {}} className="btn-ghost">← Back</button>
-                    <button
-                      onClick={() => { refetchStatus() }}
-                      className="btn-primary"
-                      disabled={!phoneVerified}
-                    >
-                      Continue to Test →
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Right column — sticky live preview (hidden on final step) */}
-          {currentStep !== 4 && (
+          {currentStep !== 3 && (
             <div className="lg:col-span-1 w-full">
               <div className="sticky top-24">
                 <WhatsAppProfilePreview
@@ -640,7 +424,7 @@ export default function WhatsAppSetup() {
                   address={watched.address}
                   logoFile={watch('logoFile') ?? null}
                   onRemoveLogo={() => setValue('logoFile', null)}
-                  phone={phoneNumber || '+91 98765 43210'}
+                  phone={connectedWaba?.phoneNumber || '+91 98765 43210'}
                   isVerified={false}
                 />
               </div>
@@ -649,28 +433,31 @@ export default function WhatsAppSetup() {
         </div>
       </div>
 
-      {currentStep === 4 && (
+      {currentStep === 3 && (
         <div className="w-full px-6 pb-10">
-          {status?.wabaAccount && (
-            <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#25D366] rounded-xl flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.374 0 0 5.373 0 12c0 2.122.554 4.136 1.534 5.9L0 24l6.286-1.534A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.8 0-3.49-.467-4.963-1.285l-.354-.21-3.73.91.932-3.629-.228-.37A9.971 9.971 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-                </svg>
+          {(() => {
+            const waba = connectedWaba ?? status?.wabaAccount
+            return waba && (
+              <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
+                <div className="w-9 h-9 bg-[#25D366] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.374 0 0 5.373 0 12c0 2.122.554 4.136 1.534 5.9L0 24l6.286-1.534A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.8 0-3.49-.467-4.963-1.285l-.354-.21-3.73.91.932-3.629-.228-.37A9.971 9.971 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#085041] truncate">
+                    {waba.displayName}
+                  </p>
+                  <p className="text-xs text-[#1a5c3a]/70">
+                    {waba.phoneNumber}
+                  </p>
+                </div>
+                <span className="text-xs bg-[#1a5c3a] text-white rounded-full px-2.5 py-1 font-medium flex-shrink-0">
+                  Connected
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#085041] truncate">
-                  {status.wabaAccount.displayName}
-                </p>
-                <p className="text-xs text-[#1a5c3a]/70">
-                  {status.wabaAccount.phoneNumber}
-                </p>
-              </div>
-              <span className="text-xs bg-[#1a5c3a] text-white rounded-full px-2.5 py-1 font-medium flex-shrink-0">
-                Connected
-              </span>
-            </div>
-          )}
+            )
+          })()}
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6">
               <h3 className="font-semibold mb-4">Send a test message</h3>
@@ -711,11 +498,11 @@ export default function WhatsAppSetup() {
               <h3 className="font-semibold mb-4">Connection status</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between"><div>Meta account connected</div><div className="text-[#1a5c3a]">✓</div></div>
-                <div className="flex items-center justify-between"><div>WABA created</div><div className="text-[#1a5c3a] font-mono text-xs">{status?.wabaAccount?.wabaId || wabaId || '✓'}</div></div>
-                {(status?.wabaAccount?.phoneNumberId || phoneNumberId) && (
-                  <div className="flex items-center justify-between"><div>Phone Number ID</div><div className="text-[#1a5c3a] font-mono text-xs">{status?.wabaAccount?.phoneNumberId || phoneNumberId}</div></div>
+                <div className="flex items-center justify-between"><div>WABA created</div><div className="text-[#1a5c3a] font-mono text-xs">{connectedWaba?.wabaId || status?.wabaAccount?.wabaId || wabaId || '✓'}</div></div>
+                {(connectedWaba?.phoneNumberId || status?.wabaAccount?.phoneNumberId || phoneNumberId) && (
+                  <div className="flex items-center justify-between"><div>Phone Number ID</div><div className="text-[#1a5c3a] font-mono text-xs">{connectedWaba?.phoneNumberId || status?.wabaAccount?.phoneNumberId || phoneNumberId}</div></div>
                 )}
-                <div className="flex items-center justify-between"><div>Phone number registered</div><div className={phoneVerified? 'text-[#1a5c3a]' : 'text-gray-300'}>{phoneVerified? '✓':'○'}</div></div>
+                <div className="flex items-center justify-between"><div>Phone number registered</div><div className={isMetaConnected ? 'text-[#1a5c3a]' : 'text-gray-300'}>{isMetaConnected ? '✓':'○'}</div></div>
                 <div className="flex items-center justify-between"><div>Webhook configured</div><div className="text-[#1a5c3a]">✓</div></div>
                 <div className="flex items-center justify-between"><div>API credentials stored</div><div className="text-[#1a5c3a]">✓</div></div>
                 <div className="flex items-center justify-between"><div>Test message delivered</div><div className={(testSent||sendSuccess)? 'text-[#1a5c3a]' : 'text-gray-300'}>{(testSent||sendSuccess)? '✓':'○'}</div></div>

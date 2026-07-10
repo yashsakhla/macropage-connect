@@ -95,7 +95,7 @@ export default function WelcomePopup() {
               </h2>
 
               <p className="text-white/75 text-sm mt-2 leading-relaxed">
-                Welcome to Macropage Connect, {user.name.split(' ')[0]}!
+                Welcome to Macropage Connect, {user.name?.split(' ')[0] ?? 'there'}!
                 You have full access to all Growth features.
               </p>
 
