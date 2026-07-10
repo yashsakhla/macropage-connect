@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
+import { useUIStore } from '@/store/uiStore'
 import type { Subscription, BillingPlan, Payment } from '@/types'
 
 const STATUS_MAP: Record<string, Subscription['status']> = {
@@ -93,12 +94,15 @@ export function useVerifyPayment() {
     }) => api.post('/billing/verify-payment', data).then((r) => unwrap(r)),
     onSuccess: async () => {
       const me = await api.get('/auth/me')
-      useAuthStore.getState().setUser(me.data.data)
+      const user = me.data?.data?.user ?? me.data?.data ?? me.data?.user
+      if (user) useAuthStore.getState().setUser(user)
       qc.invalidateQueries({ queryKey: ['billing'] })
       toast.success('Plan activated successfully!')
     },
-    onError: () =>
-      toast.error('Payment verification failed. Please contact support.'),
+    // Payment already went through Razorpay at this point — money may be deducted.
+    // A toast is easy to miss here, so surface a modal with support contact details instead.
+    onError: (_err, variables) =>
+      useUIStore.getState().openPaymentIssueModal(variables?.razorpay_payment_id),
   })
 }
 

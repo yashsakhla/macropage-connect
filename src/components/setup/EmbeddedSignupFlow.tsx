@@ -8,8 +8,16 @@ import { useFacebookSDK } from '@/hooks/useFacebookSDK'
 import MetaConnectButton from './MetaConnectButton'
 import WABADetails from './WABADetails'
 
+export interface EmbeddedSignupConnectedData {
+  wabaId:        string
+  phoneNumberId: string
+  phoneNumber?:  string
+  displayName?:  string
+  qualityRating?: string
+}
+
 interface EmbeddedSignupFlowProps {
-  onConnected: (wabaId: string, phoneNumberId: string) => void
+  onConnected: (data: EmbeddedSignupConnectedData) => void
 }
 
 const REQUIREMENTS = [
@@ -83,10 +91,13 @@ export default function EmbeddedSignupFlow({ onConnected }: EmbeddedSignupFlowPr
   // Notify parent when connection completes
   useEffect(() => {
     if (state === 'connected' && wabaAccount) {
-      onConnected(
-        capturedWabaId        ?? wabaAccount.wabaId,
-        capturedPhoneNumberId ?? wabaAccount.phoneNumberId
-      )
+      onConnected({
+        wabaId:        capturedWabaId        ?? wabaAccount.wabaId,
+        phoneNumberId: capturedPhoneNumberId ?? wabaAccount.phoneNumberId,
+        phoneNumber:   wabaAccount.phoneNumber,
+        displayName:   wabaAccount.displayName || wabaAccount.wabaName,
+        qualityRating: wabaAccount.qualityRating,
+      })
     }
   }, [state, wabaAccount, capturedWabaId, capturedPhoneNumberId, onConnected])
 

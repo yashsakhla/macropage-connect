@@ -11,6 +11,7 @@ import ReconnectBanner from '@/components/setup/ReconnectBanner'
 import PlanExpiredBanner from '@/components/shared/PlanExpiredBanner'
 import PlanExpiredModal from '@/components/shared/PlanExpiredModal'
 import WhatsAppRequiredModal from '@/components/shared/WhatsAppRequiredModal'
+import PaymentVerificationFailedModal from '@/components/shared/PaymentVerificationFailedModal'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import FullPageLoader from '@/components/shared/FullPageLoader'
@@ -106,6 +107,7 @@ export default function MainLayout() {
       <NotificationPanel />
       <PlanExpiredModal />
       <WhatsAppRequiredModal />
+      <PaymentVerificationFailedModal />
     </div>
   )
 }

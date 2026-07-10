@@ -55,9 +55,10 @@ export function useLogin() {
   })
 }
 
+// Creates the account and triggers the automatic verification-code email.
+// Does NOT log the user in — that happens once they confirm the OTP,
+// via useFinalizeSignup below.
 export function useRegister() {
-  const { setAuth } = useAuthStore()
-  const navigate = useNavigate()
   const setFullLoader = useUIStore.getState().setFullLoader
 
   return useMutation({
@@ -84,23 +85,31 @@ export function useRegister() {
     },
     onMutate: () => setFullLoader(true),
     onSettled: () => setFullLoader(false),
-    onSuccess: ({ data }) => {
-      const token = data.accessToken ?? data.token
-      const refreshToken = data.refreshToken ?? ''
-      const user = {
-        ...(data.user || {}),
-        plan: (data.user?.plan ?? 'TRIAL') as string,
-        role: data.user?.role ?? decodeTokenRole(token),
-      }
-      setAuth(user, token, refreshToken)
-      connectSocket(token)
-      toast.success('Account created! Check your email to verify.')
-      navigate('/setup/whatsapp')
-    },
     onError: (err: any) => {
       toast.error(err.response?.data?.message ?? 'Registration failed')
     },
   })
+}
+
+// Call once the user has confirmed their OTP after signup — logs them in
+// using the token/user returned by the original /auth/signup response.
+export function useFinalizeSignup() {
+  const { setAuth } = useAuthStore()
+  const navigate = useNavigate()
+
+  return (data: any) => {
+    const token = data.accessToken ?? data.token
+    const refreshToken = data.refreshToken ?? ''
+    const user = {
+      ...(data.user || {}),
+      plan: (data.user?.plan ?? 'TRIAL') as string,
+      role: data.user?.role ?? decodeTokenRole(token),
+      emailVerified: true,
+    }
+    setAuth(user, token, refreshToken)
+    connectSocket(token)
+    navigate('/setup/whatsapp')
+  }
 }
 
 export function useLogout() {
@@ -195,6 +204,16 @@ export function useVerifyEmail() {
 
     onError: () => {
       // Error state handled on the page itself
+    },
+  })
+}
+
+export function useVerifyOtp() {
+  return useMutation({
+    mutationFn: ({ email, otp }: { email: string; otp: string }) =>
+      api.post('/auth/verify-otp', { email, otp }).then(r => r.data),
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message ?? 'Invalid code. Try again.')
     },
   })
 }

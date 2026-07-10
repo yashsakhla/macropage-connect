@@ -161,7 +161,8 @@ export function useCompleteSetup() {
     onSuccess: async () => {
       try {
         const me = await api.get('/auth/me')
-        setUser(me.data?.data ?? me.data)
+        const user = me.data?.data?.user ?? me.data?.data ?? me.data?.user
+        if (user) setUser(user)
       } catch {
         // Even if /me fails — still navigate
       }

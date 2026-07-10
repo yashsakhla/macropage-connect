@@ -2,9 +2,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, Navigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { useState } from 'react'
-import { useRegister } from '@/hooks/useAuth'
+import { Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -18,8 +18,7 @@ const schema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Enter a valid email'),
   companyName: z.string().min(2, 'Company name is required'),
-  // Phone validation removed from UI — backend will normalize/append country code
-  phone: z.string().optional(),
+  phone: z.string().optional().refine((v) => !v || /^\d{10}$/.test(v), 'Enter a valid 10-digit number'),
   password: z.string().min(8, 'Password must be at least 8 characters').regex(passwordRegex, 'Password must contain uppercase, lowercase, number and special character'),
   confirmPassword: z.string(),
   terms: z.boolean().refine((v) => v === true, 'You must accept the terms'),
@@ -53,7 +52,112 @@ export default function Register() {
   const pw = watch('password') || ''
   const score = passwordScore(pw)
 
+  const finalizeSignup = useFinalizeSignup()
+  const verifyOtp = useVerifyOtp()
+  const resend = useResendVerification()
+
+  const [step, setStep] = useState<'form' | 'otp'>('form')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [pendingAuthData, setPendingAuthData] = useState<any>(null)
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
+  const [cooldown, setCooldown] = useState(0)
+  const otpCode = otpDigits.join('')
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
+
+  const onSubmitForm = (d: FormData) => {
+    reg.mutate(d as any, {
+      onSuccess: (res: any) => {
+        setPendingEmail(d.email)
+        setPendingAuthData(res.data)
+        setOtpDigits(['', '', '', '', '', ''])
+        setCooldown(30)
+        setStep('otp')
+      },
+    })
+  }
+
+  const handleOtpChange = (i: number, val: string) => {
+    const digit = val.replace(/\D/g, '').slice(0, 1)
+    const next = [...otpDigits]
+    next[i] = digit
+    setOtpDigits(next)
+    if (digit && i < 5) {
+      document.getElementById(`otp-${i + 1}`)?.focus()
+    }
+  }
+
+  const handleVerifyOtp = () => {
+    if (otpCode.length !== 6) return
+    verifyOtp.mutate({ email: pendingEmail, otp: otpCode }, {
+      onSuccess: () => finalizeSignup(pendingAuthData),
+    })
+  }
+
+  const handleResend = () => {
+    if (cooldown > 0) return
+    resend.mutate(pendingEmail, {
+      onSuccess: () => {
+        setOtpDigits(['', '', '', '', '', ''])
+        setCooldown(30)
+      },
+    })
+  }
+
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
+
+  if (step === 'otp') {
+    return (
+      <div className="min-h-screen bg-[#f7f8f6] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 text-center">
+          <div className="w-16 h-16 bg-[var(--primary-light)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <Mail size={28} className="text-[var(--primary)]" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Verify your email</h1>
+          <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+            We've sent a 6-digit code to <span className="font-semibold text-gray-700">{pendingEmail}</span>. Enter it below — it expires in 10 minutes.
+          </p>
+
+          <div className="flex gap-2 justify-center mt-6">
+            {otpDigits.map((digit, i) => (
+              <input
+                key={i}
+                id={`otp-${i}`}
+                maxLength={1}
+                inputMode="numeric"
+                value={digit}
+                onChange={(e) => handleOtpChange(i, e.target.value)}
+                className="w-11 h-12 text-center text-lg font-bold border border-[var(--card-border)] rounded-xl"
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handleVerifyOtp}
+            disabled={otpCode.length !== 6 || verifyOtp.isPending}
+            className="mt-6 w-full h-12 bg-[var(--primary)] text-white rounded-2xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {verifyOtp.isPending ? <><Loader2 size={16} className="animate-spin" />Verifying…</> : 'Verify & continue'}
+          </button>
+
+          <button
+            onClick={handleResend}
+            disabled={resend.isPending || cooldown > 0}
+            className="mt-3 w-full h-11 border-2 border-[var(--primary)] text-[var(--primary)] rounded-2xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <RefreshCw size={14} className={cn(resend.isPending && 'animate-spin')} />
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+          </button>
+
+          <p className="text-xs text-gray-300 mt-8">Macropage Connect · Email Verification</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -64,10 +168,10 @@ export default function Register() {
 
         <div className="my-6">
           <h2 className="text-4xl font-black text-gray-900">Create your</h2>
-          <h1 className="text-5xl font-black text-[var(--primary)] mt-1">FREE ACCOUNT</h1>
+          <h1 className="text-5xl font-black text-[var(--primary)] mt-1">ACCOUNT</h1>
           <p className="text-sm text-gray-400 mt-2 mb-8">Start your 14-day free trial. No credit card required.</p>
 
-          <form onSubmit={handleSubmit((d) => reg.mutate(d as any))} className="space-y-4 max-w-md">
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 max-w-md">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">First name</div>
@@ -98,10 +202,19 @@ export default function Register() {
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Phone number</div>
               <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-2 px-3 py-2 border border-[var(--card-border)] rounded-xl bg-white">🇮🇳</div>
-                <input {...r('phone')} placeholder="9876543210" className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl flex-1')} />
+                <div className="flex items-center gap-2 px-3 py-2 border border-[var(--card-border)] rounded-xl bg-white">🇮🇳 +91</div>
+                <input
+                  {...r('phone')}
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="9876543210"
+                  onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '').slice(0, 10) }}
+                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl flex-1', errors.phone && 'border-red-400')}
+                />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Used for account verification only; country code will be applied automatically</p>
+              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+              <p className="text-xs text-gray-500 mt-1">This is not your WhatsApp Business number — enter your business contact number, not the WhatsApp Business number you'll use for messaging</p>
             </div>
 
             <div>
@@ -140,7 +253,7 @@ export default function Register() {
               <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-sm text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
 
-            <button type="submit" disabled={reg.isPending} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
+            <button type="submit" disabled={reg.isPending} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-100" />
