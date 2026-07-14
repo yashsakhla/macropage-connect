@@ -66,7 +66,11 @@ export interface FlowState {
   redo: () => void
   isDirty: boolean
   setDirty: (dirty: boolean) => void
-  addNode: (type: FlowNodeType, position: XYPosition) => void
+  addNode: (
+    type: FlowNodeType,
+    position: XYPosition,
+    overrides?: { label?: string; config?: Record<string, unknown> }
+  ) => void
   deleteNode: (id: string) => void
   duplicateNode: (id: string) => void
   updateNodeData: (id: string, data: Partial<FlowNodeData>) => void

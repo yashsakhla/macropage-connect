@@ -4,7 +4,9 @@ import { z } from 'zod'
 import { Link, Navigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification } from '@/hooks/useAuth'
+import { GoogleLogin } from '@react-oauth/google'
+import toast from 'react-hot-toast'
+import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -48,6 +50,7 @@ export default function Register() {
   const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [showPassword, setShowPassword] = useState(false)
   const reg = useRegister()
+  const googleAuth = useGoogleAuth()
   const { register: r, handleSubmit, watch, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
   const pw = watch('password') || ''
   const score = passwordScore(pw)
@@ -261,7 +264,18 @@ export default function Register() {
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            <button type="button" onClick={() => { window.location.href = `${import.meta.env.VITE_API_BASE_URL ?? 'https://macropage-connect.onrender.com/api/v1'}/auth/google` }} className="w-full h-11 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-[var(--page-bg)] flex items-center justify-center gap-3">Continue with Google</button>
+            <div className="flex justify-center [&>div]:w-full">
+              <GoogleLogin
+                onSuccess={(cred) => {
+                  if (cred.credential) googleAuth.mutate(cred.credential)
+                  else toast.error('Google sign-in failed')
+                }}
+                onError={() => toast.error('Google sign-in failed')}
+                width="384"
+                text="signup_with"
+                shape="pill"
+              />
+            </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
             <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <Link to="#" className="underline">Terms</Link> and <Link to="#" className="underline">Privacy</Link></p>

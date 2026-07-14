@@ -29,8 +29,8 @@ export function useFlows() {
 export function useFlow(id: string | undefined) {
   return useQuery({
     queryKey: ['flows', id],
-    queryFn: () =>
-      api.get(`/automation/flows/${id}`).then((r) => r.data.data),
+    queryFn: (): Promise<ConversationFlow> =>
+      api.get(`/automation/flows/${id}`).then((r) => normalizeFlow(r.data?.data ?? r.data)),
     enabled: !!id && id !== 'new',
   })
 }

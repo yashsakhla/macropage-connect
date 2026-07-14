@@ -1,6 +1,7 @@
-import { Clock, ThumbsUp, ArrowRight } from 'lucide-react'
+import { Clock, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { HelpArticle } from '@/types'
+import { fromNow, getCategoryColor, getCategoryLabel, estimateReadTime, markdownExcerpt } from '@/lib/utils'
 
 interface Props {
   article: HelpArticle
@@ -8,6 +9,7 @@ interface Props {
 
 export default function ArticleCard({ article }: Props) {
   const navigate = useNavigate()
+  const color = getCategoryColor(article.category)
 
   return (
     <div
@@ -18,13 +20,13 @@ export default function ArticleCard({ article }: Props) {
       <div className="flex items-center">
         <span
           className="text-[0.625rem] font-medium rounded-full px-2.5 py-1"
-          style={{ backgroundColor: article.categoryColor + '20', color: article.categoryColor }}
+          style={{ backgroundColor: color.bg, color: color.text }}
         >
-          {article.category}
+          {getCategoryLabel(article.category)}
         </span>
         <span className="text-[0.625rem] text-gray-400 ml-auto flex items-center gap-1">
           <Clock size={11} />
-          {article.readTimeMinutes} min read
+          {estimateReadTime(article.content)} min read
         </span>
       </div>
 
@@ -35,14 +37,13 @@ export default function ArticleCard({ article }: Props) {
 
       {/* Excerpt */}
       <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-        {article.excerpt}
+        {markdownExcerpt(article.content)}
       </p>
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#f5f5f5]">
-        <span className="text-[0.625rem] text-gray-400 flex items-center gap-1">
-          <ThumbsUp size={12} className="text-gray-400" />
-          {article.helpfulPercent}% found helpful
+        <span className="text-[0.625rem] text-gray-400">
+          Updated {fromNow(article.updatedAt)}
         </span>
         <span className="text-xs text-[#1a5c3a] font-medium flex items-center gap-1">
           Read article

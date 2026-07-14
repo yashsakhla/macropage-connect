@@ -27,6 +27,7 @@ function FlowBuilderInner() {
   const [lastSaved, setLastSaved] = useState<string>('')
   const [dragNodeType, setDragNodeType] = useState<FlowNodeType | null>(null)
   const [dragNodeLabel, setDragNodeLabel] = useState('')
+  const [dragNodeConfig, setDragNodeConfig] = useState<Record<string, unknown> | undefined>(undefined)
   const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -102,11 +103,14 @@ function FlowBuilderInner() {
     }
   }
 
-  function handleDragStart(type: FlowNodeType, label: string, event: React.DragEvent) {
+  function handleDragStart(type: FlowNodeType, label: string, config: Record<string, unknown> | undefined, event: React.DragEvent) {
     event.dataTransfer.setData('application/reactflow-type', type)
+    event.dataTransfer.setData('application/reactflow-label', label)
+    if (config) event.dataTransfer.setData('application/reactflow-config', JSON.stringify(config))
     event.dataTransfer.effectAllowed = 'move'
     setDragNodeType(type)
     setDragNodeLabel(label)
+    setDragNodeConfig(config)
   }
 
   return (
@@ -131,6 +135,7 @@ function FlowBuilderInner() {
           <FlowCanvas
             dragNodeType={dragNodeType}
             dragNodeLabel={dragNodeLabel}
+            dragNodeConfig={dragNodeConfig}
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
           />

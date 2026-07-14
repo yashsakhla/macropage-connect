@@ -1,7 +1,25 @@
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { TicketPayload, SearchResult, HelpArticle, HelpCategory, SystemStatus } from '@/types'
+import type { TicketPayload, SearchResult, HelpArticle, HelpCategory, FAQ, SystemStatus } from '@/types'
+
+export function useHelpDocs(category?: string) {
+  return useQuery<HelpArticle[]>({
+    queryKey: ['help-docs', category ?? 'all'],
+    queryFn: () =>
+      api.get('/help/docs', { params: category ? { category } : undefined })
+        .then(r => r.data),
+  })
+}
+
+export function useHelpFAQs(category?: string) {
+  return useQuery<FAQ[]>({
+    queryKey: ['help-faq', category ?? 'all'],
+    queryFn: () =>
+      api.get('/help/faq', { params: category ? { category } : undefined })
+        .then(r => r.data),
+  })
+}
 
 export function useHelpSearch(query: string) {
   return useQuery<SearchResult[]>({

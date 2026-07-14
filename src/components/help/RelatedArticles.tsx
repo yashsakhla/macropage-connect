@@ -17,7 +17,7 @@ export default function RelatedArticles({ articles }: Props) {
       <div>
         {articles.map(a => (
           <div
-            key={a.id}
+            key={a._id}
             onClick={() => navigate(`/help/articles/${a.slug}`)}
             className="flex items-start gap-2.5 py-2.5 border-b border-[#f5f5f5] last:border-0 cursor-pointer group"
           >

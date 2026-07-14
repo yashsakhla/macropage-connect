@@ -598,29 +598,19 @@ export interface AppNotification {
 }
 
 // ─── Help & Support ───────────────────────────────────────────────────────────
+// Shapes below match the raw Mongo documents returned by /help/docs and
+// /help/faq — no derived fields (excerpt, readTime, color, ToC) come from the
+// API; those are computed client-side, see src/lib/utils.ts and src/lib/markdown.ts.
 export interface HelpArticle {
-  id: string
-  slug: string
+  _id: string
   title: string
-  excerpt: string
-  content: string
+  slug: string
   category: string
-  categoryColor: string
-  author: string
-  readTimeMinutes: number
-  viewCount: number
-  helpfulCount: number
-  notHelpfulCount: number
-  helpfulPercent: number
+  order: number
   tags: string[]
-  relatedArticles: HelpArticle[]
-  tableOfContents: Array<{
-    id: string
-    text: string
-    level: 2 | 3
-  }>
+  content: string
+  createdAt: string
   updatedAt: string
-  publishedAt: string
 }
 
 export interface HelpCategory {
@@ -635,12 +625,14 @@ export interface HelpCategory {
 }
 
 export interface FAQ {
-  id: string
+  _id: string
+  category: string
+  order: number
   question: string
   answer: string
-  category: string
-  helpful: number
-  notHelpful: number
+  tags: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface VideoTutorial {
