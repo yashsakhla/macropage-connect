@@ -1,60 +1,26 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronRight, Clock, Eye, MessageSquare, Headphones } from 'lucide-react'
+import { ChevronRight, Clock, MessageSquare, Headphones } from 'lucide-react'
 import { useArticle } from '@/hooks/useHelp'
 import ArticleFeedback from '@/components/help/ArticleFeedback'
 import RelatedArticles from '@/components/help/RelatedArticles'
 import SupportTicketForm from '@/components/help/SupportTicketForm'
 import type { HelpArticle } from '@/types'
-import { cn } from '@/lib/utils'
-
-// Static mock article content
-const MOCK_CONTENT = `
-<h2 id="prerequisites">Prerequisites</h2>
-<p>Before you begin, make sure you have the following ready:</p>
-<ul>
-  <li>A Facebook Business Manager account with admin access</li>
-  <li>A phone number that is not currently registered on WhatsApp</li>
-  <li>A verified business in Meta's Business Manager</li>
-</ul>
-
-<div class="info-box">
-  ℹ️ <strong>Note:</strong> If your number is already on WhatsApp personal or WhatsApp Business App, you can migrate it — but the existing app will stop working. We recommend using a dedicated business number.
-</div>
-
-<h2 id="embedded-signup">Starting Embedded Signup</h2>
-<p>Macropage Connect uses Meta's Embedded Signup flow to securely connect your WhatsApp Business Account (WABA) without leaving our platform.</p>
-
-<h3 id="verify-number">Verifying your number</h3>
-<p>Once you start the flow, Meta will send an OTP to your number via SMS or voice call. Enter it within 10 minutes to verify ownership.</p>
-
-<pre><code class="language-json">{
-  "phone_number": "+91 98765 43210",
-  "code": "123456"
-}</code></pre>
-
-<h2 id="troubleshooting">Troubleshooting</h2>
-<blockquote>If the signup window closes without completing, don't worry. Your progress is saved and you can restart from where you left off in Settings → WhatsApp → Connect Account.</blockquote>
-
-<p>Common issues and fixes:</p>
-<ol>
-  <li>OTP not received — wait 2 minutes and request a new code via voice call</li>
-  <li>Business verification pending — you can continue with limited sending until Meta verifies</li>
-  <li>Number already registered — migrate from WhatsApp app first using the official migration guide</li>
-</ol>
-`
+import { cn, fromNow, getCategoryColor, getCategoryLabel, estimateReadTime } from '@/lib/utils'
+import { renderMarkdown } from '@/lib/markdown'
 
 export default function ArticleDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { data: apiArticle } = useArticle(slug ?? '')
+  const { data: article } = useArticle(slug ?? '')
   const [activeSection, setActiveSection] = useState('')
   const [ticketOpen, setTicketOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const article: HelpArticle | undefined = apiArticle
-
-  const toc = article?.tableOfContents ?? []
+  const { html, toc } = useMemo(
+    () => article ? renderMarkdown(article.content) : { html: '', toc: [] },
+    [article]
+  )
   const related: HelpArticle[] = []
 
   // Track active ToC item via IntersectionObserver
@@ -83,10 +49,10 @@ export default function ArticleDetail() {
           <Link to="/help" className="hover:text-[#1a5c3a]">Help</Link>
           <ChevronRight size={12} />
           <button
-            onClick={() => navigate(`/help?category=${article.category.toLowerCase().replace(/ /g, '-')}`)}
+            onClick={() => navigate(`/help?category=${article.category}`)}
             className="hover:text-[#1a5c3a]"
           >
-            {article.category}
+            {getCategoryLabel(article.category)}
           </button>
           <ChevronRight size={12} />
           <span className="text-gray-700 truncate max-w-xs">{article.title}</span>
@@ -98,9 +64,9 @@ export default function ArticleDetail() {
             {/* Header */}
             <span
               className="text-[0.625rem] font-medium rounded-full px-2.5 py-1"
-              style={{ backgroundColor: article.categoryColor + '20', color: article.categoryColor }}
+              style={{ backgroundColor: getCategoryColor(article.category).bg, color: getCategoryColor(article.category).text }}
             >
-              {article.category}
+              {getCategoryLabel(article.category)}
             </span>
 
             <h1 className="text-2xl lg:text-3xl font-black text-gray-900 mt-3 leading-tight">
@@ -108,20 +74,11 @@ export default function ArticleDetail() {
             </h1>
 
             <div className="flex items-center gap-4 mt-4 flex-wrap">
-              <span className="flex items-center gap-2 text-xs text-gray-500">
-                <div className="w-6 h-6 rounded-full bg-[#1a5c3a] flex items-center justify-center text-white text-[0.5rem] font-bold">
-                  ST
-                </div>
-                by {article.author}
-              </span>
               <span className="text-xs text-gray-400">
-                Updated {new Date(article.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                Updated {fromNow(article.updatedAt)}
               </span>
               <span className="text-xs text-gray-400 flex items-center gap-1">
-                <Clock size={11} /> {article.readTimeMinutes} min read
-              </span>
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <Eye size={11} /> {article.viewCount.toLocaleString()} views
+                <Clock size={11} /> {estimateReadTime(article.content)} min read
               </span>
             </div>
 
@@ -131,12 +88,12 @@ export default function ArticleDetail() {
             <div
               ref={contentRef}
               className="mt-6 article-content"
-              dangerouslySetInnerHTML={{ __html: MOCK_CONTENT }}
+              dangerouslySetInnerHTML={{ __html: html }}
             />
 
             {/* Feedback */}
             <ArticleFeedback
-              articleId={article.id}
+              articleId={article._id}
               articleSlug={article.slug}
               onNeedHelp={() => setTicketOpen(true)}
             />
@@ -304,6 +261,22 @@ export default function ArticleDetail() {
           font-style: italic;
           background: rgba(232,245,238,0.5);
           border-radius: 0 0.75rem 0.75rem 0;
+        }
+        .article-content table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 1rem;
+          font-size: 0.8125rem;
+        }
+        .article-content th, .article-content td {
+          border: 1px solid #e8ebe8;
+          padding: 0.5rem 0.75rem;
+          text-align: left;
+        }
+        .article-content th {
+          background: #f7f8f6;
+          font-weight: 600;
+          color: #111827;
         }
         .article-content .info-box {
           background: #eff6ff;

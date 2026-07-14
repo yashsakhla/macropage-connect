@@ -1,7 +1,8 @@
 import { Handle, Position, type NodeProps } from 'reactflow'
 import type { FlowNodeData } from '@/types/flow'
+import NodeActions from './NodeActions'
 
-export default function StartNode({ data, selected }: NodeProps<FlowNodeData>) {
+export default function StartNode({ id, data, selected }: NodeProps<FlowNodeData>) {
   return (
     <div
       className="rounded-2xl px-5 py-3 min-w-[180px] cursor-pointer select-none"
@@ -11,6 +12,7 @@ export default function StartNode({ data, selected }: NodeProps<FlowNodeData>) {
         boxShadow: selected ? '0 0 0 4px rgba(26,92,58,0.15), 0 4px 12px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.12)',
       }}
     >
+      <NodeActions nodeId={id} selected={selected} />
       <p className="text-white text-sm font-semibold">▶ Flow starts</p>
       {data.config?.trigger != null && (
         <div className="mt-2 bg-white/20 rounded-xl px-3 py-1.5">

@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { UserPlus } from 'lucide-react'
 import type { FlowNodeData } from '@/types/flow'
+import NodeActions from './NodeActions'
 
-export default function EndNode({ data, selected }: NodeProps<FlowNodeData>) {
+export default function EndNode({ id, data, selected }: NodeProps<FlowNodeData>) {
   const isHandoff = data.nodeType === 'handoff'
 
   return (
@@ -14,6 +15,7 @@ export default function EndNode({ data, selected }: NodeProps<FlowNodeData>) {
         boxShadow: selected ? '0 0 0 4px rgba(26,92,58,0.1), 0 4px 12px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.12)',
       }}
     >
+      <NodeActions nodeId={id} selected={selected} />
       <Handle type="target" position={Position.Top} style={{ width: 10, height: 10, background: 'rgba(255,255,255,0.4)', top: -6 }} />
 
       {isHandoff ? (

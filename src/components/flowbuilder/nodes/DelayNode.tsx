@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { Timer } from 'lucide-react'
 import type { FlowNodeData } from '@/types/flow'
+import NodeActions from './NodeActions'
 
-export default function DelayNode({ data, selected }: NodeProps<FlowNodeData>) {
+export default function DelayNode({ id, data, selected }: NodeProps<FlowNodeData>) {
   const duration = (data.config?.duration as number) ?? 5
   const unit = (data.config?.unit as string) ?? 'minutes'
   const short: Record<string, string> = { seconds: 's', minutes: 'm', hours: 'h', days: 'd' }
@@ -16,6 +17,7 @@ export default function DelayNode({ data, selected }: NodeProps<FlowNodeData>) {
         boxShadow: selected ? '0 0 0 4px rgba(26,92,58,0.1), 0 4px 12px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.06)',
       }}
     >
+      <NodeActions nodeId={id} selected={selected} />
       <Handle type="target" position={Position.Top} style={{ width: 10, height: 10, background: '#94a3b8', top: -6 }} />
 
       <div className="px-4 py-2.5 flex items-center gap-2 bg-gray-500">

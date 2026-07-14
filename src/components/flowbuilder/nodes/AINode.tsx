@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { Sparkles } from 'lucide-react'
 import type { FlowNodeData } from '@/types/flow'
+import NodeActions from './NodeActions'
 
-export default function AINode({ data, selected }: NodeProps<FlowNodeData>) {
+export default function AINode({ id, data, selected }: NodeProps<FlowNodeData>) {
   const model = (data.config?.model as string) ?? 'gpt-4o'
   const instruction = (data.config?.instruction as string) ?? ''
   const threshold = (data.config?.confidenceThreshold as number) ?? 70
@@ -16,6 +17,7 @@ export default function AINode({ data, selected }: NodeProps<FlowNodeData>) {
         boxShadow: selected ? '0 0 0 4px rgba(168,85,247,0.1), 0 4px 12px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.06)',
       }}
     >
+      <NodeActions nodeId={id} selected={selected} />
       <Handle type="target" position={Position.Top} style={{ width: 10, height: 10, background: '#94a3b8', top: -6 }} />
 
       <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)' }}>

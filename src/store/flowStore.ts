@@ -62,15 +62,20 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     set({ nodes: next.nodes, edges: next.edges, historyIndex: historyIndex + 1, isDirty: true })
   },
 
-  addNode: (type: FlowNodeType, position: XYPosition) => {
+  addNode: (type: FlowNodeType, position: XYPosition, overrides) => {
     const { nodes, pushHistory } = get()
     pushHistory()
     const id = generateNodeId()
+    const base = getDefaultNodeData(type)
     const newNode: Node<FlowNodeData> = {
       id,
       type,
       position,
-      data: getDefaultNodeData(type),
+      data: {
+        ...base,
+        ...(overrides?.label ? { label: overrides.label } : {}),
+        config: { ...base.config, ...overrides?.config },
+      },
     }
     set({ nodes: [...nodes, newNode], isDirty: true })
   },

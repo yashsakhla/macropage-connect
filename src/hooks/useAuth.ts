@@ -55,6 +55,40 @@ export function useLogin() {
   })
 }
 
+export function useGoogleAuth() {
+  const { setAuth } = useAuthStore()
+  const navigate = useNavigate()
+  const setFullLoader = useUIStore.getState().setFullLoader
+
+  return useMutation({
+    mutationFn: (credential: string) =>
+      api.post('/auth/google', { credential }).then((r) => r.data),
+    onMutate: () => setFullLoader(true),
+    onSettled: () => setFullLoader(false),
+    onSuccess: ({ data }) => {
+      const token = data.accessToken ?? data.token
+      const refreshToken = data.refreshToken ?? ''
+      const user = {
+        ...(data.user || {}),
+        plan: (data.user?.plan ?? 'TRIAL') as string,
+        role: data.user?.role ?? decodeTokenRole(token),
+        emailVerified: true,
+      }
+      setAuth(user, token, refreshToken)
+      connectSocket(token)
+
+      if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
+        navigate('/setup/whatsapp')
+      } else {
+        navigate('/dashboard')
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message ?? 'Google sign-in failed')
+    },
+  })
+}
+
 // Creates the account and triggers the automatic verification-code email.
 // Does NOT log the user in — that happens once they confirm the OTP,
 // via useFinalizeSignup below.

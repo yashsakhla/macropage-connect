@@ -24,6 +24,7 @@ import ActionNode from './nodes/ActionNode'
 import AINode from './nodes/AINode'
 import DelayNode from './nodes/DelayNode'
 import EndNode from './nodes/EndNode'
+import DeletableEdge from './edges/DeletableEdge'
 import type { FlowNodeData, FlowNodeType } from '@/types/flow'
 
 const nodeTypes = {
@@ -37,14 +38,19 @@ const nodeTypes = {
   handoff: EndNode,
 }
 
+const edgeTypes = {
+  smoothstep: DeletableEdge,
+}
+
 interface Props {
   dragNodeType: FlowNodeType | null
   dragNodeLabel?: string
+  dragNodeConfig?: Record<string, unknown>
   onNodeClick: NodeMouseHandler
   onPaneClick: () => void
 }
 
-export default function FlowCanvas({ dragNodeType, onNodeClick, onPaneClick }: Props) {
+export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig, onNodeClick, onPaneClick }: Props) {
   const { nodes, edges, setNodes, setEdges, addNode, pushHistory } = useFlowStore()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
@@ -87,13 +93,19 @@ export default function FlowCanvas({ dragNodeType, onNodeClick, onPaneClick }: P
       event.preventDefault()
       const type = (event.dataTransfer.getData('application/reactflow-type') || dragNodeType) as FlowNodeType | null
       if (!type) return
+      const label = event.dataTransfer.getData('application/reactflow-label') || dragNodeLabel
+      const configRaw = event.dataTransfer.getData('application/reactflow-config')
+      let config = dragNodeConfig
+      if (configRaw) {
+        try { config = JSON.parse(configRaw) } catch { /* keep state fallback */ }
+      }
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       })
-      addNode(type, position)
+      addNode(type, position, { label, config })
     },
-    [dragNodeType, addNode, reactFlowInstance]
+    [dragNodeType, dragNodeLabel, dragNodeConfig, addNode, reactFlowInstance]
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -120,6 +132,7 @@ export default function FlowCanvas({ dragNodeType, onNodeClick, onPaneClick }: P
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         deleteKeyCode="Backspace"
         snapToGrid

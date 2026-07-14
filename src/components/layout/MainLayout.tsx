@@ -15,7 +15,7 @@ import PaymentVerificationFailedModal from '@/components/shared/PaymentVerificat
 import PageLoader from '@/components/shared/PageLoader'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import FullPageLoader from '@/components/shared/FullPageLoader'
-import HelpWidget from '@/components/help/HelpWidget'
+import SupportChat from '@/components/support/SupportChat'
 import NotificationPanel from '@/components/notifications/NotificationPanel'
 import { useSocket } from '@/hooks/useSocket'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
@@ -103,7 +103,7 @@ export default function MainLayout() {
         </div>
       </div>
 
-      {!location.pathname.startsWith('/help') && <HelpWidget />}
+      {!location.pathname.startsWith('/help') && <SupportChat />}
       <NotificationPanel />
       <PlanExpiredModal />
       <WhatsAppRequiredModal />

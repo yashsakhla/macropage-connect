@@ -5,17 +5,22 @@ import HelpHeader from '@/components/help/HelpHeader'
 import QuickActions from '@/components/help/QuickActions'
 import OnboardingChecklist from '@/components/help/OnboardingChecklist'
 import CategoryGrid from '@/components/help/CategoryGrid'
+import ArticleCard from '@/components/help/ArticleCard'
 import VideoTutorials from '@/components/help/VideoTutorials'
 import FAQAccordion from '@/components/help/FAQAccordion'
 import ContactSupport from '@/components/help/ContactSupport'
 import SearchResults from '@/components/help/SearchResults'
 import SupportTicketForm from '@/components/help/SupportTicketForm'
-import { useSystemStatus } from '@/hooks/useHelp'
+import { useSystemStatus, useHelpDocs, useHelpFAQs } from '@/hooks/useHelp'
+import type { HelpCategory } from '@/types'
 
 export default function Help() {
   const [searchQuery, setSearchQuery] = useState('')
   const [ticketOpen, setTicketOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<HelpCategory | null>(null)
   const { data: status } = useSystemStatus()
+  const { data: docs = [], isLoading: docsLoading } = useHelpDocs(activeCategory?.slug)
+  const { data: faqs = [] } = useHelpFAQs()
 
   return (
     <div className="min-h-screen bg-[#f7f8f6]">
@@ -45,15 +50,42 @@ export default function Help() {
           </div>
 
           {/* Category grid */}
-          <CategoryGrid />
+          <CategoryGrid onCategoryClick={cat => setActiveCategory(cat)} />
 
-          {/* Popular articles section removed — fetched per category/search */}
+          {/* Doc articles — all, or filtered by the clicked category */}
+          <div className="max-w-5xl mx-auto px-6 mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                {activeCategory ? `${activeCategory.name} articles` : 'All articles'}
+              </h2>
+              {activeCategory && (
+                <button
+                  onClick={() => setActiveCategory(null)}
+                  className="text-xs text-[#1a5c3a] font-medium hover:underline"
+                >
+                  ← Show all
+                </button>
+              )}
+            </div>
+
+            {docsLoading ? (
+              <div className="text-center py-12 text-gray-400">Loading articles…</div>
+            ) : docs.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">No articles in this category yet</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {docs.map(article => (
+                  <ArticleCard key={article._id} article={article} />
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Video tutorials */}
           <VideoTutorials />
 
           {/* FAQs */}
-          <FAQAccordion />
+          <FAQAccordion faqs={faqs} />
 
           {/* Contact support */}
           <ContactSupport

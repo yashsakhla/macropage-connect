@@ -49,6 +49,8 @@ const config: Config = {
       animation: {
         'fade-in': 'fadeIn 0.15s ease-out',
         'slide-in': 'slideIn 0.2s ease-out',
+        'slide-up': 'slideUp 0.2s ease-out forwards',
+        'bounce-once': 'bounceOnce 0.6s ease-in-out 1',
       },
       keyframes: {
         fadeIn: {
@@ -58,6 +60,14 @@ const config: Config = {
         slideIn: {
           from: { opacity: '0', transform: 'translateY(6px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(16px) scale(0.97)' },
+          to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        bounceOnce: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%':      { transform: 'translateY(-6px)' },
         },
       },
     },

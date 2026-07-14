@@ -14,6 +14,7 @@ interface NodeDef {
   icon: React.ElementType
   iconBg: string
   iconColor: string
+  config?: Record<string, unknown>
 }
 
 const NODE_GROUPS: { id: string; label: string; icon: React.ElementType; iconColor: string; nodes: NodeDef[] }[] = [
@@ -33,17 +34,17 @@ const NODE_GROUPS: { id: string; label: string; icon: React.ElementType; iconCol
       { type: 'condition', label: 'Condition / if-else', desc: 'Branch based on condition', icon: GitBranch, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
       { type: 'condition', label: 'Wait for reply', desc: 'Pause until customer replies', icon: Hourglass, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
       { type: 'delay', label: 'Time delay', desc: 'Wait before continuing', icon: Timer, iconBg: 'bg-gray-100', iconColor: 'text-gray-500' },
-      { type: 'action', label: 'Jump to step', desc: 'Skip to another node', icon: CornerDownRight, iconBg: 'bg-gray-100', iconColor: 'text-gray-500' },
+      { type: 'action', label: 'Jump to step', desc: 'Skip to another node', icon: CornerDownRight, iconBg: 'bg-gray-100', iconColor: 'text-gray-500', config: { type: 'jump_to_step' } },
     ],
   },
   {
     id: 'actions', label: 'Actions', icon: Webhook, iconColor: 'text-amber-600',
     nodes: [
-      { type: 'action', label: 'Assign to agent', desc: 'Route to team member', icon: UserCheck, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
-      { type: 'action', label: 'Add/remove tag', desc: 'Tag the contact', icon: Tag, iconBg: 'bg-[#e8f5ee]', iconColor: 'text-[#1a5c3a]' },
-      { type: 'action', label: 'Update contact field', desc: 'Set a contact property', icon: Edit3, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-      { type: 'action', label: 'Mark resolved', desc: 'Close the conversation', icon: CheckCircle, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
-      { type: 'action', label: 'Send webhook', desc: 'POST to external URL', icon: Webhook, iconBg: 'bg-gray-100', iconColor: 'text-gray-600' },
+      { type: 'action', label: 'Assign to agent', desc: 'Route to team member', icon: UserCheck, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', config: { type: 'assign_agent' } },
+      { type: 'action', label: 'Add/remove tag', desc: 'Tag the contact', icon: Tag, iconBg: 'bg-[#e8f5ee]', iconColor: 'text-[#1a5c3a]', config: { type: 'add_tag' } },
+      { type: 'action', label: 'Update contact field', desc: 'Set a contact property', icon: Edit3, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', config: { type: 'update_field' } },
+      { type: 'action', label: 'Mark resolved', desc: 'Close the conversation', icon: CheckCircle, iconBg: 'bg-green-50', iconColor: 'text-green-600', config: { type: 'mark_resolved' } },
+      { type: 'action', label: 'Send webhook', desc: 'POST to external URL', icon: Webhook, iconBg: 'bg-gray-100', iconColor: 'text-gray-600', config: { type: 'webhook' } },
     ],
   },
   {
@@ -59,7 +60,7 @@ const NODE_GROUPS: { id: string; label: string; icon: React.ElementType; iconCol
     nodes: [
       { type: 'end', label: 'End flow', desc: 'Terminate the flow', icon: Square, iconBg: 'bg-gray-100', iconColor: 'text-gray-500' },
       { type: 'handoff', label: 'Handoff to agent', desc: 'Transfer to human agent', icon: UserPlus, iconBg: 'bg-[#e8f5ee]', iconColor: 'text-[#1a5c3a]' },
-      { type: 'action', label: 'Restart flow', desc: 'Go back to start', icon: RefreshCw, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+      { type: 'action', label: 'Restart flow', desc: 'Go back to start', icon: RefreshCw, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', config: { type: 'restart_flow' } },
     ],
   },
 ]
@@ -70,7 +71,7 @@ const VARIABLES = [
 ]
 
 interface Props {
-  onDragStart: (type: FlowNodeType, label: string, event: React.DragEvent) => void
+  onDragStart: (type: FlowNodeType, label: string, config: Record<string, unknown> | undefined, event: React.DragEvent) => void
 }
 
 export default function FlowSidebar({ onDragStart }: Props) {
@@ -135,7 +136,7 @@ export default function FlowSidebar({ onDragStart }: Props) {
                       <div
                         key={`${node.type}-${i}`}
                         draggable
-                        onDragStart={(e) => onDragStart(node.type, node.label, e)}
+                        onDragStart={(e) => onDragStart(node.type, node.label, node.config, e)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#e8ebe8] bg-white hover:border-[#c8e6d4] hover:bg-[#fafffe] cursor-grab transition-all active:cursor-grabbing active:scale-95"
                       >
                         <div className={cn('w-7 h-7 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0', node.iconBg)}>

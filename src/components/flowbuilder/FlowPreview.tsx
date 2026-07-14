@@ -8,6 +8,10 @@ interface PreviewMsg {
   from: 'user' | 'bot'
   text: string
   buttons?: string[]
+  mediaType?: string
+  mediaUrl?: string
+  listButtonText?: string
+  listOptions?: string[]
   isSystem?: boolean
 }
 
@@ -90,9 +94,25 @@ function runFlow(nodes: Node[], edges: Edge[], startId: string, userInput = ''):
         break
 
       case 'message': {
-        const text = (data.config?.text as string) || '(message text not configured)'
-        const buttons = (data.config?.buttons as string[]) || []
-        msgs.push({ from: 'bot', text, buttons: buttons.length ? buttons : undefined })
+        const cfg = data.config ?? {}
+        const mediaUrl = (cfg.mediaUrl as string) || undefined
+        const mediaType = (cfg.mediaType as string) || undefined
+        const caption = (cfg.caption as string) || ''
+        const buttons = (cfg.buttons as string[]) || []
+        const listSections = (cfg.listSections as Array<{ title: string; rows: Array<{ title: string }> }>) || []
+        const listOptions = listSections.flatMap((s) => s.rows.map((r) => r.title).filter(Boolean))
+        const listButtonText = listOptions.length ? ((cfg.listButtonText as string) || 'View options') : undefined
+        const rawText = (cfg.text as string) || ''
+        const text = caption || rawText || (mediaUrl || listOptions.length ? '' : '(message text not configured)')
+        msgs.push({
+          from: 'bot',
+          text,
+          buttons: buttons.length ? buttons : undefined,
+          mediaType,
+          mediaUrl,
+          listButtonText,
+          listOptions: listOptions.length ? listOptions : undefined,
+        })
 
         // Chain consecutive message nodes without waiting for user input
         const continueId =
@@ -279,9 +299,27 @@ export default function FlowPreview({ onClose }: Props) {
                   : 'bg-[#e8f5ee]'
               }`}
             >
-              <p className={`text-xs leading-relaxed ${msg.isSystem ? 'text-amber-700 italic' : 'text-gray-700'}`}>
-                {msg.text}
-              </p>
+              {msg.mediaUrl && (
+                <div className="mb-1.5 rounded-lg overflow-hidden border border-[#d0e8d8]">
+                  {msg.mediaType === 'image' ? (
+                    <img
+                      src={msg.mediaUrl}
+                      alt=""
+                      className="w-full max-h-40 object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-white capitalize">
+                      📎 {msg.mediaType || 'media'} attached
+                    </div>
+                  )}
+                </div>
+              )}
+              {msg.text && (
+                <p className={`text-xs leading-relaxed ${msg.isSystem ? 'text-amber-700 italic' : 'text-gray-700'}`}>
+                  {msg.text}
+                </p>
+              )}
               {msg.buttons && msg.buttons.length > 0 && (
                 <div className="mt-2 space-y-1.5 border-t border-[#d0e8d8] pt-2">
                   {msg.buttons.map((btn, bi) => (
@@ -292,6 +330,21 @@ export default function FlowPreview({ onClose }: Props) {
                       className="w-full text-center bg-white text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {btn}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {msg.listOptions && msg.listOptions.length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-[#d0e8d8] pt-2">
+                  <p className="text-2xs text-gray-500 mb-1">{msg.listButtonText}</p>
+                  {msg.listOptions.map((opt, oi) => (
+                    <button
+                      key={oi}
+                      onClick={() => send(opt)}
+                      disabled={done || isTyping}
+                      className="w-full text-left bg-white text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {opt}
                     </button>
                   ))}
                 </div>

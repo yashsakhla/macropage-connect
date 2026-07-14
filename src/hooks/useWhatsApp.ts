@@ -122,8 +122,8 @@ export function useConfirmPhoneOTP() {
 export function useSendTestMessage() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () =>
-      api.post('/whatsapp/setup/send-test')
+    mutationFn: (phoneNumber: string) =>
+      api.post('/whatsapp/setup/send-test', { toPhone: phoneNumber })
         .then(r => r.data?.data ?? r.data),
 
     onSuccess: (responseData: any) => {

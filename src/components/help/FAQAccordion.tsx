@@ -1,17 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, HelpCircle, ThumbsUp, ThumbsDown } from 'lucide-react'
 import type { FAQ } from '@/types'
-import { cn } from '@/lib/utils'
-
-const CATEGORIES = ['All', 'WhatsApp', 'Billing', 'Campaigns', 'Templates', 'API']
-
-const CAT_COLORS: Record<string, { bg: string; text: string }> = {
-  WhatsApp: { bg: '#f0fdf4', text: '#16a34a' },
-  Billing: { bg: '#eff6ff', text: '#2563eb' },
-  Campaigns: { bg: '#faf5ff', text: '#9333ea' },
-  Templates: { bg: '#fff7ed', text: '#ea580c' },
-  API: { bg: '#f8fafc', text: '#475569' },
-}
+import { cn, getCategoryColor, getCategoryLabel } from '@/lib/utils'
 
 interface Props {
   faqs?: FAQ[]
@@ -21,6 +11,8 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
   const [activeCategory, setActiveCategory] = useState('All')
   const [openId, setOpenId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, 'yes' | 'no'>>({})
+
+  const CATEGORIES = ['All', ...Array.from(new Set(allFaqs.map(f => f.category)))]
 
   const faqs: FAQ[] = activeCategory === 'All'
     ? allFaqs
@@ -43,21 +35,21 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
                 : 'bg-white border border-[#e8ebe8] text-gray-600 hover:border-[#c8e6d4]'
             )}
           >
-            {cat}
+            {cat === 'All' ? cat : getCategoryLabel(cat)}
           </button>
         ))}
       </div>
 
       <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
         {faqs.map(faq => {
-          const isOpen = openId === faq.id
-          const colors = CAT_COLORS[faq.category] ?? { bg: '#e8f5ee', text: '#1a5c3a' }
+          const isOpen = openId === faq._id
+          const colors = getCategoryColor(faq.category)
 
           return (
-            <div key={faq.id} className="border-b border-[#f5f5f5] last:border-0">
+            <div key={faq._id} className="border-b border-[#f5f5f5] last:border-0">
               {/* Question */}
               <button
-                onClick={() => setOpenId(isOpen ? null : faq.id)}
+                onClick={() => setOpenId(isOpen ? null : faq._id)}
                 className="w-full px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-[#fafffe] transition-colors text-left"
               >
                 <div
@@ -81,18 +73,18 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
                   {/* Feedback row */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[#f5f5f5]">
                     <span className="text-xs text-gray-500">Was this helpful?</span>
-                    {feedback[faq.id] ? (
+                    {feedback[faq._id] ? (
                       <span className="text-xs text-gray-500">Thanks for your feedback!</span>
                     ) : (
                       <>
                         <button
-                          onClick={() => setFeedback(p => ({ ...p, [faq.id]: 'yes' }))}
+                          onClick={() => setFeedback(p => ({ ...p, [faq._id]: 'yes' }))}
                           className="bg-[#e8f5ee] text-[#1a5c3a] h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-[#c8e6d4] transition-colors"
                         >
                           <ThumbsUp size={12} /> Yes
                         </button>
                         <button
-                          onClick={() => setFeedback(p => ({ ...p, [faq.id]: 'no' }))}
+                          onClick={() => setFeedback(p => ({ ...p, [faq._id]: 'no' }))}
                           className="bg-[#f7f8f6] text-gray-500 h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-gray-200 transition-colors"
                         >
                           <ThumbsDown size={12} /> No

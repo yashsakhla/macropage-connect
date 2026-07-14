@@ -9,6 +9,7 @@ import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
 import { cn } from '@/lib/utils'
 import EmbeddedSignupFlow, { type EmbeddedSignupConnectedData } from '@/components/setup/EmbeddedSignupFlow'
 import toast from 'react-hot-toast'
+import { useUIStore } from '@/store/uiStore'
 import {
   useWhatsAppSetupStatus,
   useSaveBusinessInfo,
@@ -33,6 +34,7 @@ export default function WhatsAppSetup() {
   const [metaConnected, setMetaConnected] = useState(false)
   const [wabaId, setWabaId] = useState('')
   const [phoneNumberId, setPhoneNumberId] = useState('')
+  const [testPhoneNumber, setTestPhoneNumber] = useState('')
 
   // Connection details captured directly from Embedded Signup — used to
   // populate the confirmation step immediately, before status refetch lands
@@ -149,8 +151,12 @@ export default function WhatsAppSetup() {
   }
 
   const handleSendTest = () => {
+    if (!testPhoneNumber.trim()) {
+      toast.error('Enter a phone number to send the test message to')
+      return
+    }
     resetSend()
-    sendTest(undefined, {
+    sendTest(testPhoneNumber.trim(), {
       onSuccess: () => {
         refetchStatus()
       },
@@ -191,12 +197,17 @@ export default function WhatsAppSetup() {
     <div className="min-h-screen bg-[var(--page-bg)] dark:bg-[#0f1724] w-full">
       <div className="bg-white border-b border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-300 rounded-full flex items-center justify-center shrink-0 text-current font-semibold text-sm">Nad</div>
+          <div className="w-10 h-10 bg-brand-300 rounded-full flex items-center justify-center shrink-0 text-current font-semibold text-sm">
+            {(watched.businessName || connectedWaba?.displayName || 'B').charAt(0).toUpperCase()}
+          </div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">
+            {watched.businessName || connectedWaba?.displayName || 'Your Business'}
+          </div>
         </div>
         <div className="flex-1 px-6">{renderProgress()}</div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-500">Need help?</div>
-          <button className="btn-outline text-xs h-8 px-3">Chat with us</button>
+          <button onClick={() => navigate('/help')} className="text-sm text-gray-500 hover:text-[#1a5c3a]">Need help?</button>
+          <button onClick={() => useUIStore.getState().openHelpChat()} className="btn-outline text-xs h-8 px-3">Chat with us</button>
         </div>
       </div>
 
@@ -462,7 +473,12 @@ export default function WhatsAppSetup() {
             <div className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6">
               <h3 className="font-semibold mb-4">Send a test message</h3>
               <label className="block text-sm">Send test to *</label>
-              <input className="input mt-2" placeholder="Your personal WhatsApp number" />
+              <input
+                className="input mt-2"
+                placeholder="Your personal WhatsApp number"
+                value={testPhoneNumber}
+                onChange={(e) => setTestPhoneNumber(e.target.value)}
+              />
               <div className="mt-4">
                 <button
                   onClick={handleSendTest}

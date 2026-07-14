@@ -9,6 +9,7 @@ interface UIState {
   whatsappRequiredModalOpen: boolean
   paymentIssueModalOpen: boolean
   paymentIssueReferenceId: string | null
+  helpWidgetOpen: boolean
 
   // global full-page loader
   fullLoader: boolean
@@ -23,6 +24,8 @@ interface UIState {
   setWhatsappRequiredModalOpen: (v: boolean) => void
   openPaymentIssueModal: (referenceId?: string | null) => void
   setPaymentIssueModalOpen: (v: boolean) => void
+  setHelpWidgetOpen: (v: boolean) => void
+  openHelpChat: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -35,6 +38,7 @@ export const useUIStore = create<UIState>()(
       whatsappRequiredModalOpen: false,
       paymentIssueModalOpen: false,
       paymentIssueReferenceId: null,
+      helpWidgetOpen: false,
       fullLoader: false,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
@@ -53,6 +57,8 @@ export const useUIStore = create<UIState>()(
       openPaymentIssueModal: (referenceId) =>
         set({ paymentIssueModalOpen: true, paymentIssueReferenceId: referenceId ?? null }),
       setPaymentIssueModalOpen: (v) => set({ paymentIssueModalOpen: v }),
+      setHelpWidgetOpen: (v) => set({ helpWidgetOpen: v }),
+      openHelpChat: () => set({ helpWidgetOpen: true }),
     }),
     {
       name: 'macropage-ui',
