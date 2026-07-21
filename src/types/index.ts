@@ -53,6 +53,11 @@ export interface User {
   emailVerified?: boolean
   createdAt?: string
   plan?: string
+  // Set at two points: plan selection (POST /billing/subscribe) and again on
+  // payment verification / webhook — the authoritative "what's actually active"
+  // pair, since `plan` alone can lag behind the real subscription state.
+  billingPlan?: string
+  billingCycle?: BillingCycle
   trialEndsAt?: string
   subscriptionType?: 'FREE' | 'PAID'
   subscriptionActive?: boolean
@@ -459,6 +464,11 @@ export interface ChecklistData {
   totalSteps: number
 }
 
+export interface UploadResponse {
+  url: string
+  key: string
+}
+
 // ─── Settings ─────────────────────────────────────────────────────────────────
 export interface AccountSettings {
   companyName: string
@@ -505,6 +515,7 @@ export interface BillingPlan {
   currency: string
   custom?: boolean
   pricing: Record<BillingCycle, PlanPricingTier>
+  razorpayPlanIds?: Partial<Record<BillingCycle, string>>
   features: string[]
   notIncluded: string[]
 }
@@ -517,6 +528,9 @@ export interface Subscription {
   currentPeriodEnd: string
   cancelAtPeriodEnd: boolean
   trialEndsAt?: string
+  // Matches one of a BillingPlan's `razorpayPlanIds[cycle]` values — the
+  // authoritative way to tell which plan AND which billing cycle is active.
+  razorpayPlanId?: string
   usage: { messages: number; contacts: number; storage: number; teamMembers: number; campaigns: number }
 }
 
@@ -528,6 +542,16 @@ export interface Payment {
   status: 'success' | 'failed' | 'pending'
   invoiceUrl?: string
   createdAt: string
+}
+
+export interface PaymentMethod {
+  paymentMethod: 'upi' | 'card' | string
+  bankAccount: string | null
+  subscriptionId: string
+  customerId: string
+  plan: string
+  billingCycle: BillingCycle
+  status: 'ACTIVE' | 'TRIALING' | 'CANCELLED' | 'PAST_DUE' | string
 }
 
 export interface Invoice {

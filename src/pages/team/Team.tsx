@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Plus, Users, Zap, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types'
@@ -15,11 +16,22 @@ type TabView = 'members' | 'performance' | 'permissions'
 const CURRENT_USER_ID = 'tm1'
 
 export default function Team() {
+  const location = useLocation()
   const { data: teamData } = useTeamMembers()
   const members = teamData ?? []
   const [showInvite, setShowInvite] = useState(false)
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [activeTab, setActiveTab] = useState<TabView>('members')
+
+  // Opened via a deep link (e.g. global search quick actions), which pass
+  // this through router state — mirrors the pattern used on the Templates page.
+  const consumedDeepLinkKey = useRef<string | null>(null)
+  useEffect(() => {
+    const state = location.state as { openInvite?: boolean } | null
+    if (!state || consumedDeepLinkKey.current === location.key) return
+    consumedDeepLinkKey.current = location.key
+    if (state.openInvite) setShowInvite(true)
+  }, [location.key, location.state])
 
   const normRole = (r: string) => r.toLowerCase()
   const counts = {

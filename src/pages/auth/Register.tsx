@@ -252,7 +252,7 @@ export default function Register() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-sm">I agree to the <a href="#" className="text-[var(--primary)]">Terms of Service</a> and <a href="#" className="text-[var(--primary)]">Privacy Policy</a></span></label>
+              <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-sm">I agree to the <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Privacy Policy</a></span></label>
               <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-sm text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
 
@@ -278,7 +278,7 @@ export default function Register() {
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
-            <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <Link to="#" className="underline">Terms</Link> and <Link to="#" className="underline">Privacy</Link></p>
+            <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">Privacy</a></p>
           </form>
         </div>
       </div>

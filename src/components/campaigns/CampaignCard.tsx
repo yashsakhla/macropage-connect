@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MoreVertical, FileText, Pause, Edit2, Trash2, Copy, Users, Eye } from 'lucide-react'
+import { MoreVertical, FileText, Pause, Edit2, Trash2, Copy, Users, Eye, Calendar, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Campaign } from '@/types'
 import { format } from 'date-fns'
@@ -197,7 +197,7 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
       )}
 
       <div className="grid items-center gap-4 px-5 py-4"
-        style={{ gridTemplateColumns: '2fr 120px 1fr 1fr 1fr 120px 100px' }}>
+        style={{ gridTemplateColumns: '2fr 108px 68px 64px 60px 60px 60px 116px 96px' }}>
         {/* col 1: info */}
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{campaign.name}</p>
@@ -229,17 +229,33 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           <p className="text-[10px] text-gray-400">Delivered</p>
         </div>
 
-        {/* col 5: schedule/progress */}
+        {/* col 5-7: stat cells — same typographic treatment as "contacts" above, no icons/emoji needed */}
+        <div>
+          <p className="text-sm font-semibold text-gray-800">{campaign.sent.toLocaleString()}</p>
+          <p className="text-xs text-gray-400">sent</p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-blue-600">{campaign.read.toLocaleString()}</p>
+          <p className="text-xs text-gray-400">read</p>
+        </div>
+        <div>
+          <p className={cn('text-sm font-semibold', campaign.failed > 0 ? 'text-red-500' : 'text-gray-300')}>
+            {campaign.failed.toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400">failed</p>
+        </div>
+
+        {/* col 8: schedule/progress */}
         <div>
           {campaign.status === 'scheduled' && campaign.scheduledAt && (
             <div className="text-xs text-gray-600 flex items-center gap-1">
-              <span>📅</span>
+              <Calendar size={11} className="text-gray-400 flex-shrink-0" />
               {format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a')}
             </div>
           )}
           {campaign.status === 'completed' && campaign.completedAt && (
             <div className="text-xs text-gray-500 flex items-center gap-1">
-              <span>✅</span>
+              <CheckCircle2 size={11} className="text-purple-400 flex-shrink-0" />
               {format(new Date(campaign.completedAt), 'dd MMM, h:mm a')}
             </div>
           )}
@@ -256,14 +272,7 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           )}
         </div>
 
-        {/* col 6: mini stats */}
-        <div className="flex items-center gap-3 text-xs">
-          <span className="font-medium text-gray-700">✓ {campaign.sent.toLocaleString()}</span>
-          <span className="font-medium text-gray-700">👁 {campaign.read.toLocaleString()}</span>
-          <span className="font-medium text-red-500">✗ {campaign.failed.toLocaleString()}</span>
-        </div>
-
-        {/* col 7: actions */}
+        {/* col 9: actions */}
         <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
           {campaign.status === 'running' && canLaunchCampaign && (
             <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>

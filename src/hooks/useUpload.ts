@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 import api from '@/lib/axios'
+import type { UploadResponse } from '@/types'
 
-function uploadFile(endpoint: string, file: File) {
+function uploadFile(endpoint: string, file: File): Promise<UploadResponse> {
   const form = new FormData()
   form.append('file', file)
   return api
@@ -9,22 +10,20 @@ function uploadFile(endpoint: string, file: File) {
     .then((r) => r.data.data)
 }
 
+export const uploadImage = (file: File) => uploadFile('/upload/image', file)
+export const uploadDocument = (file: File) => uploadFile('/upload/document', file)
+export const uploadAudio = (file: File) => uploadFile('/upload/audio', file)
+
 export function useUploadImage() {
-  return useMutation({
-    mutationFn: (file: File) => uploadFile('/upload/image', file),
-  })
+  return useMutation({ mutationFn: uploadImage })
 }
 
 export function useUploadDocument() {
-  return useMutation({
-    mutationFn: (file: File) => uploadFile('/upload/document', file),
-  })
+  return useMutation({ mutationFn: uploadDocument })
 }
 
 export function useUploadAudio() {
-  return useMutation({
-    mutationFn: (file: File) => uploadFile('/upload/audio', file),
-  })
+  return useMutation({ mutationFn: uploadAudio })
 }
 
 export function useDeleteFile() {

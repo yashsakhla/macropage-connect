@@ -8,12 +8,13 @@ import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw } 
 import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
 import { cn } from '@/lib/utils'
 import EmbeddedSignupFlow, { type EmbeddedSignupConnectedData } from '@/components/setup/EmbeddedSignupFlow'
+import WhatsAppPinStep from '@/components/setup/WhatsAppPinStep'
+import WhatsAppCompletionStep from '@/components/setup/WhatsAppCompletionStep'
 import toast from 'react-hot-toast'
 import { useUIStore } from '@/store/uiStore'
 import {
   useWhatsAppSetupStatus,
   useSaveBusinessInfo,
-  useSendTestMessage,
   useCompleteSetup,
 } from '@/hooks/useWhatsApp'
 
@@ -32,9 +33,6 @@ export default function WhatsAppSetup() {
   const navigate = useNavigate()
   const [showMobilePreview, setShowMobilePreview] = useState(false)
   const [metaConnected, setMetaConnected] = useState(false)
-  const [wabaId, setWabaId] = useState('')
-  const [phoneNumberId, setPhoneNumberId] = useState('')
-  const [testPhoneNumber, setTestPhoneNumber] = useState('')
 
   // Connection details captured directly from Embedded Signup — used to
   // populate the confirmation step immediately, before status refetch lands
@@ -62,14 +60,17 @@ export default function WhatsAppSetup() {
     isFetching: statusFetching,
   } = useWhatsAppSetupStatus()
 
-  // 3-step wizard: Business info → Connect Meta → Confirm.
+  // 4-step wizard: Business info → Connect Meta → Verify PIN → Get started.
   // Phone number/display name now come from Embedded Signup automatically,
-  // so there's no separate manual phone step to gate on.
+  // so there's no separate manual phone step to gate on. A returning user
+  // (e.g. after a refresh) lands on whichever step their status says is next —
+  // if phoneRegistered is already true, step 3 is skipped entirely.
   const currentStep = (() => {
     if (!status) return 1
     if (!status.businessInfoSaved) return 1
     if (!status.metaConnected)     return 2
-    return 3
+    if (!status.phoneRegistered)   return 3
+    return 4
   })()
 
   // Redirect immediately if setup is already complete
@@ -81,7 +82,6 @@ export default function WhatsAppSetup() {
 
   // Derived states — prefer API truth, fall back to local session state
   const isMetaConnected = (status?.metaConnected ?? false) || metaConnected
-  const testSent        = status?.testMessageSent ?? false
 
   // Business info mutation
   const {
@@ -92,16 +92,6 @@ export default function WhatsAppSetup() {
     reset:     resetSaveError,
   } = useSaveBusinessInfo()
 
-  // Test message
-  const {
-    mutate:    sendTest,
-    isPending: sending,
-    isError:   sendError,
-    error:     sendErr,
-    reset:     resetSend,
-    isSuccess: sendSuccess,
-  } = useSendTestMessage()
-
   const {
     mutate:    complete,
     isPending: completing,
@@ -111,7 +101,8 @@ export default function WhatsAppSetup() {
     const stepFlags = [
       { num: 1, label: 'Business info', done: status?.businessInfoSaved ?? false },
       { num: 2, label: 'Connect Meta',  done: status?.metaConnected     ?? false },
-      { num: 3, label: 'Confirm',       done: status?.testMessageSent   ?? false },
+      { num: 3, label: 'Verify PIN',    done: status?.phoneRegistered   ?? false },
+      { num: 4, label: 'Get started',  done: status?.setupComplete     ?? false },
     ]
     return (
       <div className="flex items-center gap-6 justify-center">
@@ -148,19 +139,6 @@ export default function WhatsAppSetup() {
         },
       }
     )
-  }
-
-  const handleSendTest = () => {
-    if (!testPhoneNumber.trim()) {
-      toast.error('Enter a phone number to send the test message to')
-      return
-    }
-    resetSend()
-    sendTest(testPhoneNumber.trim(), {
-      onSuccess: () => {
-        refetchStatus()
-      },
-    })
   }
 
   const handleComplete = () => {
@@ -218,7 +196,7 @@ export default function WhatsAppSetup() {
               <div className="grid grid-cols-1 gap-8 items-start">
                 <div className="lg:col-span-3">
                   <div className="mb-4">
-                    <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 3</div>
+                    <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 4</div>
                     <h2 className="text-2xl font-bold text-gray-900">Tell us about your business</h2>
                     <p className="text-sm text-gray-500 mt-1 mb-8">This information will appear on your WhatsApp Business profile and is shown to your customers.</p>
                   </div>
@@ -373,7 +351,7 @@ export default function WhatsAppSetup() {
             {currentStep === 2 && (
               <div className="animate-fade-in space-y-6">
                 <div>
-                  <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 3</div>
+                  <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 4</div>
                   <h2 className="text-2xl font-bold text-gray-900">Connect your Meta Business Account</h2>
                   <p className="text-sm text-gray-500 mt-1">This authorises Macropage Connect to send and receive WhatsApp messages on behalf of your business.</p>
                 </div>
@@ -382,8 +360,6 @@ export default function WhatsAppSetup() {
                   <EmbeddedSignupFlow
                     onConnected={(data: EmbeddedSignupConnectedData) => {
                       setMetaConnected(true)
-                      setWabaId(data.wabaId)
-                      setPhoneNumberId(data.phoneNumberId)
                       setConnectedWaba({
                         phoneNumber:   data.phoneNumber   ?? '',
                         displayName:   data.displayName   ?? '',
@@ -414,16 +390,29 @@ export default function WhatsAppSetup() {
                     disabled={!isMetaConnected}
                     className="btn-primary h-12 px-5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Continue to Confirmation
+                    Continue to Verification
                     <ArrowRight size={16} />
                   </button>
                 </div>
               </div>
             )}
+
+            {currentStep === 3 && (
+              <div className="animate-fade-in">
+                <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 3 of 4</div>
+                <WhatsAppPinStep
+                  phoneNumber={connectedWaba?.phoneNumber ?? status?.wabaAccount?.phoneNumber ?? null}
+                  onSuccess={() => {
+                    toast.success('WhatsApp number verified!')
+                    refetchStatus()
+                  }}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Right column — sticky live preview (hidden on final step) */}
-          {currentStep !== 3 && (
+          {/* Right column — sticky live preview (hidden on PIN + final steps) */}
+          {currentStep !== 3 && currentStep !== 4 && (
             <div className="lg:col-span-1 w-full">
               <div className="sticky top-24">
                 <WhatsAppProfilePreview
@@ -444,95 +433,14 @@ export default function WhatsAppSetup() {
         </div>
       </div>
 
-      {currentStep === 3 && (
+      {currentStep === 4 && (
         <div className="w-full px-6 pb-10">
-          {(() => {
-            const waba = connectedWaba ?? status?.wabaAccount
-            return waba && (
-              <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
-                <div className="w-9 h-9 bg-[#25D366] rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.374 0 0 5.373 0 12c0 2.122.554 4.136 1.534 5.9L0 24l6.286-1.534A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.8 0-3.49-.467-4.963-1.285l-.354-.21-3.73.91.932-3.629-.228-.37A9.971 9.971 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#085041] truncate">
-                    {waba.displayName}
-                  </p>
-                  <p className="text-xs text-[#1a5c3a]/70">
-                    {waba.phoneNumber}
-                  </p>
-                </div>
-                <span className="text-xs bg-[#1a5c3a] text-white rounded-full px-2.5 py-1 font-medium flex-shrink-0">
-                  Connected
-                </span>
-              </div>
-            )
-          })()}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6">
-              <h3 className="font-semibold mb-4">Send a test message</h3>
-              <label className="block text-sm">Send test to *</label>
-              <input
-                className="input mt-2"
-                placeholder="Your personal WhatsApp number"
-                value={testPhoneNumber}
-                onChange={(e) => setTestPhoneNumber(e.target.value)}
-              />
-              <div className="mt-4">
-                <button
-                  onClick={handleSendTest}
-                  disabled={sending}
-                  className="btn-primary w-full h-10 flex items-center justify-center gap-2"
-                >
-                  {sending ? <><Loader2 size={15} className="animate-spin" /> Sending...</> : 'Send test message'}
-                </button>
-              </div>
-              {(testSent || sendSuccess) && <div className="mt-4 text-sm text-[#1a5c3a]">✓ Test message sent! Check your WhatsApp.</div>}
-              {sendError && (
-                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mt-4">
-                  <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-700">Could not send test message</p>
-                    <p className="text-xs text-red-500 mt-0.5">
-                      {(sendErr as any)?.response?.data?.error?.message ?? 'Something went wrong. Please try again.'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleSendTest}
-                    disabled={sending}
-                    className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white border border-red-200 text-red-600 disabled:opacity-50"
-                  >
-                    <RefreshCw size={11} className={cn(sending && 'animate-spin')} />
-                    Retry
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6">
-              <h3 className="font-semibold mb-4">Connection status</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between"><div>Meta account connected</div><div className="text-[#1a5c3a]">✓</div></div>
-                <div className="flex items-center justify-between"><div>WABA created</div><div className="text-[#1a5c3a] font-mono text-xs">{connectedWaba?.wabaId || status?.wabaAccount?.wabaId || wabaId || '✓'}</div></div>
-                {(connectedWaba?.phoneNumberId || status?.wabaAccount?.phoneNumberId || phoneNumberId) && (
-                  <div className="flex items-center justify-between"><div>Phone Number ID</div><div className="text-[#1a5c3a] font-mono text-xs">{connectedWaba?.phoneNumberId || status?.wabaAccount?.phoneNumberId || phoneNumberId}</div></div>
-                )}
-                <div className="flex items-center justify-between"><div>Phone number registered</div><div className={isMetaConnected ? 'text-[#1a5c3a]' : 'text-gray-300'}>{isMetaConnected ? '✓':'○'}</div></div>
-                <div className="flex items-center justify-between"><div>Webhook configured</div><div className="text-[#1a5c3a]">✓</div></div>
-                <div className="flex items-center justify-between"><div>API credentials stored</div><div className="text-[#1a5c3a]">✓</div></div>
-                <div className="flex items-center justify-between"><div>Test message delivered</div><div className={(testSent||sendSuccess)? 'text-[#1a5c3a]' : 'text-gray-300'}>{(testSent||sendSuccess)? '✓':'○'}</div></div>
-              </div>
-              <div className="mt-6">
-                <button
-                  onClick={handleComplete}
-                  disabled={completing}
-                  className="btn-primary w-full h-11 flex items-center justify-center gap-2"
-                >
-                  {completing ? <><Loader2 size={15} className="animate-spin" /> Finishing...</> : 'Complete setup & go to dashboard →'}
-                </button>
-              </div>
-            </div>
+          <div className="max-w-2xl mx-auto">
+            <WhatsAppCompletionStep
+              connectedWaba={connectedWaba}
+              onGoToDashboard={handleComplete}
+              completing={completing}
+            />
           </div>
         </div>
       )}

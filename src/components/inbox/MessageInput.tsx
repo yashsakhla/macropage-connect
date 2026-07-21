@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search } from 'lucide-react'
+import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriangle } from 'lucide-react'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
 import type { Template, QuickReply } from '@/types'
@@ -24,12 +24,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 interface Props {
   onSend: (text: string) => void
+  onSendTemplate?: (tpl: Template) => void
   mode: 'reply' | 'note'
   setMode: (m: 'reply' | 'note') => void
   disabled?: boolean
+  /** True when the customer has never messaged, or hasn't replied within Meta's 24h window — free-form text is blocked and only an approved template may be sent. */
+  templateRequired?: boolean
 }
 
-export default function MessageInput({ onSend, mode, setMode, disabled }: Props) {
+export default function MessageInput({ onSend, onSendTemplate, mode, setMode, disabled, templateRequired }: Props) {
   const [text, setText] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showTpl, setShowTpl] = useState(false)
@@ -173,6 +176,13 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
   }
 
   function handleTemplateSelect(tpl: Template) {
+    // Outside the 24h window a template must be sent as-is (an actual WhatsApp
+    // template message), not copied into the free-text box and sent as TEXT.
+    if (templateRequired && mode !== 'note' && onSendTemplate) {
+      onSendTemplate(tpl)
+      setShowTpl(false)
+      return
+    }
     setText(tpl.body)
     setShowTpl(false)
     taRef.current?.focus()
@@ -347,108 +357,135 @@ export default function MessageInput({ onSend, mode, setMode, disabled }: Props)
             </button>
           </div>
 
-          {/* Textarea */}
-          <div
-            className={cn(
-              'rounded-xl px-3 py-2 mb-2 transition-colors',
-              isNote ? 'bg-amber-50/40 dark:bg-amber-900/10' : ''
-            )}
-          >
-            <textarea
-              ref={taRef}
-              value={text}
-              onChange={handleTextChange}
-              onKeyDown={handleKey}
-              placeholder={
-                isNote
-                  ? 'Add a note (only visible to team)...'
-                  : 'Type a message or / for quick replies...'
-              }
-              disabled={disabled}
-              rows={1}
-              className="w-full resize-none outline-none text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent min-h-[44px] max-h-[120px] leading-relaxed"
-              style={{ height: '44px' }}
-            />
-            {charCount > 800 && (
-              <p className="text-2xs text-gray-300 dark:text-gray-500 text-right">
-                {charCount} / 1000
-              </p>
-            )}
-          </div>
-
-          {/* Action row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={() => { setShowEmoji((v) => !v); setShowQR(false); setShowTpl(false) }}
-                className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
-                  showEmoji
-                    ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
-                    : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
-                )}
-                title="Emoji"
-              >
-                <Smile size={16} />
-              </button>
-              <button
-                onClick={() => fileRef.current?.click()}
-                className={iconBtnCls}
-                title="Attach file"
-              >
-                <Paperclip size={16} />
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*,application/pdf,audio/*"
-                className="hidden"
-              />
-              <button
-                onClick={() => { setShowTpl((v) => !v); setShowQR(false); setShowEmoji(false) }}
-                className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
-                  showTpl
-                    ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
-                    : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
-                )}
-                title="Send template"
-              >
-                <FileText size={16} />
-              </button>
-              <button
-                onClick={() => {
-                  setSlashTriggerPos(null)
-                  setQuickReplySearch('')
-                  setShowQR((v) => !v)
-                  setShowTpl(false)
-                  setShowEmoji(false)
-                }}
-                className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
-                  showQR
-                    ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
-                    : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
-                )}
-                title="Quick replies"
-              >
-                <MessageSquare size={16} />
-              </button>
+          {templateRequired && !isNote ? (
+            /* Meta policy: this customer has never messaged, or hasn't replied within
+               24h — free-form text can't reach them. Only an approved template can. */
+            <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/10 px-3.5 py-3 mb-1">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                    You can't send a normal message to this customer yet
+                  </p>
+                  <p className="text-2xs text-amber-700/90 dark:text-amber-400/80 mt-0.5 leading-relaxed">
+                    Per WhatsApp/Meta policy, a conversation can only be started (or resumed after 24 hours of silence)
+                    with an approved template message — free-form replies aren't allowed until the customer messages you first.
+                  </p>
+                  <button
+                    onClick={() => { setShowTpl(true); setShowQR(false); setShowEmoji(false) }}
+                    className="mt-2.5 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors"
+                  >
+                    <FileText size={13} /> Send a template
+                  </button>
+                </div>
+              </div>
             </div>
+          ) : (
+            <>
+              {/* Textarea */}
+              <div
+                className={cn(
+                  'rounded-xl px-3 py-2 mb-2 transition-colors',
+                  isNote ? 'bg-amber-50/40 dark:bg-amber-900/10' : ''
+                )}
+              >
+                <textarea
+                  ref={taRef}
+                  value={text}
+                  onChange={handleTextChange}
+                  onKeyDown={handleKey}
+                  placeholder={
+                    isNote
+                      ? 'Add a note (only visible to team)...'
+                      : 'Type a message or / for quick replies...'
+                  }
+                  disabled={disabled}
+                  rows={1}
+                  className="w-full resize-none outline-none text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent min-h-[44px] max-h-[120px] leading-relaxed"
+                  style={{ height: '44px' }}
+                />
+                {charCount > 800 && (
+                  <p className="text-2xs text-gray-300 dark:text-gray-500 text-right">
+                    {charCount} / 1000
+                  </p>
+                )}
+              </div>
 
-            <button
-              onClick={send}
-              disabled={!text.trim() || !!disabled}
-              className={cn(
-                'w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95',
-                text.trim() && !disabled
-                  ? cn('text-white', sendCls)
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed'
-              )}
-            >
-              <Send size={16} />
-            </button>
-          </div>
+              {/* Action row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => { setShowEmoji((v) => !v); setShowQR(false); setShowTpl(false) }}
+                    className={cn(
+                      'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
+                      showEmoji
+                        ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
+                        : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    )}
+                    title="Emoji"
+                  >
+                    <Smile size={16} />
+                  </button>
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    className={iconBtnCls}
+                    title="Attach file"
+                  >
+                    <Paperclip size={16} />
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,application/pdf,audio/*"
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => { setShowTpl((v) => !v); setShowQR(false); setShowEmoji(false) }}
+                    className={cn(
+                      'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
+                      showTpl
+                        ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
+                        : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    )}
+                    title="Send template"
+                  >
+                    <FileText size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSlashTriggerPos(null)
+                      setQuickReplySearch('')
+                      setShowQR((v) => !v)
+                      setShowTpl(false)
+                      setShowEmoji(false)
+                    }}
+                    className={cn(
+                      'w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
+                      showQR
+                        ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]'
+                        : 'hover:bg-[#f7f8f6] dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    )}
+                    title="Quick replies"
+                  >
+                    <MessageSquare size={16} />
+                  </button>
+                </div>
+
+                <button
+                  onClick={send}
+                  disabled={!text.trim() || !!disabled}
+                  className={cn(
+                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95',
+                    text.trim() && !disabled
+                      ? cn('text-white', sendCls)
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed'
+                  )}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

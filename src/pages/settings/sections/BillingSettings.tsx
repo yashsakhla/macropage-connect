@@ -1,16 +1,19 @@
 import { useState } from 'react'
-import { CheckCircle, Download, Info, Loader2, AlertCircle } from 'lucide-react'
+import { CheckCircle, CreditCard, Download, Info, Loader2, AlertCircle, Smartphone } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
 import PlanCard from '@/components/settings/PlanCard'
 import InvoiceTable from '@/components/settings/InvoiceTable'
-import { useBillingSubscription, useBillingPlans, usePaymentHistory, useCancelSubscription } from '@/hooks/useBilling'
+import { useBillingSubscription, useBillingPlans, usePaymentHistory, useBillingPaymentMethod, useCancelSubscription } from '@/hooks/useBilling'
 import { useRazorpay } from '@/hooks/useRazorpay'
 import type { BillingCycle, Invoice } from '@/types'
 
 const PLAN_ORDER: Record<string, number> = { STARTER: 0, GROWTH: 1, BUSINESS: 2, ENTERPRISE: 3 }
 const CYCLE_LABEL: Record<BillingCycle, string> = { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' }
+const PAYMENT_STATUS_BADGE: Record<string, string> = {
+  ACTIVE: 'badge-green', TRIALING: 'badge-blue', CANCELLED: 'badge-red', PAST_DUE: 'badge-yellow',
+}
 
 const METERS = [
   { label: 'Messages sent', key: 'messages', limit: 50000 },
@@ -27,6 +30,7 @@ export default function BillingSettings() {
   const { data: subscription, isLoading: subLoading, isError: subError } = useBillingSubscription()
   const { data: plans, isLoading: plansLoading } = useBillingPlans()
   const { data: paymentsData, isLoading: paymentsLoading } = usePaymentHistory(page)
+  const { data: paymentMethod, isLoading: paymentMethodLoading } = useBillingPaymentMethod()
   const { openCheckout } = useRazorpay()
   const { mutate: cancelSubscription, isPending: cancelling } = useCancelSubscription()
 
@@ -214,18 +218,58 @@ export default function BillingSettings() {
 
       {/* Payment method */}
       <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-semibold text-gray-800">Payment method</p>
-          <button className="btn-outline h-9 text-sm">+ Add payment method</button>
-        </div>
-        <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-xl p-4 flex items-center gap-4">
-          <div className="w-10 h-7 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
-          <div className="flex-1">
-            <p className="text-sm font-mono">•••• •••• •••• 4242</p>
-            <p className="text-xs text-gray-500">Expires 12/26</p>
+        <p className="text-sm font-semibold text-gray-800 mb-4">Payment method</p>
+        {paymentMethodLoading ? (
+          <div className="py-6 text-center text-gray-400 text-sm">Loading payment method…</div>
+        ) : paymentMethod ? (
+          <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-xl p-5 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <div className="flex items-center gap-3.5">
+              <div
+                className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0',
+                  paymentMethod.paymentMethod === 'upi'
+                    ? 'bg-gradient-to-br from-[#f7931e] to-[#1a5c3a]'
+                    : 'bg-gradient-to-br from-[#3395ff] to-[#0527c2]'
+                )}
+              >
+                {paymentMethod.paymentMethod === 'upi' ? <Smartphone size={20} /> : <CreditCard size={20} />}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  {paymentMethod.paymentMethod === 'upi' ? 'Paid via UPI' : 'Paid via Card'}
+                </p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-2xs text-gray-400">Powered by</span>
+                  <span className="text-2xs font-bold text-[#0527c2]">Razorpay</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-9 w-px bg-[#e8ebe8] hidden sm:block" />
+
+            <div className="flex items-center gap-8 flex-wrap">
+              <div>
+                <p className="text-2xs text-gray-400">Plan</p>
+                <p className="text-sm font-medium text-gray-800 capitalize">{paymentMethod.plan.toLowerCase()}</p>
+              </div>
+              <div>
+                <p className="text-2xs text-gray-400">Billing cycle</p>
+                <p className="text-sm font-medium text-gray-800">{CYCLE_LABEL[paymentMethod.billingCycle] ?? paymentMethod.billingCycle}</p>
+              </div>
+              <div>
+                <p className="text-2xs text-gray-400 mb-0.5">Status</p>
+                <span className={cn('badge', PAYMENT_STATUS_BADGE[paymentMethod.status] ?? 'badge-gray')}>
+                  {paymentMethod.status}
+                </span>
+              </div>
+            </div>
           </div>
-          <span className="text-2xs bg-[#e8f5ee] text-[#1a5c3a] rounded-full px-2 py-0.5">Primary</span>
-        </div>
+        ) : (
+          <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-xl p-4 flex items-center gap-3 text-gray-500">
+            <CreditCard size={16} className="flex-shrink-0" />
+            <p className="text-sm">No payment method on file</p>
+          </div>
+        )}
       </div>
 
       {/* Invoices */}

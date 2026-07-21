@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Info, CheckCircle, Copy, Plus } from 'lucide-react'
+import { Info, CheckCircle, Copy, Loader2, Plus } from 'lucide-react'
 import SettingsSection from '@/components/settings/SettingsSection'
 import APIKeyItem from '@/components/settings/APIKeyItem'
-import { useAPIKeys, useRevokeAPIKey } from '@/hooks/useSettings'
+import { useAPIKeys, useCreateAPIKey, useRevokeAPIKey } from '@/hooks/useSettings'
 import type { APIKey } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -18,6 +18,7 @@ const PERMISSIONS = [
 
 export default function APISettings() {
   const { data: keysData } = useAPIKeys()
+  const createKey = useCreateAPIKey()
   const revokeKey = useRevokeAPIKey()
 
   const keys = ((keysData as any)?.data ?? keysData ?? []) as APIKey[]
@@ -33,11 +34,19 @@ export default function APISettings() {
 
   function generate() {
     if (!keyName.trim()) return
-    const fakeKey = `mk_live_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`
-    setNewKeyValue(fakeKey)
-    setKeyName('')
-    setSelectedPerms(['read_conversations', 'send_messages'])
-    toast.success('API key created')
+    createKey.mutate(
+      { name: keyName.trim(), permissions: selectedPerms, expiresIn: expiry === 'never' ? undefined : expiry },
+      {
+        onSuccess: (res: any) => {
+          const key = res?.data?.key ?? res?.data?.data?.key ?? res?.key
+          setNewKeyValue(key ?? null)
+          setKeyName('')
+          setSelectedPerms(['read_conversations', 'send_messages'])
+          setExpiry('never')
+          toast.success('API key created')
+        },
+      }
+    )
   }
 
   function copyNewKey() {
@@ -102,8 +111,9 @@ export default function APISettings() {
             </select>
           </div>
 
-          <button onClick={generate} disabled={!keyName.trim()} className="btn-primary h-10 text-sm flex items-center gap-1.5">
-            <Plus size={14} /> Generate key
+          <button onClick={generate} disabled={!keyName.trim() || createKey.isPending} className="btn-primary h-10 text-sm flex items-center gap-1.5 disabled:opacity-50">
+            {createKey.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            {createKey.isPending ? 'Generating…' : 'Generate key'}
           </button>
         </div>
       </div>

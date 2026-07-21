@@ -27,9 +27,13 @@ export interface SetupStatus {
   businessInfoSaved: boolean
   metaConnected: boolean
   phoneVerified: boolean
+  phoneRegistered: boolean
   testMessageSent: boolean
   setupComplete: boolean
   tokenExpired?: boolean
+  totalTemplates?: number
+  approvedTemplates?: number
+  readyToSend?: boolean
   wabaAccount?: {
     phoneNumberId?: string
     wabaId?: string

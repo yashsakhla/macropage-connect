@@ -1,21 +1,21 @@
-import { Bell, Sun, Moon, LogOut, Search, Zap } from 'lucide-react'
+import { Bell, Sun, Moon, LogOut, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/hooks/useAuth'
 import { useUnreadCount } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
+import GlobalSearch from '@/components/search/GlobalSearch'
 
 export default function Navbar() {
   const { theme, toggleTheme, notificationPanelOpen, toggleNotificationPanel } = useUIStore()
-  const { user, isInTrial, trialDaysLeft } = useAuthStore()
+  const { user } = useAuthStore()
   const logout = useLogout()
   const navigate = useNavigate()
 
   const unreadCount = useUnreadCount().data ?? 0
   const showUpgradeTag = user?.plan !== 'ENTERPRISE'
-  const inTrial = isInTrial()
-  const daysLeft = trialDaysLeft()
+  // Trial day-count now lives in the sidebar's profile card, not here
 
   return (
     <header
@@ -34,22 +34,13 @@ export default function Navbar() {
 
       {/* Center: search */}
       <div className="flex-1 max-w-lg mx-6">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-          <input placeholder="Search task" className="w-full h-10 rounded-lg border border-gray-100 bg-white pl-9 pr-10 text-sm focus:outline-none" />
-          <button
-            type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md bg-gray-100 hover:bg-brand-300 hover:text-white text-gray-500 transition-colors"
-          >
-            <Search size={14} />
-          </button>
-        </div>
+        <GlobalSearch />
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-3">
 
-        {/* Upgrade / trial tag — desktop */}
+        {/* Upgrade tag — desktop */}
         {showUpgradeTag && (
           <button
             onClick={() => navigate('/plans')}
@@ -57,29 +48,11 @@ export default function Navbar() {
               'hidden sm:flex items-center gap-1.5',
               'h-8 px-3 rounded-xl text-xs font-semibold',
               'transition-all hover:scale-[1.02] active:scale-[0.98]',
-              inTrial && daysLeft > 7
-                ? 'bg-[#e8f5ee] text-[#1a5c3a] hover:bg-[#d1edd9]'
-                : inTrial && daysLeft <= 7
-                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                : 'bg-[#1a3d2b] text-white hover:bg-[#1a5c3a]'
+              'bg-[#1a3d2b] text-white hover:bg-[#1a5c3a]'
             )}
           >
-            {inTrial ? (
-              <>
-                {daysLeft <= 7 && (
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
-                  </span>
-                )}
-                {daysLeft > 0 ? `${daysLeft}d trial left` : 'Trial expired'}
-              </>
-            ) : (
-              <>
-                <Zap size={11} />
-                Upgrade plan
-              </>
-            )}
+            <Zap size={11} />
+            Upgrade plan
           </button>
         )}
 

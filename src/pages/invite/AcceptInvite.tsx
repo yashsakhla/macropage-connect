@@ -363,8 +363,12 @@ export default function AcceptInvite() {
 
               <p className="text-center text-xs text-gray-400">
                 By joining you agree to our{' '}
-                <a href="/terms" target="_blank" className="text-[#1a5c3a] underline">
+                <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#1a5c3a] underline">
                   Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#1a5c3a] underline">
+                  Privacy Policy
                 </a>
               </p>
             </form>

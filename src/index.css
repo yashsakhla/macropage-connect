@@ -40,6 +40,12 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .dark {
+    --text-primary: #f1f5f4;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+  }
+
   .dark body {
     background: #0f1724;
     color: #e6eef0;
@@ -65,6 +71,30 @@
 @layer components {
   /* Sidebar */
   .sidebar { width: var(--sidebar-width); position: fixed; left: 0; top: 0; height: 100vh; background: #ffffff; border-right: 1px solid #f0f0f0; z-index: 30; }
+
+  /* Aurora sidebar theme — light, but a visible blend of colour (mint → sky → lilac), not plain white */
+  .sidebar-aurora {
+    background: linear-gradient(160deg, #e3f6ea 0%, #e2eefb 45%, #eee7fa 75%, #fbe9f2 100%);
+  }
+  .sidebar-aurora-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(65px);
+    opacity: 0.6;
+    mix-blend-mode: normal;
+    pointer-events: none;
+  }
+  .sidebar-aurora-blob.b1 { width: 240px; height: 240px; top: -70px;  left: -70px; background: #7bd9a8; }
+  .sidebar-aurora-blob.b2 { width: 220px; height: 220px; top: 38%;   right: -90px; background: #8ec5fb; }
+  .sidebar-aurora-blob.b3 { width: 260px; height: 260px; bottom: -90px; left: -50px; background: #c9a6f5; }
+
+  .sidebar-nav-item { color: #57606f; }
+  .sidebar-nav-item:hover { color: #111827; background: rgba(17,24,39,0.05); }
+  .sidebar-nav-item.active {
+    color: var(--primary);
+    background: linear-gradient(90deg, rgba(45,122,79,0.12), rgba(37,99,235,0.08));
+    box-shadow: inset 0 0 0 1px rgba(26,92,58,0.08);
+  }
 
   /* Main content area */
   .main-content { margin-left: var(--sidebar-width); padding-top: var(--navbar-height); min-height: 100vh; }
@@ -103,20 +133,86 @@
   .badge-red { background: #fee2e2; color: #dc2626; }
   .badge-yellow { background: #fffbeb; color: #92400e; }
 
-  /* Company badge used in navbar */
-  .company-badge { display:inline-flex; align-items:center; padding:0.125rem 0.5rem; border-radius:9999px; font-size:0.75rem; font-weight:700; color:#fff; background: linear-gradient(90deg, var(--primary), var(--primary-light)); box-shadow: 0 1px 2px rgba(26,92,58,0.12); }
-  .company-badge.trial { background: linear-gradient(90deg, #f59e0b, #f97316); }
-  .company-badge.starter { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
-  .company-badge.growth { background: linear-gradient(90deg, #0ea5e9, #3b82f6); }
-  .company-badge.enterprise { background: linear-gradient(90deg, #7c3aed, #6d28d9); }
+  /* Company badge used in navbar / sidebar — every plan gets its own colour AND its own font treatment */
+  .company-badge {
+    display:inline-flex; align-items:center; gap:0.3em;
+    padding:0.1875rem 0.6rem; border-radius:9999px;
+    font-size:0.75rem; font-weight:700; color:#fff;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    box-shadow: 0 1px 2px rgba(26,92,58,0.12);
+    white-space: nowrap;
+  }
+
+  /* FREE / TRIAL — amber "ticket" look: italic slanted sans + dashed ring to signal it's temporary */
+  .company-badge.trial {
+    background: linear-gradient(90deg, #f59e0b, #fb923c);
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 2px rgba(217,119,6,0.25), inset 0 0 0 1.5px rgba(255,255,255,0.35);
+  }
+
+  /* STARTER — brand green, bold uppercase small-caps feel */
+  .company-badge.starter {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.6875rem;
+  }
+
+  /* GROWTH — cyan/blue, monospace for a "techy / metrics" feel */
+  .company-badge.growth {
+    background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+    font-family: theme('fontFamily.mono');
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.6875rem;
+  }
+
+  /* BUSINESS — magenta/violet blend, wide-tracked small-caps */
+  .company-badge.business {
+    background: linear-gradient(90deg, #d946ef, #7c3aed);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.6875rem;
+    font-weight: 800;
+  }
+
+  /* ENTERPRISE — gold-on-black, serif italic for a premium editorial feel */
+  .company-badge.enterprise {
+    background: linear-gradient(90deg, #1f2937, #111827);
+    color: #fbbf24;
+    font-family: theme('fontFamily.serif');
+    font-style: italic;
+    letter-spacing: 0.04em;
+    box-shadow: inset 0 0 0 1px rgba(251,191,36,0.4);
+  }
 
   /* small variant for profile card top-right */
-  .company-badge.small { padding: 0.0625rem 0.4rem; font-size:0.65rem; border-radius:999px; }
+  .company-badge.small { padding: 0.0625rem 0.45rem; font-size:0.65rem; border-radius:999px; }
+  .company-badge.small.growth,
+  .company-badge.small.starter,
+  .company-badge.small.business { font-size: 0.6rem; }
 
-  /* Profile card tweaks */
-  .profile-card { overflow: visible; }
-  .profile-card .email { white-space: normal; overflow: visible; }
-  .profile-card .name { white-space: normal; overflow: visible; }
+  /* Trial countdown meter — shown in the sidebar profile card */
+  .trial-meter-track { height: 5px; border-radius: 9999px; background: rgba(17,24,39,0.08); overflow: hidden; }
+  .trial-meter-fill { height: 100%; border-radius: 9999px; transition: width 0.3s ease; }
+
+  /* Profile card — light glass card with a green/blue/purple gradient rim, mirrors the sidebar's aurora blend */
+  .profile-card {
+    overflow: visible;
+    position: relative;
+    background: linear-gradient(135deg, var(--primary) 0%, #2563eb 55%, #7c3aed 100%);
+    padding: 1px;
+  }
+  .profile-card-inner {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(6px);
+    border-radius: inherit;
+  }
+  .profile-card.expired {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  }
   .company-name { font-size:0.95rem; font-weight:700; color:var(--text-primary); }
 
   /* Greeting shown in navbar */
