@@ -22,7 +22,7 @@ import { format, isToday, isYesterday } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import type { Conversation, ConversationStatus, Message } from '@/types'
+import type { Conversation, ConversationStatus, Message, Template } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
@@ -555,6 +555,25 @@ export default function ChatThread({ mobileBack }: Props) {
     endRef.current?.scrollIntoView({ behavior: 'instant' })
   }
 
+  function handleSendTemplate(tpl: Template) {
+    if (!selectedConversationId) return
+    if (!requireConnected()) return
+    sendMessage.mutate({
+      conversationId: selectedConversationId,
+      data: { content: tpl.body, type: 'TEMPLATE', templateId: tpl.id, templateName: tpl.name },
+    })
+    shouldAutoScroll.current = true
+    endRef.current?.scrollIntoView({ behavior: 'instant' })
+  }
+
+  // Meta only allows free-form replies within 24h of the customer's last inbound
+  // message. Outside that window (or if they've never messaged at all — a
+  // freshly-initiated conversation from the Contacts page) only an approved
+  // template message can reach them.
+  const lastInboundMessage = [...allMessages].reverse().find((m: any) => m.direction === 'inbound')
+  const templateRequired = !lastInboundMessage
+    || Date.now() - new Date(lastInboundMessage.createdAt).getTime() > 24 * 60 * 60 * 1000
+
   // ── No selection ──
   if (!selectedConversationId) {
     return (
@@ -757,9 +776,11 @@ export default function ChatThread({ mobileBack }: Props) {
       {/* Input */}
       <MessageInput
         onSend={handleSend}
+        onSendTemplate={handleSendTemplate}
         mode={inputMode}
         setMode={setInputMode}
         disabled={false}
+        templateRequired={templateRequired}
       />
 
       {showAssignModal && selectedConversationId && (

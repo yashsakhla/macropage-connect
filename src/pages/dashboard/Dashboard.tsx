@@ -87,7 +87,7 @@ function AccountHealthBanner({ health }: { health: import('@/types').DashboardHe
           <span className="font-medium text-gray-700 dark:text-gray-300">Tier: {tier}</span>
         )}
         <div className="flex items-center gap-2">
-          <span>{health.messagesSentToday ?? 0} / {health.tierLimit ?? 0} today</span>
+          <span>{health.messagesSentToday ?? 0} / {health.tierLimit ?? 0} this month</span>
           <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div className={cn('h-full rounded-full', config.bar)} style={{ width: `${Math.min(health.usagePercent ?? 0, 100)}%` }} />
           </div>

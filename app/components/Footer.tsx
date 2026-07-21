@@ -24,8 +24,8 @@ const footerLinks = {
     { label: "WhatsApp Us", href: "https://wa.me/917000000000" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
+    { label: "Privacy Policy", href: "https://www.macropageconnect.com/privacy-policy" },
+    { label: "Terms of Service", href: "https://www.macropageconnect.com/terms-of-service" },
     { label: "Cookie Policy", href: "#" },
     { label: "GDPR", href: "#" },
   ],
@@ -100,6 +100,8 @@ export default function Footer() {
                   <li key={link.label}>
                     <a
                       href={link.href}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className="text-sm text-gray-500 hover:text-brand-green transition-colors"
                     >
                       {link.label}

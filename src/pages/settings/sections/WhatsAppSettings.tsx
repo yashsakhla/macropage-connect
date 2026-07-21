@@ -224,7 +224,7 @@ export default function WhatsAppSettings() {
           {/* Messages today with progress bar */}
           <div className="bg-[#f7f8f6] rounded-2xl px-4 py-3">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-gray-400">Messages today</p>
+              <p className="text-xs text-gray-400">Messages this month</p>
               <p className="text-sm font-bold text-gray-800">
                 {waba.messagesToday?.toLocaleString('en-IN')}
                 {waba.tierLimit !== -1 && (

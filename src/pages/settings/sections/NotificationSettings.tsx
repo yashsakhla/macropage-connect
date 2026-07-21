@@ -39,11 +39,14 @@ const NOTIFICATION_GROUPS = [
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', checked && !disabled ? 'bg-[#1a5c3a]' : 'bg-gray-200', disabled && 'opacity-40 cursor-not-allowed')}
+      className={cn('relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors', checked && !disabled ? 'bg-[#1a5c3a]' : 'bg-gray-200', disabled && 'opacity-40 cursor-not-allowed')}
     >
-      <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', checked ? 'translate-x-4.5' : 'translate-x-0.5')} />
+      <span className={cn('inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-1')} />
     </button>
   )
 }
@@ -62,6 +65,13 @@ export default function NotificationSettings() {
   function setEvent(eventKey: string, channel: 'email' | 'inApp' | 'whatsapp', val: boolean) {
     const updated = { ...prefs, events: { ...prefs.events, [eventKey]: { ...prefs.events[eventKey], [channel]: val } } }
     setPrefs(updated)
+    update.mutate(updated)
+  }
+
+  function setQuietHoursEnabled(val: boolean) {
+    const updated = { ...prefs, quietHours: { ...prefs.quietHours, enabled: val } }
+    setPrefs(updated)
+    update.mutate(updated)
   }
 
   return (
@@ -127,7 +137,7 @@ export default function NotificationSettings() {
             <p className="text-sm font-semibold text-gray-800">Quiet hours</p>
             <p className="text-xs text-gray-500 mt-0.5">Pause notifications during specified hours</p>
           </div>
-          <Toggle checked={prefs.quietHours.enabled} onChange={(v) => setPrefs(p => ({ ...p, quietHours: { ...p.quietHours, enabled: v } }))} />
+          <Toggle checked={prefs.quietHours.enabled} onChange={setQuietHoursEnabled} />
         </div>
         {prefs.quietHours.enabled && (
           <div className="space-y-4">

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Download, Upload, Plus, Search, SlidersHorizontal,
   LayoutList, LayoutGrid, Users, Activity, UserMinus, UserPlus,
@@ -109,6 +109,7 @@ function StatCard({ label, value, sub, icon: Icon, bg, color }: {
 
 export default function Contacts() {
   const navigate = useNavigate()
+  const location = useLocation()
   // Only search/page/limit drive API calls; everything else is client-side
   const [filters, setFilters] = useState<ContactFilters>({ page: 1, limit: 500 })
   const [view, setView] = useState<View>('list')
@@ -129,6 +130,17 @@ export default function Contacts() {
   const [showCreateSegment, setShowCreateSegment] = useState(false)
   const [segmentName, setSegmentName] = useState('')
   const [segmentColor, setSegmentColor] = useState('#1a5c3a')
+
+  // Opened via a deep link (e.g. global search quick actions), which pass
+  // this through router state — mirrors the pattern used on the Templates page.
+  const consumedDeepLinkKey = useRef<string | null>(null)
+  useEffect(() => {
+    const state = location.state as { openCreate?: boolean; openImport?: boolean } | null
+    if (!state || consumedDeepLinkKey.current === location.key) return
+    consumedDeepLinkKey.current = location.key
+    if (state.openCreate) setShowForm(true)
+    if (state.openImport) setShowImport(true)
+  }, [location.key, location.state])
 
   const { data: contactsData } = useContacts(filters)
   const allContacts: Contact[] = (contactsData as any)?.data ?? []

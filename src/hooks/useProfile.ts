@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
+import { uploadImage } from '@/hooks/useUpload'
 import { useAuthStore } from '@/store/authStore'
 import type { UpdateProfilePayload, ChangePasswordPayload } from '@/types'
 
@@ -30,18 +31,15 @@ export function useUpdateProfile() {
 }
 
 export function useUpdateAvatar() {
+  const setUser = useAuthStore((s) => s.setUser)
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (file: File) => {
-      const form = new FormData()
-      form.append('avatar', file)
-      return api
-        .patch('/users/me/avatar', form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        .then((r) => r.data)
+    mutationFn: async (file: File) => {
+      const { url } = await uploadImage(file)
+      return api.patch('/users/me/avatar', { avatarUrl: url }).then((r) => r.data)
     },
-    onSuccess: () => {
+    onSuccess: ({ data }) => {
+      if (data?.user) setUser(data.user)
       qc.invalidateQueries({ queryKey: ['profile'] })
       toast.success('Avatar updated')
     },

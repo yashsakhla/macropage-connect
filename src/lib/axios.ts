@@ -1,5 +1,4 @@
 import axios from 'axios'
-import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 
 const DEFAULT_BASE = 'https://macropage-connect.onrender.com/api/v1'
@@ -41,6 +40,29 @@ function handleLogout() {
   }
 }
 
+// ── Error → toast message classification ─────────────────────────────────────
+// Single source of truth for "what should the user see when this request fails".
+// Actual toasting happens in the QueryClient's queryCache/mutationCache onError
+// (see main.tsx) — NOT here — so a request that's retried by React Query only
+// ever shows one toast (once it finally settles as an error), instead of one
+// per retry attempt, and mutations that already handle their own onError don't
+// get a second, duplicate toast layered on top of this one.
+export function getErrorToastMessage(error: any): string | null {
+  const status = error?.response?.status
+  if (status === 401) return null // handled by the refresh/logout flow below
+  if (status === 422) return null // validation — let the calling UI handle it
+  if (status === 404) return null // not found — let the calling UI handle it
+  if (status === 403) {
+    return (
+      error.response?.data?.error?.message ??
+      error.response?.data?.message ??
+      'You do not have permission to do this'
+    )
+  }
+  if (status && status >= 500) return 'Server error. Please try again later.'
+  return error.response?.data?.message ?? 'Something went wrong'
+}
+
 // ── RESPONSE — handle 401 with token refresh ─────────────────────────────────
 
 api.interceptors.response.use(
@@ -49,23 +71,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     const status = error.response?.status
-    const message = error.response?.data?.message ?? 'Something went wrong'
 
-    // Non-401 errors — show toasts as before
+    // Non-401 errors — classification/toasting is handled by the QueryClient
     if (status !== 401) {
-      if (status === 403) {
-        const msg403 =
-          error.response?.data?.error?.message ??
-          error.response?.data?.message ??
-          'You do not have permission to do this'
-        toast.error(msg403)
-      } else if (status === 422) {
-        // validation — let calling code handle
-      } else if (status && status >= 500) {
-        toast.error('Server error. Please try again later.')
-      } else if (status !== 404) {
-        toast.error(message)
-      }
       return Promise.reject(error)
     }
 

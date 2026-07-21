@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { useBillingPlans } from '@/hooks/useBilling'
+import { useBillingPlans, useBillingSubscription } from '@/hooks/useBilling'
 import { useRazorpay } from '@/hooks/useRazorpay'
 import { loadRazorpay } from '@/lib/razorpay'
 import { cn } from '@/lib/utils'
@@ -42,9 +42,10 @@ export default function Plans() {
   const { user, isPlanExpired, isInTrial, trialDaysLeft, effectivePlan } = useAuthStore()
 
   const { data: plans, isLoading: plansLoading, isError: plansError } = useBillingPlans()
+  const { data: subscription } = useBillingSubscription()
   const { openCheckout } = useRazorpay()
 
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(user?.billingCycle ?? 'monthly')
   const [processing, setProcessing]     = useState<string | null>(null)
 
   // Cheapest first, custom (enterprise) plans always last
@@ -59,19 +60,69 @@ export default function Plans() {
   const referencePlan = orderedPlans.find(p => !p.custom)
   const cycleSavings = (cycle: BillingCycle) => referencePlan?.pricing[cycle]?.savings
 
+  // The only fully reliable signal: match /billing/subscription's razorpayPlanId
+  // against each plan's razorpayPlanIds{monthly,quarterly,yearly} map from /billing/plans.
+  // Whichever plan+cycle owns that Razorpay plan id is the one truly active.
+  const matchedByRazorpay = (() => {
+    if (!subscription?.razorpayPlanId) return null
+    for (const plan of orderedPlans) {
+      const cycle = (Object.keys(plan.razorpayPlanIds ?? {}) as BillingCycle[])
+        .find((c) => plan.razorpayPlanIds?.[c] === subscription.razorpayPlanId)
+      if (cycle) return { planId: plan.id, cycle }
+    }
+    return null
+  })()
+
+  // /auth/me's `plan` field can lag or misreport (e.g. shows FREE for an
+  // account that's actually on an active paid plan). The razorpayPlanId match
+  // above is the primary source of truth; `billingPlan` (set on both plan
+  // selection and payment verification) is the next best signal, ahead of the
+  // unreliable `plan` field.
+  const currentPlanId = (matchedByRazorpay?.planId || subscription?.planId || user?.billingPlan || user?.plan || 'TRIAL').toUpperCase()
+  const isTrial = subscription ? subscription.status === 'trial' : isInTrial()
+
+  // Which billing cycle (monthly / quarterly / yearly) the active plan is on —
+  // prefer the cycle resolved from the razorpayPlanId match, falling back to
+  // /auth/me's billingCycle field. Trial accounts have none.
+  const activeCycleLabel = isTrial
+    ? 'Free'
+    : matchedByRazorpay
+    ? CYCLE_LABEL[matchedByRazorpay.cycle]
+    : user?.billingCycle
+    ? CYCLE_LABEL[user.billingCycle]
+    : null
+
   const expiredPlanLabel = (() => {
     if (!isPlanExpired()) return null
-    if (isInTrial() && trialDaysLeft() <= 0) return 'Free Trial'
-    const p = effectivePlan()
+    if (isTrial && trialDaysLeft() <= 0) return 'Free Trial'
+    const p = subscription?.planName || effectivePlan()
     return p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : 'Plan'
   })()
+
+  // Days remaining on the currently active plan — trial countdown, or the paid
+  // subscription's current billing period end. Only meaningful while not expired.
+  const activeDaysLeft = (() => {
+    if (expiredPlanLabel) return null
+    if (isTrial) return trialDaysLeft()
+    if (subscription?.currentPeriodEnd) {
+      const diff = Math.ceil(
+        (new Date(subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+      return Math.max(0, diff)
+    }
+    return null
+  })()
+
+  // All plans stay visible regardless of what's active — smaller tiers included —
+  // so the user can see the full lineup and switch either direction.
+  const visiblePlans = orderedPlans
 
   const highlightPlan = (location.state as { highlightPlan?: string } | null)?.highlightPlan
 
   useEffect(() => { loadRazorpay() }, [])
 
   const handleSelectPlan = async (planId: string) => {
-    if (user?.plan === planId) return
+    if (currentPlanId === planId) return
     const plan = orderedPlans.find(p => p.id === planId)
     if (plan?.custom) {
       window.open(plan.ctaHref || 'mailto:sales@macropage.in?subject=Enterprise%20Plan%20Inquiry', '_blank')
@@ -111,7 +162,7 @@ export default function Plans() {
 
           <div className="flex items-center">
             <span className="text-xs bg-[#e8f5ee] text-[#1a5c3a] rounded-full px-3 py-1 font-semibold">
-              Current: {user?.plan ?? 'TRIAL'}
+              Current: {currentPlanId}{activeCycleLabel ? ` · ${activeCycleLabel}` : ''}
             </span>
           </div>
         </div>
@@ -144,7 +195,7 @@ export default function Plans() {
         )}
 
         {/* Trial status banner */}
-        {user?.plan === 'TRIAL' && user?.trialEndsAt && (
+        {isTrial && user?.trialEndsAt && (
           <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 flex-wrap">
             <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center flex-shrink-0">
               <Sparkles size={18} className="text-white" />
@@ -198,10 +249,17 @@ export default function Plans() {
           <div className="py-24 text-center text-red-400 text-sm">Failed to load plans. Please try again later.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {orderedPlans.map(plan => {
+            {visiblePlans.map(plan => {
               const meta          = metaFor(plan)
               const tier           = plan.pricing[billingCycle]
-              const isCurrent     = user?.plan === plan.id
+              // A plan only counts as "active" while it hasn't expired — once
+              // expired we fall back to a plain plan picker with nothing pre-selected.
+              // When we know the exact active cycle (via razorpayPlanId match), the
+              // "Current plan" ribbon must only show on that cycle's toggle — otherwise
+              // e.g. a Monthly Growth subscriber would see Growth marked "current" on
+              // the Quarterly/Yearly tabs too.
+              const isCurrent     = !expiredPlanLabel && currentPlanId === plan.id &&
+                (!matchedByRazorpay || matchedByRazorpay.cycle === billingCycle)
               const isPopular     = plan.highlight
               const isProcessing  = processing === plan.id
               const isHighlighted = highlightPlan === plan.id
@@ -266,36 +324,43 @@ export default function Plans() {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      disabled={isCurrent || !!processing}
-                      className={cn(
-                        'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2',
-                        'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
-                        isCurrent
-                          ? 'bg-[#e8f5ee] text-[#1a5c3a] cursor-default'
-                          : isPopular || plan.custom
-                          ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
-                          : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
-                      )}
-                    >
-                      {isCurrent ? (
-                        <><Check size={15} /> Current plan</>
-                      ) : isProcessing ? (
-                        <><Loader2 size={15} className="animate-spin" /> Processing...</>
-                      ) : plan.custom ? (
-                        <><Headphones size={15} /> Contact sales</>
-                      ) : (
-                        <>
-                          <Zap size={15} />
-                          {user?.plan && user.plan !== 'TRIAL' &&
-                            planIndex(plan.id) > planIndex(user.plan)
-                            ? 'Upgrade'
-                            : 'Select plan'
-                          }
-                        </>
-                      )}
-                    </button>
+                    {isCurrent ? (
+                      // Same footprint as the CTA button below (w-full h-11) so this
+                      // card doesn't grow taller than its siblings in the grid.
+                      <div className="w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mb-5 bg-gradient-to-r from-[#123c28] to-[#1a5c3a] text-white">
+                        <Check size={15} />
+                        <span>
+                          This plan is active
+                          {activeDaysLeft !== null && ` · ${activeDaysLeft} day${activeDaysLeft === 1 ? '' : 's'} left`}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={!!processing}
+                        className={cn(
+                          'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2',
+                          'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
+                          isPopular || plan.custom
+                            ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
+                            : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
+                        )}
+                      >
+                        {isProcessing ? (
+                          <><Loader2 size={15} className="animate-spin" /> Processing...</>
+                        ) : plan.custom ? (
+                          <><Headphones size={15} /> Contact sales</>
+                        ) : (
+                          <>
+                            <Zap size={15} />
+                            {!isTrial && planIndex(plan.id) > planIndex(currentPlanId)
+                              ? 'Upgrade'
+                              : 'Select plan'
+                            }
+                          </>
+                        )}
+                      </button>
+                    )}
 
                     <ul className="space-y-2.5 flex-1">
                       {plan.features.map(f => (

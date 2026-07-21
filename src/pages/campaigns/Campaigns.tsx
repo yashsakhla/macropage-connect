@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Plus, Upload, Search, Calendar, ChevronDown,
   Megaphone, Send, TrendingUp, Zap, LayoutList, LayoutGrid, ArrowUp, ArrowDown
@@ -31,6 +31,7 @@ const STATUS_TABS: { value: CampaignStatus | 'all'; label: string }[] = [
 
 export default function Campaigns() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: campaignsData, isLoading } = useCampaigns()
   const campaigns: Campaign[] = (campaignsData as any)?.data ?? []
   const pause = usePauseCampaign()
@@ -47,6 +48,16 @@ export default function Campaigns() {
 
   const dateMenuRef = useRef<HTMLDivElement>(null)
   const sortMenuRef = useRef<HTMLDivElement>(null)
+
+  // Opened via a deep link (e.g. global search quick actions), which pass
+  // this through router state — mirrors the pattern used on the Templates page.
+  const consumedDeepLinkKey = useRef<string | null>(null)
+  useEffect(() => {
+    const state = location.state as { openWizard?: boolean } | null
+    if (!state || consumedDeepLinkKey.current === location.key) return
+    consumedDeepLinkKey.current = location.key
+    if (state.openWizard) setShowWizard(true)
+  }, [location.key, location.state])
 
   useEffect(() => {
     function handler(e: MouseEvent) {

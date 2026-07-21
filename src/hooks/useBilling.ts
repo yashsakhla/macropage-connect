@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
-import type { Subscription, BillingPlan, Payment } from '@/types'
+import type { Subscription, BillingPlan, Payment, PaymentMethod } from '@/types'
 
 const STATUS_MAP: Record<string, Subscription['status']> = {
   ACTIVE: 'active', TRIALING: 'trial', CANCELLED: 'cancelled', PAST_DUE: 'past_due',
@@ -27,6 +27,7 @@ export function useBillingSubscription() {
           planName: d.planName ?? (d.plan ? d.plan.charAt(0) + d.plan.slice(1).toLowerCase() : ''),
           status: STATUS_MAP[d.status] ?? 'trial',
           currentPeriodEnd: d.currentPeriodEnd ?? d.trialEndsAt ?? null,
+          razorpayPlanId: d.razorpayPlanId ?? undefined,
           usage: d.usage ?? { messages: 0, contacts: 0, storage: 0, teamMembers: 0, campaigns: 0 },
         } as Subscription
       }),
@@ -66,6 +67,19 @@ export function usePaymentHistory(page = 1, limit = 10) {
       api.get('/billing/payments', { params: { page, limit } }).then((r) => {
         const d = unwrap(r)
         return { payments: d?.payments ?? [], total: d?.total ?? 0 }
+      }),
+    staleTime: 60000,
+  })
+}
+
+export function useBillingPaymentMethod() {
+  return useQuery({
+    queryKey: ['billing', 'payment-method'],
+    queryFn: (): Promise<PaymentMethod | null> =>
+      api.get('/billing/payment-method').then((r) => {
+        const d = unwrap(r)
+        if (!d || typeof d !== 'object' || !d.paymentMethod) return null
+        return d as PaymentMethod
       }),
     staleTime: 60000,
   })

@@ -36,7 +36,10 @@ export function useWhatsAppSetupStatus() {
         // Handle both response shapes: { data: {...} } or direct {...}
         return r.data?.data ?? r.data
       }),
-    staleTime: 0,
+    staleTime: 30000,
+    // Poll so template approval status (Meta review) updates automatically
+    // without the user needing to refresh the completion step.
+    refetchInterval: 10000,
     retry: 2,
   })
 }
@@ -119,31 +122,19 @@ export function useConfirmPhoneOTP() {
   })
 }
 
-export function useSendTestMessage() {
+export function useRegisterPhone() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (phoneNumber: string) =>
-      api.post('/whatsapp/setup/send-test', { toPhone: phoneNumber })
+    mutationFn: (pin: string) =>
+      api.post('/whatsapp/register-phone', { pin })
         .then(r => r.data?.data ?? r.data),
 
-    onSuccess: (responseData: any) => {
-      toast.success(
-        `Test message sent to ${responseData?.sentTo ?? 'your number'}!`
-      )
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
     },
 
-    onError: (err: any) => {
-      const code = err?.response?.data?.error?.code
-      const msg  = err?.response?.data?.error?.message
-
-      if (code === 'NO_OWNER_PHONE') {
-        toast.error('Add your phone number in profile settings first')
-      } else if (code === 'TEMPLATE_ERROR') {
-        toast.error('hello_world template not available. Contact support.')
-      } else {
-        toast.error(msg ?? 'Could not send test message')
-      }
+    onError: () => {
+      // PIN errors are shown inline in WhatsAppPinStep — never toast/log the PIN itself
     },
   })
 }

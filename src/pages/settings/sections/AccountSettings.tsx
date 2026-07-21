@@ -1,8 +1,11 @@
+import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { CheckCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import SettingsSection from '@/components/settings/SettingsSection'
 import { useAccountSettings, useUpdateAccountSettings } from '@/hooks/useSettings'
+import { useUploadImage } from '@/hooks/useUpload'
 import type { AccountSettings } from '@/types'
 
 const INDUSTRIES = ['Technology', 'Retail & E-commerce', 'Healthcare', 'Education', 'Finance & Banking', 'Real Estate', 'Food & Beverage', 'Travel & Hospitality', 'Media & Entertainment', 'Manufacturing', 'Other']
@@ -11,13 +14,27 @@ export default function AccountSettingsPage() {
   const navigate = useNavigate()
   const { data: settings } = useAccountSettings()
   const update = useUpdateAccountSettings()
+  const uploadLogo = useUploadImage()
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
-  const { register, handleSubmit, formState: { isDirty, isSubmitting } } = useForm<AccountSettings>({
+  const { register, handleSubmit, watch, setValue, formState: { isDirty, isSubmitting } } = useForm<AccountSettings>({
     defaultValues: settings ?? undefined,
     values: settings ?? undefined,
   })
 
+  const companyLogoUrl = watch('companyLogoUrl')
+
   function onSubmit(values: AccountSettings) { update.mutate(values) }
+
+  function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    uploadLogo.mutate(file, {
+      onSuccess: ({ url }) => setValue('companyLogoUrl', url, { shouldDirty: true }),
+      onError: () => toast.error('Failed to upload logo'),
+    })
+  }
 
   return (
     <SettingsSection title="Account" subtitle="Manage your business account settings">
@@ -28,9 +45,27 @@ export default function AccountSettingsPage() {
           <p className="text-xs text-gray-500 mb-6">This information is used across your WhatsApp profile and invoices</p>
 
           <div className="flex items-center gap-5 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-[#1a3d2b] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">M</div>
+            <div className="w-16 h-16 rounded-2xl bg-[#1a3d2b] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 overflow-hidden">
+              {companyLogoUrl ? (
+                <img src={companyLogoUrl} alt="Company logo" className="w-full h-full object-cover" />
+              ) : 'M'}
+            </div>
             <div>
-              <button type="button" className="btn-outline h-9 text-sm">Upload logo</button>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleLogoFile}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={uploadLogo.isPending}
+                className="btn-outline h-9 text-sm"
+              >
+                {uploadLogo.isPending ? 'Uploading...' : 'Upload logo'}
+              </button>
               <p className="text-xs text-gray-400 mt-1">Recommended: 400×400px PNG or JPG · Max 2MB</p>
             </div>
           </div>

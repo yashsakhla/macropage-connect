@@ -95,7 +95,7 @@ export default function Login() {
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">Don't have an account? <Link to="/register" className="text-[var(--primary)] font-semibold">Create your free account →</Link></p>
-            <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <Link to="#" className="underline">Terms of Service</Link> and <Link to="#" className="underline">Privacy Policy</Link></p>
+            <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a></p>
           </form>
         </div>
 

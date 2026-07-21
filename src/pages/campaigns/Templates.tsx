@@ -1,13 +1,16 @@
-import { useState } from 'react'
-import { RefreshCw, Plus, Search, X, CheckCircle, Clock, XCircle, PauseCircle, Layers } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
+import { RefreshCw, Plus, Search, X, CheckCircle, Clock, XCircle, PauseCircle, Layers, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Template, TemplateStatus, TemplateCategory } from '@/types'
-import { useTemplates, useSyncTemplates, useDeleteTemplate } from '@/hooks/useTemplates'
+import { useTemplates, useSyncTemplates, useDeleteTemplate, useCreateTemplate } from '@/hooks/useTemplates'
 import { usePermissions } from '@/lib/permissions'
 import TemplateCard from '@/components/templates/TemplateCard'
 import TemplateForm from '@/components/templates/TemplateForm'
 import TemplatePreview from '@/components/templates/TemplatePreview'
+import SampleTemplateCard from '@/components/templates/SampleTemplateCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
+import { STARTER_TEMPLATES, type StarterTemplate } from '@/lib/starterTemplates'
 import { format } from 'date-fns'
 
 const STATUS_TABS: { value: TemplateStatus | 'all'; label: string }[] = [
@@ -126,7 +129,9 @@ export default function Templates() {
   const { data: templates = [], isLoading } = useTemplates()
   const syncTemplates = useSyncTemplates()
   const { canCreateTemplate, canDeleteTemplate } = usePermissions()
+  const location = useLocation()
 
+  const [view, setView] = useState<'mine' | 'samples'>('mine')
   const [statusFilter, setStatusFilter] = useState<TemplateStatus | 'all'>('all')
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'all'>('all')
   const [search, setSearch] = useState('')
@@ -135,13 +140,60 @@ export default function Templates() {
   const [editTemplate, setEditTemplate] = useState<Template | null>(null)
   const [wizardTemplate, setWizardTemplate] = useState<Template | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Template | null>(null)
+  const [submittingStarterId, setSubmittingStarterId] = useState<string | null>(null)
 
   const deleteTemplate = useDeleteTemplate()
+  const createTemplate = useCreateTemplate()
+
+  const handleUseStarter = (starter: StarterTemplate) => {
+    setSubmittingStarterId(starter.id)
+    createTemplate.mutate(starter.payload, {
+      onSettled: () => setSubmittingStarterId(null),
+    })
+  }
 
   const openWizard = (t: Template) => {
     setSelectedTemplate(null)
     setWizardTemplate(t)
   }
+
+  // Opened via a deep link (e.g. the WhatsApp setup completion step's
+  // "create/use/edit template" actions), which pass this through router state.
+  // Guarded by location.key so navigating here again with fresh state re-runs,
+  // but re-renders of the same navigation don't keep reopening a closed dialog.
+  const consumedDeepLinkKey = useRef<string | null>(null)
+  useEffect(() => {
+    const state = location.state as {
+      openCreate?: boolean
+      openSamples?: boolean
+      useTemplateId?: string
+      editTemplateId?: string
+      viewTemplateId?: string
+    } | null
+    if (!state || consumedDeepLinkKey.current === location.key) return
+    if (isLoading && (state.useTemplateId || state.editTemplateId || state.viewTemplateId)) return
+
+    consumedDeepLinkKey.current = location.key
+
+    if (state.openCreate && canCreateTemplate) {
+      setShowForm(true)
+    }
+    if (state.openSamples) {
+      setView('samples')
+    }
+    if (state.useTemplateId) {
+      const t = templates.find(x => x.id === state.useTemplateId)
+      if (t) openWizard(t)
+    }
+    if (state.editTemplateId && canCreateTemplate) {
+      const t = templates.find(x => x.id === state.editTemplateId)
+      if (t) setEditTemplate(t)
+    }
+    if (state.viewTemplateId) {
+      const t = templates.find(x => x.id === state.viewTemplateId)
+      if (t) setSelectedTemplate(t)
+    }
+  }, [location.key, location.state, isLoading, templates, canCreateTemplate])
 
   const confirmDelete = () => {
     if (!deleteTarget) return
@@ -185,21 +237,85 @@ export default function Templates() {
           <p className="page-subtitle mt-0.5">Manage your WhatsApp message templates</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            className="btn btn-outline h-9 gap-2"
-            onClick={() => syncTemplates.refetch()}
-            disabled={syncTemplates.isFetching}
-          >
-            <RefreshCw size={15} className={cn(syncTemplates.isFetching && 'animate-spin')} />
-            Sync from Meta
-          </button>
-          {canCreateTemplate && (
+          {view === 'mine' && (
+            <button
+              className="btn btn-outline h-9 gap-2"
+              onClick={() => syncTemplates.refetch()}
+              disabled={syncTemplates.isFetching}
+            >
+              <RefreshCw size={15} className={cn(syncTemplates.isFetching && 'animate-spin')} />
+              Sync from Meta
+            </button>
+          )}
+          {view === 'mine' && canCreateTemplate && (
             <button className="btn btn-primary h-9 gap-2" onClick={() => setShowForm(true)}>
               <Plus size={16} /> New Template
             </button>
           )}
         </div>
       </div>
+
+      {/* view tabs */}
+      <div className="flex items-center gap-1 bg-white border border-[#e8ebe8] rounded-xl p-1 mb-6 w-fit">
+        <button
+          onClick={() => setView('mine')}
+          className={cn(
+            'px-4 h-8 rounded-lg text-xs font-medium transition-all',
+            view === 'mine' ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 hover:text-gray-700'
+          )}
+        >
+          My Templates
+        </button>
+        <button
+          onClick={() => setView('samples')}
+          className={cn(
+            'px-4 h-8 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+            view === 'samples' ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 hover:text-gray-700'
+          )}
+        >
+          <Sparkles size={12} />
+          Sample Templates
+        </button>
+      </div>
+
+      {view === 'samples' ? (
+        <div>
+          <p className="text-sm text-gray-500 mb-5">
+            Ready-made templates you can submit for Meta review in one click — a starting point instead of building from scratch.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {STARTER_TEMPLATES.map(starter => (
+              <SampleTemplateCard
+                key={starter.id}
+                starter={starter}
+                existing={templates.find(t => t.name === starter.payload.name)}
+                canUse={canCreateTemplate}
+                isSubmitting={submittingStarterId === starter.id}
+                onUse={handleUseStarter}
+                onUseInCampaign={openWizard}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+      <>
+      {/* pending review notice */}
+      {counts.PENDING > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-6 flex items-center gap-3 flex-wrap">
+          <Clock size={16} className="text-amber-500 flex-shrink-0" />
+          <p className="text-sm text-amber-700 flex-1 min-w-[200px]">
+            {counts.PENDING} template{counts.PENDING !== 1 ? 's are' : ' is'} still pending Meta's review. Try syncing to check for the latest status.
+          </p>
+          <button
+            className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-white border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors flex-shrink-0"
+            onClick={() => syncTemplates.refetch()}
+            disabled={syncTemplates.isFetching}
+          >
+            <RefreshCw size={12} className={cn(syncTemplates.isFetching && 'animate-spin')} />
+            Sync from Meta
+          </button>
+        </div>
+      )}
 
       {/* stats */}
       <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 flex items-center gap-0 mb-6">
@@ -304,6 +420,8 @@ export default function Templates() {
             />
           ))}
         </div>
+      )}
+      </>
       )}
 
       {/* detail sidebar */}

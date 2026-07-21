@@ -88,7 +88,13 @@ export function useSendMessage() {
       data,
     }: {
       conversationId: string
-      data: { type?: string; content: string }
+      data: {
+        type?: string
+        content: string
+        templateId?: string
+        templateName?: string
+        variables?: Record<string, string>
+      }
     }) =>
       api
         .post(`/conversations/${conversationId}/messages`, data)
@@ -101,9 +107,10 @@ export function useSendMessage() {
         id: tempId,
         conversationId,
         direction: 'outbound',
-        type: 'text',
+        type: data.type === 'TEMPLATE' ? 'template' : 'text',
         status: 'SENDING',
         content: data.content,
+        templateName: data.templateName,
         agentId: user?.id,
         agentName: user?.name,
         createdAt: new Date().toISOString(),
@@ -218,10 +225,17 @@ export function useConversationByContact(contactId: string | null) {
     queryKey: ['conversation-by-contact', contactId],
     queryFn: () =>
       api
-        .get('/conversations', { params: { contactId, limit: 1 } })
+        .get('/conversations', { params: { contactId, limit: 50 } })
         .then(r => {
           const list = r.data?.data ?? r.data
-          return Array.isArray(list) ? (list[0] ?? null) : null
+          const candidates = Array.isArray(list) ? list : []
+          // Don't trust the contactId filter blindly — if the backend ignores it
+          // and just returns the most recently active conversation, list[0] can
+          // belong to a different contact entirely. Match on the contact id ourselves.
+          return candidates.find((c: any) => {
+            const cId = c.contact?._id ?? c.contact?.id ?? c.contactId
+            return cId === contactId
+          }) ?? null
         }),
     enabled: !!contactId,
     staleTime: 30_000,

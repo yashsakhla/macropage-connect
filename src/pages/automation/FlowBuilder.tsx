@@ -77,11 +77,26 @@ function FlowBuilderInner() {
     if (!hasMessage) { toast.error('Flow must have at least one Message node'); return }
     if (!hasEnd) { toast.error('Flow must have an End or Handoff node'); return }
 
-    if (id && id !== 'new') {
+    if (id && id !== 'new' && !isDirty) {
       publishFlow.mutate(id)
-    } else {
-      toast.error('Save the flow first before publishing')
+      return
     }
+
+    saveFlow.mutate(
+      { id: id !== 'new' ? id : undefined, data: { name: flowName, nodes, edges } },
+      {
+        onSuccess: (data) => {
+          const savedId = data?.data?.id ?? id
+          if (savedId && id === 'new') {
+            navigate(`/automation/flows/${savedId}`, { replace: true })
+            setFlowId(savedId)
+          }
+          setDirty(false)
+          setLastSaved('just now')
+          if (savedId) publishFlow.mutate(savedId)
+        },
+      }
+    )
   }
 
   const onNodeClick: NodeMouseHandler = useCallback((_, node) => {
