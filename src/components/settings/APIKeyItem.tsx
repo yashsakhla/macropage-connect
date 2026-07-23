@@ -31,32 +31,32 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
     <div className="px-5 py-4 border-b border-[#f5f5f5] last:border-0">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-900">{apiKey.name}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{apiKey.name}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             Created {formatDistanceToNow(new Date(apiKey.createdAt), { addSuffix: true })}
             {apiKey.lastUsedAt && ` · Last used ${formatDistanceToNow(new Date(apiKey.lastUsedAt), { addSuffix: true })}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={cn('text-2xs font-medium rounded-full px-2.5 py-0.5', apiKey.isActive ? 'bg-[#e8f5ee] text-[#1a5c3a]' : 'bg-red-50 text-red-500')}>
+          <span className={cn('text-2xs font-medium rounded-full px-2.5 py-0.5', apiKey.isActive ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400')}>
             {apiKey.isActive ? 'Active' : 'Expired'}
           </span>
           <div className="relative">
             <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">
-              <MoreVertical size={14} className="text-gray-400" />
+              <MoreVertical size={14} className="text-gray-400 dark:text-gray-500" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 bg-white border border-[#e8ebe8] rounded-xl shadow-lg z-20 py-1 min-w-32">
-                <button onClick={() => setMenuOpen(false)} className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-[#f7f8f6]">Edit</button>
-                <button onClick={() => { onRevoke(apiKey.id); setMenuOpen(false) }} className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50">Revoke</button>
+              <div className="absolute right-0 top-8 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg z-20 py-1 min-w-32">
+                <button onClick={() => setMenuOpen(false)} className="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-[#f7f8f6] dark:hover:bg-white/5">Edit</button>
+                <button onClick={() => { onRevoke(apiKey.id); setMenuOpen(false) }} className="w-full text-left px-3 py-1.5 text-xs text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30">Revoke</button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="bg-[#f7f8f6] rounded-xl px-4 py-2.5 mt-3 flex items-center gap-3">
-        <code className="font-mono text-sm text-gray-700 flex-1 truncate">
+      <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl px-4 py-2.5 mt-3 flex items-center gap-3">
+        <code className="font-mono text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
           {revealed ? apiKey.keyPreview.replace(/•+/, 'sk_live_xxxxxxxxxxxxxxxxxxxxxxx') : apiKey.keyPreview}
         </code>
         <button onClick={revealed ? () => setRevealed(false) : reveal} className="btn-ghost h-7 px-3 text-xs flex items-center gap-1.5 flex-shrink-0">
@@ -71,14 +71,14 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
 
       <div className="flex flex-wrap gap-1.5 mt-2.5">
         {apiKey.permissions.map((p) => (
-          <span key={p} className="bg-[#e8f5ee] text-[#1a5c3a] text-2xs rounded-full px-2.5 py-1">{p.replace(/_/g, ' ')}</span>
+          <span key={p} className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-2xs rounded-full px-2.5 py-1">{p.replace(/_/g, ' ')}</span>
         ))}
       </div>
 
       <div className="flex gap-4 mt-2">
-        <span className="text-2xs text-gray-400">{apiKey.requestsToday} requests today</span>
+        <span className="text-2xs text-gray-400 dark:text-gray-500">{apiKey.requestsToday} requests today</span>
         {apiKey.lastUsedAt && (
-          <span className="text-2xs text-gray-400">Last used {formatDistanceToNow(new Date(apiKey.lastUsedAt), { addSuffix: true })}</span>
+          <span className="text-2xs text-gray-400 dark:text-gray-500">Last used {formatDistanceToNow(new Date(apiKey.lastUsedAt), { addSuffix: true })}</span>
         )}
       </div>
     </div>

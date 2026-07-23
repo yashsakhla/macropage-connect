@@ -3,8 +3,8 @@ import type { OnlineStatus } from '@/types'
 
 const CONFIG = {
   online:  { dot: 'bg-green-500',  label: 'Online',  labelColor: 'text-[#1a5c3a]' },
-  away:    { dot: 'bg-amber-500',  label: 'Away',    labelColor: 'text-amber-600' },
-  offline: { dot: 'bg-gray-300',   label: 'Offline', labelColor: 'text-gray-400' },
+  away:    { dot: 'bg-amber-500',  label: 'Away',    labelColor: 'text-amber-600 dark:text-amber-400' },
+  offline: { dot: 'bg-gray-300',   label: 'Offline', labelColor: 'text-gray-400 dark:text-gray-500' },
 }
 
 interface OnlineIndicatorProps {

@@ -75,12 +75,12 @@ export default function DangerZone() {
         {ACTIONS.map((action, i) => (
           <div key={i} className={cn('flex items-center justify-between px-5 py-4', i < ACTIONS.length - 1 && 'border-b border-red-100')}>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{action.title}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{action.title}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{action.desc}</p>
             </div>
             <button
               onClick={() => action.confirm ? openAction(action) : undefined}
-              className="btn-outline h-9 text-sm border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 flex-shrink-0 ml-4"
+              className="btn-outline h-9 text-sm border-red-300 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400 flex-shrink-0 ml-4"
             >
               {action.btnLabel}
             </button>
@@ -90,17 +90,17 @@ export default function DangerZone() {
 
       {activeAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8]">
-              <h3 className="text-base font-bold text-red-600">{activeAction.title}</h3>
-              <button onClick={close}><X size={16} className="text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+              <h3 className="text-base font-bold text-red-600 dark:text-red-400">{activeAction.title}</h3>
+              <button onClick={close}><X size={16} className="text-gray-400 dark:text-gray-500" /></button>
             </div>
 
             <div className="p-6 space-y-4">
               {/* Simple confirm */}
               {activeAction.confirm === 'simple' && (
                 <>
-                  <p className="text-sm text-gray-700">{activeAction.confirmMessage ?? 'Are you sure you want to continue?'}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{activeAction.confirmMessage ?? 'Are you sure you want to continue?'}</p>
                   <div className="flex gap-3">
                     <button onClick={close} disabled={confirming} className="btn-ghost flex-1 h-9 text-sm disabled:opacity-40">Cancel</button>
                     <button
@@ -118,7 +118,7 @@ export default function DangerZone() {
               {/* Type to confirm */}
               {activeAction.confirm === 'type' && (
                 <>
-                  <p className="text-sm text-gray-700">Type <strong>DELETE</strong> to confirm:</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Type <strong>DELETE</strong> to confirm:</p>
                   <input className="input w-full h-9 text-sm" placeholder="DELETE" value={typeValue} onChange={(e) => setTypeValue(e.target.value)} />
                   <div className="flex gap-3">
                     <button onClick={close} className="btn-ghost flex-1 h-9 text-sm">Cancel</button>
@@ -132,10 +132,10 @@ export default function DangerZone() {
                 <>
                   {step === 1 && (
                     <>
-                      <p className="text-sm font-semibold text-gray-900">Are you absolutely sure?</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Are you absolutely sure?</p>
                       <ul className="space-y-1.5">
                         {['All your data will be permanently deleted', 'Your WhatsApp will be disconnected', 'All team members will lose access', 'Billing will be cancelled immediately', 'This cannot be undone'].map((w) => (
-                          <li key={w} className="flex items-start gap-2 text-xs text-red-700"><span className="mt-0.5">•</span>{w}</li>
+                          <li key={w} className="flex items-start gap-2 text-xs text-red-700 dark:text-red-400"><span className="mt-0.5">•</span>{w}</li>
                         ))}
                       </ul>
                       <div className="flex gap-3">
@@ -146,7 +146,7 @@ export default function DangerZone() {
                   )}
                   {step === 2 && (
                     <>
-                      <p className="text-sm text-gray-700">Type your account email to confirm:</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">Type your account email to confirm:</p>
                       <input className="input w-full h-9 text-sm" placeholder={user?.email ?? 'your@email.com'} value={typeValue} onChange={(e) => setTypeValue(e.target.value)} />
                       <div className="flex gap-3">
                         <button onClick={close} className="btn-outline flex-1 h-9 text-sm">Cancel</button>
@@ -156,7 +156,7 @@ export default function DangerZone() {
                   )}
                   {step === 3 && (
                     <>
-                      <p className="text-sm text-gray-700">Enter your password to confirm:</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">Enter your password to confirm:</p>
                       <input type="password" className="input w-full h-9 text-sm" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} />
                       <div className="flex gap-3">
                         <button onClick={close} className="btn-outline flex-1 h-9 text-sm">Cancel</button>

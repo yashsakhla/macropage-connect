@@ -62,7 +62,7 @@ export function useUpdateRule() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<RulePayload> }) =>
-      api.put(`/automation/rules/${id}`, data).then((r) => r.data),
+      api.patch(`/automation/rules/${id}`, data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['automation-rules'] })
       toast.success('Rule updated')

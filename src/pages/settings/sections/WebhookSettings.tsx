@@ -41,30 +41,30 @@ export default function WebhookSettings() {
   return (
     <SettingsSection title="Webhooks" subtitle="Send real-time events to your server when things happen in Macropage Connect">
       {/* Add webhook */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6">
-        <p className="text-sm font-semibold text-gray-800 mb-5">Add webhook endpoint</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Add webhook endpoint</p>
         <div className="space-y-4 max-w-xl">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Endpoint URL *</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Endpoint URL *</label>
             <input type="url" className="input w-full h-9 text-sm" placeholder="https://yourapp.com/webhook" value={url} onChange={e => setUrl(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Description (optional)</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description (optional)</label>
             <input className="input w-full h-9 text-sm" placeholder="e.g. CRM sync webhook" value={desc} onChange={e => setDesc(e.target.value)} />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-gray-700">Events to send</label>
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Events to send</label>
               <div className="flex gap-3">
                 <button onClick={selectAll} className="text-xs text-[#1a5c3a] hover:underline">Select all</button>
-                <button onClick={deselectAll} className="text-xs text-gray-400 hover:underline">Deselect all</button>
+                <button onClick={deselectAll} className="text-xs text-gray-400 dark:text-gray-500 hover:underline">Deselect all</button>
               </div>
             </div>
-            <div className="border border-[#e8ebe8] rounded-xl overflow-hidden">
+            <div className="border border-[#e8ebe8] dark:border-white/10 rounded-xl overflow-hidden">
               {EVENT_GROUPS.map(({ group, events }) => (
                 <div key={group} className="border-b border-[#f5f5f5] last:border-0">
-                  <button onClick={() => setExpandedGroups(p => ({ ...p, [group]: !p[group] }))} className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold text-gray-600 bg-[#f7f8f6] hover:bg-[#f0f5f1]">
+                  <button onClick={() => setExpandedGroups(p => ({ ...p, [group]: !p[group] }))} className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-[#f7f8f6] dark:bg-[#0f1724] hover:bg-[#f0f5f1] dark:hover:bg-emerald-950/30">
                     {group}
                     {expandedGroups[group] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
@@ -73,7 +73,7 @@ export default function WebhookSettings() {
                       {events.map(ev => (
                         <label key={ev} className="flex items-center gap-2.5 cursor-pointer">
                           <input type="checkbox" checked={selectedEvents.includes(ev)} onChange={() => toggleEvent(ev)} className="accent-[#1a5c3a]" />
-                          <code className="text-xs text-gray-700">{ev}</code>
+                          <code className="text-xs text-gray-700 dark:text-gray-300">{ev}</code>
                         </label>
                       ))}
                     </div>

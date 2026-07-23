@@ -41,6 +41,11 @@
   }
 
   .dark {
+    --page-bg: #0f1724;
+    --card-bg: #0b1220;
+    --card-border: rgba(255,255,255,0.08);
+    --primary-soft: rgba(45,122,79,0.2);
+
     --text-primary: #f1f5f4;
     --text-secondary: #9ca3af;
     --text-muted: #6b7280;
@@ -107,10 +112,9 @@
 
   /* Card */
   .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius:1rem; padding:1.25rem; box-shadow: var(--tw-shadow-card); }
-  .dark .card { background: #0b1220; border-color: rgba(255,255,255,0.04); }
 
   /* Inputs */
-  .input { width:100%; height:36px; padding:0 0.75rem; font-size:0.875rem; background:#fff; border:1px solid var(--card-border); border-radius:0.75rem; color:var(--text-primary); }
+  .input { width:100%; height:36px; padding:0 0.75rem; font-size:0.875rem; background:var(--card-bg); border:1px solid var(--card-border); border-radius:0.75rem; color:var(--text-primary); }
   .input::placeholder { color:#9ca3af; }
   .input:focus { outline: none; box-shadow: 0 0 0 4px rgba(200,230,212,0.15); border-color: var(--primary); }
 
@@ -132,6 +136,12 @@
   .badge-gray { background: #f3f4f6; color: #6b7280; }
   .badge-red { background: #fee2e2; color: #dc2626; }
   .badge-yellow { background: #fffbeb; color: #92400e; }
+
+  .dark .badge-green { color: #6ee7b7; }
+  .dark .badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .dark .badge-gray { background: rgba(255,255,255,0.08); color: #d1d5db; }
+  .dark .badge-red { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .dark .badge-yellow { background: rgba(245,158,11,0.15); color: #fcd34d; }
 
   /* Company badge used in navbar / sidebar — every plan gets its own colour AND its own font treatment */
   .company-badge {

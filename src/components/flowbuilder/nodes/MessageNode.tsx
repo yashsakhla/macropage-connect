@@ -37,7 +37,7 @@ export default function MessageNode({ id, data, selected }: NodeProps<FlowNodeDa
 
       <div className="px-4 py-3">
         {mediaUrl && (
-          <div className="mb-2 rounded-lg overflow-hidden border border-[#e8ebe8] bg-gray-50">
+          <div className="mb-2 rounded-lg overflow-hidden border border-[#e8ebe8] dark:border-white/10 bg-gray-50 dark:bg-white/5">
             {mediaType === 'image' ? (
               <img
                 src={mediaUrl}
@@ -46,25 +46,25 @@ export default function MessageNode({ id, data, selected }: NodeProps<FlowNodeDa
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
-              <div className="flex items-center gap-2 px-3 py-2 text-2xs text-gray-500">
+              <div className="flex items-center gap-2 px-3 py-2 text-2xs text-gray-500 dark:text-gray-400">
                 <MediaIcon size={13} />
                 <span className="capitalize">{mediaType || 'media'} attached</span>
               </div>
             )}
           </div>
         )}
-        <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
-          {(caption || text) || (mediaUrl ? '' : <span className="text-gray-300 italic">No message set</span>)}
+        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3">
+          {(caption || text) || (mediaUrl ? '' : <span className="text-gray-300 dark:text-gray-600 italic">No message set</span>)}
         </p>
         {buttons.length > 0 && (
           <div className="mt-2 space-y-1">
             {buttons.map((btn, i) => (
-              <div key={i} className="bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center">{btn}</div>
+              <div key={i} className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center">{btn}</div>
             ))}
           </div>
         )}
         {listOptionCount > 0 && (
-          <div className="mt-2 bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center font-medium flex items-center justify-center gap-1.5">
+          <div className="mt-2 bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center font-medium flex items-center justify-center gap-1.5">
             <List size={12} />
             {listButtonText || 'View options'} ({listOptionCount})
           </div>

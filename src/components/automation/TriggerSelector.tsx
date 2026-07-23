@@ -79,14 +79,14 @@ export default function TriggerSelector({ value, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-[#f7f8f6] rounded-xl p-1">
+      <div className="flex gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1">
         {TRIGGER_TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
               'flex-1 py-1.5 text-xs font-medium rounded-lg transition-all',
-              activeTab === t.id ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === t.id ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             )}
           >
             {t.label}
@@ -97,7 +97,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
       {activeTab === 'message' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Message contains (keywords):</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Message contains (keywords):</label>
             <div className="flex gap-2 mb-2">
               <input
                 className="input flex-1 h-9 text-sm"
@@ -110,7 +110,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(value.keywords ?? []).map((kw) => (
-                <span key={kw} className="inline-flex items-center gap-1 bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1.5">
+                <span key={kw} className="inline-flex items-center gap-1 bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-full px-3 py-1.5">
                   {kw}
                   <button onClick={() => removeKeyword('keywords', kw)}><X size={10} /></button>
                 </span>
@@ -119,7 +119,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Match type:</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Match type:</label>
             <div className="space-y-1.5">
               {['Any of these words', 'All of these words', 'Exact phrase', 'Regex pattern'].map((m) => (
                 <label key={m} className="flex items-center gap-2 cursor-pointer">
@@ -131,14 +131,14 @@ export default function TriggerSelector({ value, onChange }: Props) {
                     onChange={() => onChange({ ...value, matchType: m })}
                     className="accent-[#1a5c3a]"
                   />
-                  <span className="text-xs text-gray-700">{m}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{m}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Don't trigger if message also contains:</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Don't trigger if message also contains:</label>
             <div className="flex gap-2 mb-2">
               <input
                 className="input flex-1 h-9 text-sm"
@@ -151,7 +151,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(value.excludeKeywords ?? []).map((kw) => (
-                <span key={kw} className="inline-flex items-center gap-1 bg-red-50 text-red-600 text-xs rounded-full px-3 py-1.5">
+                <span key={kw} className="inline-flex items-center gap-1 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs rounded-full px-3 py-1.5">
                   {kw}
                   <button onClick={() => removeKeyword('excludeKeywords', kw)}><X size={10} /></button>
                 </span>
@@ -162,11 +162,11 @@ export default function TriggerSelector({ value, onChange }: Props) {
           <label className="flex items-center gap-2 cursor-pointer">
             <button
               onClick={() => onChange({ ...value, firstMessageOnly: !value.firstMessageOnly })}
-              className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', value.firstMessageOnly ? 'bg-[#1a5c3a]' : 'bg-gray-200')}
+              className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', value.firstMessageOnly ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10')}
             >
               <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', value.firstMessageOnly ? 'translate-x-4.5' : 'translate-x-0.5')} />
             </button>
-            <span className="text-xs text-gray-700">Only trigger on contact's first message</span>
+            <span className="text-xs text-gray-700 dark:text-gray-300">Only trigger on contact's first message</span>
           </label>
         </div>
       )}
@@ -174,7 +174,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
       {activeTab === 'button' && (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">When contact clicks a button:</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">When contact clicks a button:</label>
             <select className="input w-full h-9 text-sm" value={value.templateId ?? ''} onChange={(e) => onChange({ ...value, templateId: e.target.value })}>
               <option value="">Select template...</option>
               <option value="tpl-demo-1">Demo template (Yes / No)</option>
@@ -183,11 +183,11 @@ export default function TriggerSelector({ value, onChange }: Props) {
           </div>
           {value.templateId && (
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-gray-700">Select button:</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Select button:</label>
               {['Yes', 'No', 'Learn more'].map((btn) => (
                 <label key={btn} className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="buttonText" value={btn} checked={value.buttonText === btn} onChange={() => onChange({ ...value, buttonText: btn })} className="accent-[#1a5c3a]" />
-                  <span className="text-xs text-gray-700">{btn}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{btn}</span>
                 </label>
               ))}
             </div>
@@ -197,7 +197,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
 
       {activeTab === 'event' && (
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">When this event occurs:</label>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">When this event occurs:</label>
           <select className="input w-full h-9 text-sm" value={value.event ?? ''} onChange={(e) => onChange({ ...value, event: e.target.value })}>
             <option value="">Select event...</option>
             {EVENTS.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
@@ -208,12 +208,12 @@ export default function TriggerSelector({ value, onChange }: Props) {
       {activeTab === 'schedule' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Schedule type:</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Schedule type:</label>
             <div className="space-y-1.5">
               {['Once', 'Daily', 'Weekly', 'Monthly'].map((t) => (
                 <label key={t} className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="scheduleType" value={t} checked={(value.scheduleType ?? 'Daily') === t} onChange={() => onChange({ ...value, scheduleType: t })} className="accent-[#1a5c3a]" />
-                  <span className="text-xs text-gray-700">{t}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{t}</span>
                 </label>
               ))}
             </div>
@@ -221,11 +221,11 @@ export default function TriggerSelector({ value, onChange }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Time</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Time</label>
               <input type="time" className="input h-9 text-sm w-full" value={value.time ?? '09:00'} onChange={(e) => onChange({ ...value, time: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Timezone</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Timezone</label>
               <select className="input h-9 text-sm w-full" value={value.timezone ?? 'IST'} onChange={(e) => onChange({ ...value, timezone: e.target.value })}>
                 <option value="IST">IST (UTC+5:30)</option>
                 <option value="UTC">UTC</option>
@@ -236,13 +236,13 @@ export default function TriggerSelector({ value, onChange }: Props) {
 
           {value.scheduleType === 'Weekly' && (
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">Days:</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Days:</label>
               <div className="flex gap-1.5">
                 {DAYS_SHORT.map((d) => (
                   <button
                     key={d}
                     onClick={() => toggleDay(d)}
-                    className={cn('w-9 h-9 rounded-lg text-xs font-medium transition-all', (value.days ?? []).includes(d) ? 'bg-[#1a5c3a] text-white' : 'bg-[#f7f8f6] text-gray-500 hover:bg-[#e8f5ee]')}
+                    className={cn('w-9 h-9 rounded-lg text-xs font-medium transition-all', (value.days ?? []).includes(d) ? 'bg-[#1a5c3a] text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 hover:bg-[#e8f5ee] dark:hover:bg-emerald-950/30')}
                   >
                     {d}
                   </button>

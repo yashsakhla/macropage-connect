@@ -110,9 +110,19 @@ export interface KBItemPayload {
 }
 
 export interface AutomationStats {
-  automatedConversations: number
-  automatedPercent: number
-  activeRules: number
-  aiResponsesToday: number
-  aiAvgConfidence: number
+  automatedConversations: {
+    overall: number
+    today: number
+    todayPercent: number
+  }
+  rules: {
+    total: number
+    active: number
+  }
+  aiResponses: {
+    overall: number
+    today: number
+    todayPercent: number
+    avgConfidence: number
+  }
 }

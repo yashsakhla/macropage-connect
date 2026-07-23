@@ -79,25 +79,25 @@ export default function AISettings() {
   if (!config) return <PageLoader />
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] p-6">
+    <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724] p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">AI Chatbot</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Configure your AI assistant to automatically handle customer conversations</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Chatbot</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Configure your AI assistant to automatically handle customer conversations</p>
           </div>
           <div className="flex items-center gap-4">
             <div className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
-              config.isEnabled ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-500'
+              config.isEnabled ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
             )}>
               <span className={cn('w-1.5 h-1.5 rounded-full', config.isEnabled ? 'bg-purple-500 animate-pulse' : 'bg-gray-400')} />
               {config.isEnabled ? 'AI Active' : 'AI Disabled'}
             </div>
             <button
               onClick={handleToggleAI}
-              className={cn('relative inline-flex h-6 w-11 rounded-full transition-colors', config.isEnabled ? 'bg-[#1a5c3a]' : 'bg-gray-200')}
+              className={cn('relative inline-flex h-6 w-11 rounded-full transition-colors', config.isEnabled ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10')}
             >
               <span className={cn('inline-block h-4.5 w-4.5 rounded-full bg-white shadow transition-transform mt-0.5', config.isEnabled ? 'translate-x-5.5' : 'translate-x-0.5')} />
             </button>
@@ -106,30 +106,30 @@ export default function AISettings() {
 
         {/* Setup progress */}
         {!setupComplete && (
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 mb-6">
-            <p className="text-sm font-semibold text-gray-800 mb-4">Complete setup to activate AI</p>
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 mb-6">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Complete setup to activate AI</p>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               {SETUP_STEPS.map((step, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className={cn(
                     'w-5 h-5 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0',
-                    step.done ? 'bg-[#1a5c3a] text-white' : 'bg-gray-200 text-gray-500'
+                    step.done ? 'bg-[#1a5c3a] text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400'
                   )}>
                     {step.done ? '✓' : i + 1}
                   </div>
-                  <span className={cn('text-xs', step.done ? 'text-gray-700 font-medium' : 'text-gray-400')}>{step.label}</span>
-                  {i < SETUP_STEPS.length - 1 && <div className="h-px w-4 bg-gray-200 hidden sm:block" />}
+                  <span className={cn('text-xs', step.done ? 'text-gray-700 dark:text-gray-300 font-medium' : 'text-gray-400 dark:text-gray-500')}>{step.label}</span>
+                  {i < SETUP_STEPS.length - 1 && <div className="h-px w-4 bg-gray-200 dark:bg-white/10 hidden sm:block" />}
                 </div>
               ))}
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div className="w-full bg-gray-100 dark:bg-white/10 rounded-full h-1.5">
               <div className="bg-[#1a5c3a] h-1.5 rounded-full transition-all" style={{ width: `${(doneSteps / totalSteps) * 100}%` }} />
             </div>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white border border-[#e8ebe8] rounded-xl p-1 mb-6 w-fit">
+        <div className="flex gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 mb-6 w-fit">
           {([
             ['config', 'Configuration'],
             ['knowledge', 'Knowledge Base'],
@@ -138,7 +138,7 @@ export default function AISettings() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={cn('px-4 py-1.5 text-sm font-medium rounded-lg transition-all', activeTab === id ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700')}
+              className={cn('px-4 py-1.5 text-sm font-medium rounded-lg transition-all', activeTab === id ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}
             >
               {label}
             </button>
@@ -162,9 +162,9 @@ export default function AISettings() {
       {/* Disable confirm */}
       {confirmDisable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center space-y-4">
-            <p className="text-sm font-bold text-gray-900">Disable AI chatbot?</p>
-            <p className="text-xs text-gray-500">AI will stop responding automatically. All incoming messages will be handled by human agents.</p>
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center space-y-4">
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Disable AI chatbot?</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">AI will stop responding automatically. All incoming messages will be handled by human agents.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDisable(false)} className="btn-ghost h-9 text-sm flex-1">Cancel</button>
               <button onClick={() => { handleChange({ isEnabled: false }); setConfirmDisable(false) }} className="btn-danger h-9 text-sm flex-1">Disable AI</button>

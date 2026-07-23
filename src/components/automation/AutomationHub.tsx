@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import RuleCard from './RuleCard'
 import RuleForm from './RuleForm'
 import QuickRepliesPanel from './QuickRepliesPanel'
-import { useRules, useToggleRule, useDeleteRule, useCreateRule, useAutomationLimits } from '@/hooks/useAutomation'
+import { useRules, useToggleRule, useDeleteRule, useCreateRule, useUpdateRule, useAutomationLimits } from '@/hooks/useAutomation'
 import { useFlows, useToggleFlow, useDeleteFlow } from '@/hooks/useFlows'
 import { usePermissions, usePlanFeature } from '@/lib/permissions'
 import type { AutomationRule } from '@/types/automation'
@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<ConversationFlow['status'], string> = {
 const FLOW_COLORS = ['from-blue-400 to-blue-600', 'from-green-400 to-green-600', 'from-purple-400 to-purple-600']
 
 function FlowMinimap({ nodes }: { nodes: ConversationFlow['nodes'] }) {
-  if (!nodes.length) return <div className="bg-[#f7f8f6] rounded-xl mt-3 h-24 flex items-center justify-center"><span className="text-xs text-gray-300">No nodes</span></div>
+  if (!nodes.length) return <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl mt-3 h-24 flex items-center justify-center"><span className="text-xs text-gray-300 dark:text-gray-600">No nodes</span></div>
   const maxX = Math.max(...nodes.map((n) => n.position.x)) || 1
   const maxY = Math.max(...nodes.map((n) => n.position.y)) || 1
   const scaleX = 220 / (maxX + 60)
@@ -29,7 +29,7 @@ function FlowMinimap({ nodes }: { nodes: ConversationFlow['nodes'] }) {
   const colors: Record<string, string> = { start: '#1a5c3a', message: '#3b82f6', condition: '#a855f7', ai: '#ec4899', delay: '#6b7280', end: '#1f2937', handoff: '#1a5c3a', action: '#f59e0b' }
 
   return (
-    <div className="bg-[#f7f8f6] rounded-xl mt-3 h-24 overflow-hidden relative">
+    <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl mt-3 h-24 overflow-hidden relative">
       <svg width="100%" height="100%" viewBox="0 0 240 88">
         {nodes.map((node) => {
           const x = node.position.x * scaleX + 8
@@ -67,6 +67,7 @@ export default function AutomationHub({ activeTab }: Props) {
   const toggleRule = useToggleRule()
   const deleteRule = useDeleteRule()
   const createRule = useCreateRule()
+  const updateRule = useUpdateRule()
   const toggleFlow = useToggleFlow()
   const deleteFlow = useDeleteFlow()
 
@@ -85,9 +86,9 @@ export default function AutomationHub({ activeTab }: Props) {
   const customRules = allRules.filter((r) => !r.isBuiltIn)
 
   const BUILT_IN_ICONS = [
-    { icon: Hand, bg: 'bg-amber-50', color: 'text-amber-600' },
-    { icon: Clock, bg: 'bg-blue-50', color: 'text-blue-600' },
-    { icon: Moon, bg: 'bg-purple-50', color: 'text-purple-600' },
+    { icon: Hand, bg: 'bg-amber-50 dark:bg-amber-950/30', color: 'text-amber-600 dark:text-amber-400' },
+    { icon: Clock, bg: 'bg-blue-50 dark:bg-blue-950/30', color: 'text-blue-600 dark:text-blue-400' },
+    { icon: Moon, bg: 'bg-purple-50 dark:bg-purple-950/30', color: 'text-purple-600 dark:text-purple-400' },
   ]
 
   return (
@@ -97,13 +98,13 @@ export default function AutomationHub({ activeTab }: Props) {
         <div>
           {!rulesEnabled ? (
             <div className="card p-12 text-center">
-              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Lock size={24} className="text-amber-500" />
+              <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Lock size={24} className="text-amber-500 dark:text-amber-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {isExpiredTrial ? 'Your free trial has ended' : 'Automation not available on your plan'}
               </p>
-              <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-sm mx-auto">
                 {isExpiredTrial
                   ? 'Choose a plan to continue using automated rules and replies.'
                   : 'Upgrade your plan to start automating replies.'}
@@ -116,7 +117,7 @@ export default function AutomationHub({ activeTab }: Props) {
           <div className="space-y-6">
           {/* Built-in rules */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Built-in automations</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Built-in automations</p>
             <div className="space-y-3">
               {builtinRules.map((rule, i) => {
                 const { icon: Icon, bg, color } = BUILT_IN_ICONS[i]
@@ -129,10 +130,10 @@ export default function AutomationHub({ activeTab }: Props) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-gray-900">{rule.name}</p>
-                          {isOn && <span className="flex items-center gap-1 text-2xs text-green-600 font-medium"><CheckCircle size={10} /> Active</span>}
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{rule.name}</p>
+                          {isOn && <span className="flex items-center gap-1 text-2xs text-green-600 dark:text-green-400 font-medium"><CheckCircle size={10} /> Active</span>}
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{
                           i === 0 ? 'Sent when a contact messages you for the first time' :
                           i === 1 ? 'Sent when someone messages outside your business hours' :
                           'Sent when all agents are marked Away'
@@ -147,7 +148,7 @@ export default function AutomationHub({ activeTab }: Props) {
                           disabled={!canManageAutomation}
                           className={cn(
                             'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                            isOn ? 'bg-[#1a5c3a]' : 'bg-gray-200',
+                            isOn ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10',
                             !canManageAutomation && 'opacity-50 cursor-not-allowed'
                           )}
                         >
@@ -167,12 +168,12 @@ export default function AutomationHub({ activeTab }: Props) {
           {/* Custom rules */}
           <div>
             {limits?.plan === 'STARTER' && rulesEnabled && (
-              <p className="text-2xs text-gray-400 mb-3">
+              <p className="text-2xs text-gray-400 dark:text-gray-500 mb-3">
                 {limits.currentRuleCount} / {limits.maxCustomRules} custom rules used
               </p>
             )}
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Custom rules</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custom rules</p>
               {canManageAutomation && (
                 <button
                   onClick={() => {
@@ -190,8 +191,8 @@ export default function AutomationHub({ activeTab }: Props) {
             {customRules.length === 0 ? (
               <div className="card p-12 text-center">
                 <Zap size={36} className="text-gray-200 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-gray-700">No custom rules yet</p>
-                <p className="text-xs text-gray-400 mt-1">Create rules to auto-respond based on keywords, buttons or time</p>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">No custom rules yet</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Create rules to auto-respond based on keywords, buttons or time</p>
                 {canManageAutomation && (
                   <button
                     onClick={() => {
@@ -235,13 +236,13 @@ export default function AutomationHub({ activeTab }: Props) {
         <div>
           {!flowsEnabled ? (
             <div className="card p-12 text-center">
-              <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-purple-50 dark:bg-purple-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Lock size={24} className="text-purple-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {isExpiredTrial ? 'Your free trial has ended' : 'Flows are available on Growth plan and above'}
               </p>
-              <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-sm mx-auto">
                 {isExpiredTrial
                   ? 'Choose a plan to continue building conversation flows.'
                   : 'Build visual multi-step conversations with conditions, delays, and automated handoffs.'}
@@ -253,7 +254,7 @@ export default function AutomationHub({ activeTab }: Props) {
           ) : (
             <>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-semibold text-gray-800">Conversation flows</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Conversation flows</p>
                 {canManageAutomation && (
                   <button onClick={() => navigate('/automation/flows/new')} className="btn-primary h-9 text-sm">+ New flow</button>
                 )}
@@ -262,8 +263,8 @@ export default function AutomationHub({ activeTab }: Props) {
               {(flows as ConversationFlow[]).length === 0 ? (
                 <div className="card p-12 text-center">
                   <GitBranch size={36} className="text-gray-200 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-gray-700">No flows yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Build visual conversation flows with drag-and-drop</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">No flows yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Build visual conversation flows with drag-and-drop</p>
                   {canManageAutomation && (
                     <button onClick={() => navigate('/automation/flows/new')} className="btn-primary h-9 text-sm mt-4">Create first flow</button>
                   )}
@@ -271,32 +272,32 @@ export default function AutomationHub({ activeTab }: Props) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {(flows as ConversationFlow[]).map((flow, idx) => (
-                    <div key={flow.id} className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer group" onClick={() => navigate(`/automation/flows/${flow.id}`)}>
+                    <div key={flow.id} className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer group" onClick={() => navigate(`/automation/flows/${flow.id}`)}>
                       <div className={cn('h-1.5 bg-gradient-to-r', FLOW_COLORS[idx % FLOW_COLORS.length])} />
                       <div className="p-5">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{flow.name}</p>
-                            {flow.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{flow.description}</p>}
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{flow.name}</p>
+                            {flow.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{flow.description}</p>}
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={cn('badge text-2xs', STATUS_COLORS[flow.status])}>{flow.status}</span>
                             {canManageAutomation && (
                               <div className="relative">
                                 <button
-                                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#f7f8f6] opacity-0 group-hover:opacity-100"
+                                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#f7f8f6] dark:hover:bg-white/5 opacity-0 group-hover:opacity-100"
                                   onClick={(e) => { e.stopPropagation(); setFlowMenuOpen(flowMenuOpen === flow.id ? null : flow.id) }}
                                 >
-                                  <MoreVertical size={13} className="text-gray-400" />
+                                  <MoreVertical size={13} className="text-gray-400 dark:text-gray-500" />
                                 </button>
                                 {flowMenuOpen === flow.id && (
-                                  <div className="absolute right-0 top-7 bg-white border border-[#e8ebe8] rounded-xl shadow-lg z-20 py-1 min-w-28" onClick={(e) => e.stopPropagation()}>
+                                  <div className="absolute right-0 top-7 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg z-20 py-1 min-w-28" onClick={(e) => e.stopPropagation()}>
                                     {[
                                       { label: 'Edit', action: () => navigate(`/automation/flows/${flow.id}`) },
                                       { label: 'Duplicate', action: () => setFlowMenuOpen(null) },
                                       { label: 'Delete', action: () => { deleteFlow.mutate(flow.id); setFlowMenuOpen(null) }, danger: true },
                                     ].map(({ label, action, danger }) => (
-                                      <button key={label} onClick={action} className={cn('w-full text-left px-3 py-1.5 text-xs hover:bg-[#f7f8f6]', danger ? 'text-red-500' : 'text-gray-700')}>{label}</button>
+                                      <button key={label} onClick={action} className={cn('w-full text-left px-3 py-1.5 text-xs hover:bg-[#f7f8f6] dark:hover:bg-white/5', danger ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-300')}>{label}</button>
                                     ))}
                                   </div>
                                 )}
@@ -308,11 +309,11 @@ export default function AutomationHub({ activeTab }: Props) {
                         <FlowMinimap nodes={flow.nodes} />
 
                         <div className="flex justify-between mt-3 pt-3 border-t border-[#f5f5f5]">
-                          <span className="text-xs text-gray-400">{flow.nodes.length} steps</span>
-                          <span className="text-xs text-gray-400">{flow.stats.totalTriggered} triggered</span>
-                          <span className="text-xs text-gray-400">{flow.stats.completionRate}% completion</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{flow.nodes.length} steps</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{flow.stats.totalTriggered} triggered</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{flow.stats.completionRate}% completion</span>
                         </div>
-                        {flow.trigger && <p className="text-2xs text-gray-400 mt-1.5">Triggered by: {flow.trigger.type.replace(/_/g, ' ')}</p>}
+                        {flow.trigger && <p className="text-2xs text-gray-400 dark:text-gray-500 mt-1.5">Triggered by: {flow.trigger.type.replace(/_/g, ' ')}</p>}
                       </div>
 
                       <div className="flex items-center justify-between px-5 py-3 border-t border-[#f5f5f5]">
@@ -331,7 +332,7 @@ export default function AutomationHub({ activeTab }: Props) {
                           disabled={!canManageAutomation}
                           className={cn(
                             'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                            flow.status === 'active' ? 'bg-[#1a5c3a]' : 'bg-gray-200',
+                            flow.status === 'active' ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10',
                             !canManageAutomation && 'opacity-50 cursor-not-allowed'
                           )}
                         >
@@ -355,13 +356,13 @@ export default function AutomationHub({ activeTab }: Props) {
         <div>
           {!aiEnabled ? (
             <div className="card p-12 text-center">
-              <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-purple-50 dark:bg-purple-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Lock size={24} className="text-purple-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {isExpiredTrial ? 'Your free trial has ended' : 'AI Bot is available on Business plan and above'}
               </p>
-              <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-sm mx-auto">
                 {isExpiredTrial
                   ? 'Choose a plan to continue using the AI chatbot.'
                   : 'Let AI understand and respond to open-ended customer questions automatically.'}
@@ -373,8 +374,8 @@ export default function AutomationHub({ activeTab }: Props) {
           ) : (
             <div className="card p-12 text-center">
               <Sparkles size={36} className="text-purple-400 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-gray-700">AI Chatbot Configuration</p>
-              <p className="text-xs text-gray-400 mt-1">Configure your AI assistant settings</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">AI Chatbot Configuration</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Configure your AI assistant settings</p>
               {canManageAutomation && (
                 <button onClick={() => navigate('/automation/ai')} className="btn-primary h-9 text-sm mt-4">Configure AI</button>
               )}
@@ -388,8 +389,13 @@ export default function AutomationHub({ activeTab }: Props) {
           rule={editingRule}
           onClose={() => { setShowRuleForm(false); setEditingRule(undefined) }}
           onSave={(data) => {
-            createRule.mutate(data as Parameters<typeof createRule.mutate>[0])
+            if (editingRule) {
+              updateRule.mutate({ id: editingRule.id, data: data as Parameters<typeof updateRule.mutate>[0]['data'] })
+            } else {
+              createRule.mutate(data as Parameters<typeof createRule.mutate>[0])
+            }
             setShowRuleForm(false)
+            setEditingRule(undefined)
           }}
         />
       )}
@@ -399,7 +405,7 @@ export default function AutomationHub({ activeTab }: Props) {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={(e) => e.target === e.currentTarget && setShowLockedPopup(null)}
         >
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div className="bg-[#1a3d2b] px-6 pt-6 pb-8 relative overflow-hidden">
               <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/5" />
               <button
@@ -425,7 +431,7 @@ export default function AutomationHub({ activeTab }: Props) {
               </button>
               <button
                 onClick={() => setShowLockedPopup(null)}
-                className="w-full h-10 text-gray-400 hover:text-gray-600 text-sm transition-colors rounded-2xl hover:bg-[#f7f8f6]"
+                className="w-full h-10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors rounded-2xl hover:bg-[#f7f8f6] dark:hover:bg-white/5"
               >
                 Maybe later
               </button>

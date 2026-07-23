@@ -15,13 +15,13 @@ import { format } from 'date-fns'
 const MOCK_DELIVERY_CHART: { hour: string; sent: number; delivered: number; read: number }[] = []
 
 const STATUS_CONFIG = {
-  draft:     { label: 'Draft',     bg: 'bg-gray-100',  text: 'text-gray-600',   dot: 'bg-gray-400' },
-  scheduled: { label: 'Scheduled', bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500' },
-  running:   { label: 'Running',   bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]', dot: 'bg-[#1a5c3a]' },
-  completed: { label: 'Completed', bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
-  paused:    { label: 'Paused',    bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500' },
-  failed:    { label: 'Failed',    bg: 'bg-red-50',    text: 'text-red-600',    dot: 'bg-red-500' },
-  cancelled: { label: 'Cancelled', bg: 'bg-gray-100',  text: 'text-gray-500',   dot: 'bg-gray-400' },
+  draft:     { label: 'Draft',     bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-600 dark:text-gray-400',   dot: 'bg-gray-400' },
+  scheduled: { label: 'Scheduled', bg: 'bg-blue-50 dark:bg-blue-950/30',   text: 'text-blue-700 dark:text-blue-400',   dot: 'bg-blue-500' },
+  running:   { label: 'Running',   bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', text: 'text-[#1a5c3a]', dot: 'bg-[#1a5c3a]' },
+  completed: { label: 'Completed', bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
+  paused:    { label: 'Paused',    bg: 'bg-amber-50 dark:bg-amber-950/30',  text: 'text-amber-700 dark:text-amber-400',  dot: 'bg-amber-500' },
+  failed:    { label: 'Failed',    bg: 'bg-red-50 dark:bg-red-950/30',    text: 'text-red-600 dark:text-red-400',    dot: 'bg-red-500' },
+  cancelled: { label: 'Cancelled', bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400',   dot: 'bg-gray-400' },
 } as const
 
 function FunnelCard({ icon: Icon, iconBg, iconColor, value, label, pct, isFirst }: {
@@ -29,12 +29,12 @@ function FunnelCard({ icon: Icon, iconBg, iconColor, value, label, pct, isFirst 
   value: number; label: string; pct?: string; isFirst?: boolean
 }) {
   return (
-    <div className="flex-1 bg-white border border-[#e8ebe8] rounded-2xl p-5 text-center">
+    <div className="flex-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 text-center">
       <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3', iconBg)}>
         <Icon size={18} className={iconColor} />
       </div>
-      <p className="text-2xl font-bold text-gray-900">{formatIndian(value)}</p>
-      <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatIndian(value)}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
       {!isFirst && pct && (
         <p className="text-xs font-semibold mt-2" style={{ color: Number(pct) >= 90 ? '#1a5c3a' : Number(pct) >= 70 ? '#f97316' : '#ef4444' }}>
           {pct}%
@@ -58,8 +58,8 @@ export default function CampaignDetail() {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-48" />
-          <div className="h-40 bg-gray-200 rounded-2xl" />
+          <div className="h-8 bg-gray-200 dark:bg-white/10 rounded w-48" />
+          <div className="h-40 bg-gray-200 dark:bg-white/10 rounded-2xl" />
         </div>
       </div>
     )
@@ -82,7 +82,7 @@ export default function CampaignDetail() {
   const failPct = campaign.sent > 0 ? ((campaign.failed / campaign.sent) * 100).toFixed(1) : '0'
 
   return (
-    <div className="p-6 bg-[#f7f8f6] min-h-screen">
+    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
@@ -91,7 +91,7 @@ export default function CampaignDetail() {
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{campaign.name}</h1>
               <span className={cn('flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium', s.bg, s.text)}>
                 <span className={cn('w-1.5 h-1.5 rounded-full', s.dot, campaign.status === 'running' && 'animate-pulse')} />
                 {s.label}
@@ -118,7 +118,7 @@ export default function CampaignDetail() {
           {campaign.status === 'scheduled' && (
             <>
               <button className="btn-outline h-9 gap-1.5 flex items-center"><Copy size={14} /> Edit</button>
-              <button className="btn-ghost h-9 px-3 text-sm text-red-500 flex items-center gap-1.5">
+              <button className="btn-ghost h-9 px-3 text-sm text-red-500 dark:text-red-400 flex items-center gap-1.5">
                 <XCircle size={14} /> Cancel
               </button>
             </>
@@ -128,42 +128,42 @@ export default function CampaignDetail() {
 
       {/* live progress bar */}
       {campaign.status === 'running' && (
-        <div className="bg-white border border-[#1a5c3a] rounded-2xl p-5 mb-6">
+        <div className="bg-white dark:bg-[#0b1220] border border-[#1a5c3a] rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-[#1a5c3a]">Campaign running</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               {campaign.startedAt ? `Started ${format(new Date(campaign.startedAt), 'h:mm a')}` : ''}
             </p>
           </div>
-          <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
+          <div className="bg-gray-100 dark:bg-white/10 rounded-full h-3 overflow-hidden">
             <div
               className="bg-[#1a5c3a] h-3 rounded-full transition-all"
               style={{ width: `${sentPct}%` }}
             />
           </div>
           <div className="flex justify-between mt-2">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {campaign.sent.toLocaleString()} / {campaign.totalContacts.toLocaleString()} sent ({sentPct}%)
             </p>
-            <p className="text-xs text-gray-500">~{Math.ceil((campaign.totalContacts - campaign.sent) / 1000)} min remaining</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">~{Math.ceil((campaign.totalContacts - campaign.sent) / 1000)} min remaining</p>
           </div>
         </div>
       )}
 
       {/* delivery funnel */}
       <div className="flex items-center gap-2 mb-6">
-        <FunnelCard icon={Send} iconBg="bg-blue-50" iconColor="text-blue-600" value={campaign.sent} label="Total sent" isFirst />
+        <FunnelCard icon={Send} iconBg="bg-blue-50 dark:bg-blue-950/30" iconColor="text-blue-600 dark:text-blue-400" value={campaign.sent} label="Total sent" isFirst />
         <span className="text-2xl text-gray-200 font-light">→</span>
-        <FunnelCard icon={CheckCheck} iconBg="bg-[#e8f5ee]" iconColor="text-[#1a5c3a]" value={campaign.delivered} label="Delivered" pct={delivPct} />
+        <FunnelCard icon={CheckCheck} iconBg="bg-[#e8f5ee] dark:bg-emerald-950/30" iconColor="text-[#1a5c3a]" value={campaign.delivered} label="Delivered" pct={delivPct} />
         <span className="text-2xl text-gray-200 font-light">→</span>
-        <FunnelCard icon={Eye} iconBg="bg-purple-50" iconColor="text-purple-600" value={campaign.read} label="Read" pct={readPct} />
+        <FunnelCard icon={Eye} iconBg="bg-purple-50 dark:bg-purple-950/30" iconColor="text-purple-600 dark:text-purple-400" value={campaign.read} label="Read" pct={readPct} />
         <span className="text-2xl text-gray-200 font-light">→</span>
-        <FunnelCard icon={Reply} iconBg="bg-amber-50" iconColor="text-amber-600" value={campaign.replied} label="Replied" pct={replyPct} />
-        <div className="ml-2 bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
-          <AlertTriangle size={16} className="text-red-500" />
+        <FunnelCard icon={Reply} iconBg="bg-amber-50 dark:bg-amber-950/30" iconColor="text-amber-600 dark:text-amber-400" value={campaign.replied} label="Replied" pct={replyPct} />
+        <div className="ml-2 bg-red-50 dark:bg-red-950/30 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
+          <AlertTriangle size={16} className="text-red-500 dark:text-red-400" />
           <div>
-            <p className="text-lg font-bold text-gray-900">{formatIndian(campaign.failed)}</p>
-            <p className="text-xs text-red-500">{failPct}% failed</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatIndian(campaign.failed)}</p>
+            <p className="text-xs text-red-500 dark:text-red-400">{failPct}% failed</p>
           </div>
         </div>
       </div>
@@ -173,8 +173,8 @@ export default function CampaignDetail() {
         {/* LEFT */}
         <div className="col-span-2 space-y-6">
           {/* delivery chart */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-            <p className="text-sm font-semibold text-gray-800 mb-4">Delivery progress over time</p>
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Delivery progress over time</p>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={MOCK_DELIVERY_CHART} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#9ca3af' }} />
@@ -198,8 +198,8 @@ export default function CampaignDetail() {
         {/* RIGHT */}
         <div className="space-y-4">
           {/* campaign info */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-3">
-            <p className="text-sm font-semibold text-gray-800">Campaign details</p>
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-3">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Campaign details</p>
             {[
               { icon: FileText, label: 'Template', value: campaign.templateName },
               { icon: Users, label: 'Created by', value: campaign.createdBy.name },
@@ -210,15 +210,15 @@ export default function CampaignDetail() {
               const Icon = row.icon
               return (
                 <div key={row.label} className="flex items-center gap-3 text-sm">
-                  <Icon size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500 min-w-20">{row.label}</span>
-                  <span className="text-gray-900 font-medium">{row.value}</span>
+                  <Icon size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <span className="text-gray-500 dark:text-gray-400 min-w-20">{row.label}</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{row.value}</span>
                 </div>
               )
             })}
 
             <div className="pt-3 border-t border-[#f7f8f6]">
-              <p className="text-sm font-semibold text-gray-800 mb-2">Audience</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">Audience</p>
               {[
                 ['Source', campaign.audienceType === 'all' ? 'All contacts' : campaign.audienceType === 'tag' ? `Tag: ${campaign.audienceTags?.join(', ')}` : 'CSV upload'],
                 ['Total contacts', campaign.totalContacts.toLocaleString()],
@@ -226,15 +226,15 @@ export default function CampaignDetail() {
                 ['Excluded', (campaign.totalContacts - campaign.validContacts).toLocaleString()],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between text-sm py-1">
-                  <span className="text-gray-500">{label}</span>
-                  <span className="text-gray-900 font-medium">{value}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* actions */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-2">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2">
             <button className="btn btn-outline w-full h-10 gap-2" onClick={() => duplicate.mutate(campaign.id)}>
               <Copy size={14} /> Duplicate campaign
             </button>

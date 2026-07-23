@@ -87,7 +87,7 @@ export interface WabaAccount {
 
 // ─── Conversations & Messages ─────────────────────────────────────────────────
 export type ConversationStatus = 'open' | 'pending' | 'resolved' | 'snoozed'
-export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'template' | 'interactive' | 'note' | 'system'
+export type MessageType = 'text' | 'image' | 'video' | 'sticker' | 'audio' | 'document' | 'location' | 'template' | 'interactive' | 'note' | 'system'
 export type MessageDirection = 'inbound' | 'outbound'
 export type MessageStatus = 'SENDING' | 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
 
@@ -164,7 +164,7 @@ export interface CreateContactPayload {
 }
 
 export interface ImportPayload {
-  fileData: string
+  fileUrl: string
   columnMapping: Record<string, string>
   duplicateHandling: 'skip' | 'update' | 'create'
 }
@@ -251,6 +251,7 @@ export interface Message {
   mediaUrl?: string
   mediaName?: string
   mediaSize?: number
+  mimeType?: string
   caption?: string
   agentId?: string
   agentName?: string
@@ -335,6 +336,7 @@ export interface CreateTemplatePayload {
   footer?: string
   buttons?: { buttons: TemplateButton[] }
   sampleVariables: Record<string, string>
+  variableTypes?: Record<string, string>
 }
 
 // ─── Campaigns ────────────────────────────────────────────────────────────────
@@ -434,6 +436,32 @@ export interface DashboardHealthData {
   messagesSentToday: number
   tierLimit: number
   usagePercent: number
+}
+
+export interface MessageUsageMonth {
+  year: number
+  month: number
+  totalOutbound: number
+  totalInbound: number
+  campaignMessages: number
+  inboxMessages: number
+  marketingCount: number
+  utilityCount: number
+  authenticationCount: number
+  serviceCount: number
+  estimatedCostRupees: number
+  estimatedCostFormatted: string
+}
+
+export interface MessageUsageRates {
+  marketing: number
+  utility: number
+  authentication: number
+}
+
+export interface MessageUsageData {
+  currentMonth: MessageUsageMonth
+  metaRates: MessageUsageRates
 }
 
 export interface DashboardRecentItem {

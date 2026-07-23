@@ -7,6 +7,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Reduce a #hex color to a translucent rgba tint of itself, so a chip that's
+ * meant to sit on either a white or dark navy card stays a soft tint on both
+ * instead of a flat pastel that turns into a stark white patch in dark mode.
+ */
+export function hexToTranslucent(hex: string, alpha = 0.15): string {
+  const clean = hex.replace('#', '')
+  const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  if ([r, g, b].some(Number.isNaN)) return hex
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 /** Format a date for conversation timestamps */
 export function formatChatTime(date: string | Date): string {
   const d = new Date(date)
@@ -66,25 +81,40 @@ export function downloadCSV(filename: string, rows: string[][]): void {
 /** Sleep helper for loading states in dev */
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+const CONTACT_SAMPLE_TEMPLATE_ROWS: string[][] = [
+  ['name', 'phone', 'email', 'company', 'city', 'tags'],
+  ['Rohit Sharma', '+919876543210', 'rohit.sharma@example.com', 'Acme Corp', 'Mumbai', 'VIP,Customer'],
+  ['Priya Verma', '+919812345678', 'priya.verma@example.com', 'Beta Industries', 'Delhi', 'Lead'],
+  ['Amit Kumar', '+919900112233', 'amit.kumar@example.com', '', 'Bangalore', ''],
+]
+
+/** Trigger download of the dummy CSV template used to guide the contact-import column mapping */
+export function downloadContactSampleTemplate(): void {
+  downloadCSV('contacts-sample-template.csv', CONTACT_SAMPLE_TEMPLATE_ROWS)
+}
+
 // ── Help docs / FAQ helpers ───────────────────────────────────────────────────
 // Backend /help/faq and /help/docs return only category slugs (e.g. "whatsapp",
 // "getting-started") — color and label are derived client-side.
 
+// bg is a translucent tint of `text` (not a flat pastel hex) so it reads
+// correctly as a soft chip on both a white card and a dark navy card —
+// these are applied via inline style, so they can't be handled by dark: classes.
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  account:            { bg: '#fdf2f8', text: '#db2777' },
-  automation:         { bg: '#f8fafc', text: '#475569' },
-  billing:            { bg: '#eff6ff', text: '#2563eb' },
-  campaigns:          { bg: '#faf5ff', text: '#9333ea' },
-  contacts:           { bg: '#f0fdfa', text: '#0d9488' },
-  general:            { bg: '#f9fafb', text: '#6b7280' },
-  'getting-started':  { bg: '#fffbeb', text: '#d97706' },
-  inbox:              { bg: '#ecfeff', text: '#0891b2' },
-  settings:           { bg: '#eef2ff', text: '#4f46e5' },
-  team:               { bg: '#fff1f2', text: '#e11d48' },
-  templates:          { bg: '#fff7ed', text: '#ea580c' },
-  whatsapp:           { bg: '#f0fdf4', text: '#16a34a' },
+  account:            { bg: 'rgba(219,39,119,0.12)', text: '#db2777' },
+  automation:         { bg: 'rgba(71,85,105,0.15)',   text: '#475569' },
+  billing:            { bg: 'rgba(37,99,235,0.12)',   text: '#2563eb' },
+  campaigns:          { bg: 'rgba(147,51,234,0.12)',  text: '#9333ea' },
+  contacts:           { bg: 'rgba(13,148,136,0.12)',  text: '#0d9488' },
+  general:            { bg: 'rgba(107,114,128,0.15)', text: '#6b7280' },
+  'getting-started':  { bg: 'rgba(217,119,6,0.12)',   text: '#d97706' },
+  inbox:              { bg: 'rgba(8,145,178,0.12)',   text: '#0891b2' },
+  settings:           { bg: 'rgba(79,70,229,0.12)',   text: '#4f46e5' },
+  team:               { bg: 'rgba(225,29,72,0.12)',   text: '#e11d48' },
+  templates:          { bg: 'rgba(234,88,12,0.12)',   text: '#ea580c' },
+  whatsapp:           { bg: 'rgba(22,163,74,0.12)',   text: '#16a34a' },
 }
-const DEFAULT_CATEGORY_COLOR = { bg: '#e8f5ee', text: '#1a5c3a' }
+const DEFAULT_CATEGORY_COLOR = { bg: 'rgba(26,92,58,0.15)', text: '#1a5c3a' }
 
 export function getCategoryColor(category: string): { bg: string; text: string } {
   return CATEGORY_COLORS[category.toLowerCase()] ?? DEFAULT_CATEGORY_COLOR

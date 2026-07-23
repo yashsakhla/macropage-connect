@@ -27,10 +27,10 @@ export default function AINode({ id, data, selected }: NodeProps<FlowNodeData>) 
       </div>
 
       <div className="px-4 py-3">
-        <p className="text-xs text-gray-700 line-clamp-2 leading-relaxed">
-          {instruction || <span className="text-gray-300 italic">No instruction set</span>}
+        <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
+          {instruction || <span className="text-gray-300 dark:text-gray-600 italic">No instruction set</span>}
         </p>
-        <p className="text-2xs text-gray-400 mt-2">Handoff if &lt; {threshold}% confident</p>
+        <p className="text-2xs text-gray-400 dark:text-gray-500 mt-2">Handoff if &lt; {threshold}% confident</p>
       </div>
 
       <Handle type="source" position={Position.Bottom} id="replied" style={{ width: 10, height: 10, background: '#a855f7', bottom: -6, left: '35%' }} />

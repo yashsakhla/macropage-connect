@@ -92,8 +92,8 @@ export default function RolePermissionsModal() {
     <div className="px-5 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-base font-semibold text-gray-900">Roles & Permissions</p>
-          <p className="text-sm text-gray-500 mt-0.5">Understand what each role can access</p>
+          <p className="text-base font-semibold text-gray-900 dark:text-white">Roles & Permissions</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Understand what each role can access</p>
         </div>
         <button className="btn btn-outline h-8 text-xs">Request custom roles</button>
       </div>
@@ -107,16 +107,16 @@ export default function RolePermissionsModal() {
           const isActive = selectedRole === r.value
           return (
             <div key={r.value} onClick={() => setSelectedRole(isActive ? null : r.value)}
-              className={cn('bg-white border-2 rounded-2xl p-5 cursor-pointer hover:border-[#c8e6d4] transition-all relative', isActive ? 'border-[#1a5c3a]' : 'border-[#e8ebe8]')}>
-              <span className="absolute top-3 right-3 bg-[#f7f8f6] text-gray-600 text-xs rounded-full px-2 py-0.5">
+              className={cn('bg-white dark:bg-[#0b1220] border-2 rounded-2xl p-5 cursor-pointer hover:border-[#c8e6d4] transition-all relative', isActive ? 'border-[#1a5c3a]' : 'border-[#e8ebe8] dark:border-white/10')}>
+              <span className="absolute top-3 right-3 bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-600 dark:text-gray-400 text-xs rounded-full px-2 py-0.5">
                 {memberCount(r.value)} member{memberCount(r.value) !== 1 ? 's' : ''}
               </span>
               <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', rs.bg)}>
                 <Icon size={18} className={rs.text} />
               </div>
-              <p className="text-base font-bold text-gray-900 mt-3">{meta.label}</p>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{meta.description}</p>
-              <p className="text-xs text-gray-400 mt-3">{ROLE_PERMISSIONS[r.value]?.length ?? 0} permissions enabled</p>
+              <p className="text-base font-bold text-gray-900 dark:text-white mt-3">{meta.label}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{meta.description}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">{ROLE_PERMISSIONS[r.value]?.length ?? 0} permissions enabled</p>
               <p className="text-xs text-[#1a5c3a] font-medium mt-1">View details →</p>
             </div>
           )
@@ -124,20 +124,20 @@ export default function RolePermissionsModal() {
       </div>
 
       {/* permissions matrix */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
-        <div className="grid bg-[#f7f8f6] border-b border-[#e8ebe8] px-5 py-3"
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+        <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-5 py-3"
           style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr' }}>
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Feature</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feature</span>
           {ROLES_LIST.map(r => {
             const rs = ROLE_STYLE[r.value]
             const Icon = r.icon
             const isHighlighted = selectedRole === r.value
             return (
-              <div key={r.value} className={cn('text-center rounded-lg px-2 py-1 transition-colors', isHighlighted && 'bg-[#e8f5ee]')}>
+              <div key={r.value} className={cn('text-center rounded-lg px-2 py-1 transition-colors', isHighlighted && 'bg-[#e8f5ee] dark:bg-emerald-950/30')}>
                 <div className={cn('flex items-center justify-center gap-1 text-xs font-semibold', isHighlighted ? 'text-[#1a5c3a]' : rs.text)}>
                   <Icon size={11} /> {rs.label}
                 </div>
-                <p className="text-[10px] text-gray-400">({memberCount(r.value)} people)</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">({memberCount(r.value)} people)</p>
               </div>
             )
           })}
@@ -145,17 +145,17 @@ export default function RolePermissionsModal() {
 
         {PERMISSION_GROUPS.map(group => (
           <div key={group.name}>
-            <div className="bg-[#f7f8f6] border-t border-[#e8ebe8] px-5 py-2.5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border-t border-[#e8ebe8] dark:border-white/10 px-5 py-2.5">
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 {group.icon} {group.name}
               </p>
             </div>
             {group.rows.map(row => (
-              <div key={row.key} className="grid items-center px-5 py-3.5 border-t border-[#f5f5f5] hover:bg-[#fafffe]"
+              <div key={row.key} className="grid items-center px-5 py-3.5 border-t border-[#f5f5f5] hover:bg-[#fafffe] dark:hover:bg-white/5"
                 style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr' }}>
                 <div>
-                  <p className="text-sm text-gray-800 font-medium">{row.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{row.desc}</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">{row.label}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{row.desc}</p>
                 </div>
                 {ROLES_LIST.map(r => {
                   const perms = ROLE_PERMISSIONS[r.value]
@@ -165,9 +165,9 @@ export default function RolePermissionsModal() {
                   return (
                     <div key={r.value} className={cn('flex justify-center py-1 rounded transition-colors', isHighlighted && 'bg-[#e8f5ee]/30')}>
                       {isPartial ? (
-                        <AlertCircle size={16} className="text-amber-500" aria-label="Partial permission" />
+                        <AlertCircle size={16} className="text-amber-500 dark:text-amber-400" aria-label="Partial permission" />
                       ) : hasIt ? (
-                        <div className="bg-[#e8f5ee] rounded-full p-0.5">
+                        <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-full p-0.5">
                           <CheckCircle size={16} className="text-[#1a5c3a]" />
                         </div>
                       ) : (

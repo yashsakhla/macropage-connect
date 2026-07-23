@@ -44,23 +44,23 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'yes') {
     return (
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 mt-8 text-center">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
         <CheckCircle size={20} className="text-[#1a5c3a] mx-auto" />
-        <p className="text-base font-semibold text-gray-900 mt-3">Thank you for your feedback!</p>
-        <p className="text-sm text-gray-600 mt-2">Glad this article helped you.</p>
+        <p className="text-base font-semibold text-gray-900 dark:text-white mt-3">Thank you for your feedback!</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Glad this article helped you.</p>
         <div className="flex items-center justify-center gap-3 mt-4">
           <button
             onClick={() => {
               const url = window.location.href
               window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`, '_blank')
             }}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-500 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
           >
             <Twitter size={14} /> Share on X
           </button>
           <button
             onClick={() => navigator.clipboard.writeText(window.location.href)}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#1a5c3a] transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#1a5c3a] transition-colors"
           >
             <Share2 size={14} /> Copy link
           </button>
@@ -71,8 +71,8 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'no') {
     return (
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 mt-8">
-        <p className="text-sm font-semibold text-gray-900">Sorry to hear that. What could be better?</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">Sorry to hear that. What could be better?</p>
         <div className="space-y-2 mt-4">
           {REASONS.map(r => (
             <label key={r} className="flex items-center gap-3 cursor-pointer">
@@ -82,7 +82,7 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
                 onChange={() => toggleReason(r)}
                 className="rounded text-[#1a5c3a]"
               />
-              <span className="text-sm text-gray-700">{r}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{r}</span>
             </label>
           ))}
         </div>
@@ -105,9 +105,9 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'submitted') {
     return (
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 mt-8 text-center">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
         <CheckCircle size={20} className="text-[#1a5c3a] mx-auto" />
-        <p className="text-sm text-gray-600 mt-3">Thank you for your feedback!</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">Thank you for your feedback!</p>
         <button
           onClick={onNeedHelp}
           className="text-xs text-[#1a5c3a] font-medium mt-3 hover:underline"
@@ -119,8 +119,8 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
   }
 
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 mt-8 text-center">
-      <p className="text-base font-semibold text-gray-900">Was this article helpful?</p>
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
+      <p className="text-base font-semibold text-gray-900 dark:text-white">Was this article helpful?</p>
       <div className="flex justify-center gap-4 mt-4">
         <button
           onClick={handleYes}

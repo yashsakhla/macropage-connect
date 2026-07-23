@@ -1,16 +1,16 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
-  Download, Upload, Plus, Search, SlidersHorizontal,
+  Download, Upload, Plus, Search, SlidersHorizontal, FileDown,
   LayoutList, LayoutGrid, Users, Activity, UserMinus, UserPlus,
   X, Trash2, Tag,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { cn } from '@/lib/utils'
+import { cn, downloadCSV, downloadContactSampleTemplate } from '@/lib/utils'
 import type { Contact, ContactFilters } from '@/types'
 import {
   useContacts, useDeleteContactTag,
-  useBulkDeleteContacts, useBulkTagContacts, useCreateSegment,
+  useBulkDeleteContacts, useBulkTagContacts, useCreateSegment, useSegments, useUpdateContact,
 } from '@/hooks/useContacts'
 import ContactsTable from '@/components/contacts/ContactsTable'
 import ContactCard from '@/components/contacts/ContactCard'
@@ -34,8 +34,11 @@ const SEGMENT_FILTERS: Record<string, Partial<ContactFilters>> = {
 function applyClientFilters(contacts: Contact[], filters: ContactFilters, activeTags: string[]): Contact[] {
   let result = contacts
 
-  // status
-  if (filters.status) {
+  // status — "opted_out" also covers contacts whose isOptedOut flag is set
+  // without their status field having been separately updated to match.
+  if (filters.status === 'opted_out') {
+    result = result.filter(c => c.isOptedOut || c.status === 'opted_out')
+  } else if (filters.status) {
     result = result.filter(c => c.status === filters.status)
   }
 
@@ -99,9 +102,9 @@ function StatCard({ label, value, sub, icon: Icon, bg, color }: {
         <Icon size={18} className={color} />
       </div>
       <div>
-        <p className="text-2xl font-bold text-gray-900">{typeof value === 'number' ? value.toLocaleString() : value}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-        {sub && <p className="text-[10px] text-gray-400">{sub}</p>}
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+        {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500">{sub}</p>}
       </div>
     </div>
   )
@@ -160,6 +163,24 @@ export default function Contacts() {
   const bulkTag = useBulkTagContacts()
   const deleteTag = useDeleteContactTag()
   const createSegment = useCreateSegment()
+  const updateContact = useUpdateContact()
+  const { data: customSegments = [] } = useSegments()
+
+  // built-in ids map to a fixed filter patch; custom segments (from the API)
+  // carry their own filters — merge both into one lookup used by handleSegmentChange
+  const segmentFilterMap = useMemo(() => {
+    const map: Record<string, Partial<ContactFilters>> = { ...SEGMENT_FILTERS }
+    customSegments.forEach(seg => { map[seg.id] = seg.filters })
+    return map
+  }, [customSegments])
+
+  const customSegmentsWithCount = useMemo(
+    () => customSegments.map(seg => ({
+      ...seg,
+      contactCount: applyClientFilters(allContacts, seg.filters, []).length,
+    })),
+    [customSegments, allContacts]
+  )
 
   // derive unique sorted tags from all loaded contacts
   const allTags = useMemo(() => {
@@ -189,6 +210,13 @@ export default function Contacts() {
     return Array.from(set).sort()
   }, [contacts, selectedIds])
 
+  // Bulk opt-out button flips to "Remove opt-out" only once every selected
+  // contact is already opted out — a mixed selection still shows "Opt out".
+  const selectedAllOptedOut = useMemo(() => {
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    return selected.length > 0 && selected.every(c => c.isOptedOut)
+  }, [contacts, selectedIds])
+
   const toggleContact = (id: string) => {
     setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
@@ -199,35 +227,45 @@ export default function Contacts() {
   const handleSegmentChange = (id: string) => {
     setActiveSegmentId(id)
     setActiveTags([])
-    const patch = SEGMENT_FILTERS[id] ?? {}
+    const patch = segmentFilterMap[id] ?? {}
     // keep search/page/limit, swap in segment filters, clear other manual filters
     setFilters(f => ({ page: 1, limit: f.limit, search: f.search, ...patch }))
   }
 
-  const handleBulkExport = () => {
-    const selected = contacts.filter(c => selectedIds.has(c.id))
-    if (!selected.length) return
+  const exportContacts = (list: Contact[]) => {
+    if (!list.length) { toast.error('No contacts to export'); return }
     const rows = [
       ['Name', 'Phone', 'Email', 'Company', 'Tags', 'Status'],
-      ...selected.map(c => [
+      ...list.map(c => [
         c.name, c.phone, c.email ?? '', c.company ?? '',
         c.tags.join(';'), c.isOptedOut ? 'Opted out' : c.status,
       ]),
     ]
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.success(`Exported ${selected.length} contacts`)
+    downloadCSV(`contacts-${new Date().toISOString().split('T')[0]}.csv`, rows)
+    toast.success(`Exported ${list.length} contact${list.length !== 1 ? 's' : ''}`)
   }
+
+  const handleBulkExport = () => exportContacts(contacts.filter(c => selectedIds.has(c.id)))
+  const handleExportAll = () => exportContacts(contacts)
 
   const handleBulkDelete = () => {
     bulkDelete.mutate(Array.from(selectedIds), {
       onSuccess: () => { setSelectedIds(new Set()); setShowDeleteConfirm(false) },
     })
+  }
+
+  const handleBulkOptOut = () => {
+    Array.from(selectedIds).forEach(id => {
+      updateContact.mutate({ id, data: { isOptedOut: true } })
+    })
+    setSelectedIds(new Set())
+  }
+
+  const handleBulkRemoveOptOut = () => {
+    Array.from(selectedIds).forEach(id => {
+      updateContact.mutate({ id, data: { isOptedOut: false } })
+    })
+    setSelectedIds(new Set())
   }
 
   const handleTagInputAdd = () => {
@@ -248,36 +286,37 @@ export default function Contacts() {
   const closeTags = () => { setTagAction(null); setTagsToApply([]); setTagInput('') }
 
   return (
-    <div className="p-6 bg-[#f7f8f6] min-h-screen">
+    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       <div className="page-header">
         <div>
           <h1 className="page-title">Contacts</h1>
           <p className="page-subtitle mt-0.5">Manage your WhatsApp audience</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn btn-outline h-9 gap-2"><Download size={15} /> Export</button>
+          <button className="btn btn-outline h-9 gap-2" onClick={downloadContactSampleTemplate}><FileDown size={15} /> Download Template</button>
+          <button className="btn btn-outline h-9 gap-2" onClick={handleExportAll}><Download size={15} /> Export</button>
           <button className="btn btn-outline h-9 gap-2" onClick={() => setShowImport(true)}><Upload size={15} /> Import</button>
           <button className="btn btn-primary h-9 gap-2" onClick={() => setShowForm(true)}><Plus size={16} /> Add contact</button>
         </div>
       </div>
 
       {/* stats */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 flex items-center mb-6">
-        <StatCard label="Total contacts" value={stats.total} icon={Users} bg="bg-blue-50" color="text-blue-600" />
-        <div className="h-10 w-px bg-[#e8ebe8] mx-4" />
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center mb-6">
+        <StatCard label="Total contacts" value={stats.total} icon={Users} bg="bg-blue-50 dark:bg-blue-950/30" color="text-blue-600 dark:text-blue-400" />
+        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
         <StatCard
           label="Active" value={stats.active}
           sub={stats.total ? `${Math.round(stats.active / stats.total * 100)}% of total` : undefined}
-          icon={Activity} bg="bg-[#e8f5ee]" color="text-[#1a5c3a]"
+          icon={Activity} bg="bg-[#e8f5ee] dark:bg-emerald-950/30" color="text-[#1a5c3a]"
         />
-        <div className="h-10 w-px bg-[#e8ebe8] mx-4" />
+        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
         <StatCard
           label="Opted out" value={stats.optedOut}
           sub={stats.total ? `${Math.round(stats.optedOut / stats.total * 100)}% opt-out rate` : undefined}
-          icon={UserMinus} bg="bg-red-50" color="text-red-500"
+          icon={UserMinus} bg="bg-red-50 dark:bg-red-950/30" color="text-red-500 dark:text-red-400"
         />
-        <div className="h-10 w-px bg-[#e8ebe8] mx-4" />
-        <StatCard label="Added this month" value={stats.addedThisMonth} icon={UserPlus} bg="bg-purple-50" color="text-purple-600" />
+        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
+        <StatCard label="Added this month" value={stats.addedThisMonth} icon={UserPlus} bg="bg-purple-50 dark:bg-purple-950/30" color="text-purple-600 dark:text-purple-400" />
       </div>
 
       <div className="grid grid-cols-4 gap-6">
@@ -291,6 +330,7 @@ export default function Contacts() {
             onManageTags={() => setShowManageTags(true)}
             onCreateSegment={() => { setSegmentName(''); setSegmentColor('#1a5c3a'); setShowCreateSegment(true) }}
             stats={stats}
+            customSegments={customSegmentsWithCount}
           />
         </div>
 
@@ -298,22 +338,22 @@ export default function Contacts() {
           {/* toolbar */}
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-80">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 value={filters.search ?? ''}
                 onChange={e => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
-                className="input pl-8 bg-white h-9 pr-8"
+                className="input pl-8 bg-white dark:bg-[#0b1220] h-9 pr-8"
                 placeholder="Search by name or phone..."
               />
               {filters.search && (
-                <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => setFilters(f => ({ ...f, search: '', page: 1 }))}>
+                <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" onClick={() => setFilters(f => ({ ...f, search: '', page: 1 }))}>
                   <X size={13} />
                 </button>
               )}
             </div>
 
             <button
-              className="relative bg-white border border-[#e8ebe8] rounded-xl h-9 px-3 flex items-center gap-2 text-sm text-gray-600 hover:border-[#c8e6d4] transition-colors"
+              className="relative bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:border-[#c8e6d4] transition-colors"
               onClick={() => setShowFilters(true)}
             >
               <SlidersHorizontal size={14} /> Filter
@@ -326,7 +366,7 @@ export default function Contacts() {
 
             <div className="ml-auto flex items-center gap-2">
               <select
-                className="bg-white border border-[#e8ebe8] rounded-xl h-9 px-3 text-sm text-gray-600 focus:outline-none"
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 text-sm text-gray-600 dark:text-gray-400 focus:outline-none"
                 value={`${filters.sortBy ?? 'name'}-${filters.sortOrder ?? 'asc'}`}
                 onChange={e => {
                   const [by, order] = e.target.value.split('-')
@@ -339,9 +379,9 @@ export default function Contacts() {
                 <option value="createdAt-asc">Oldest first</option>
                 <option value="lastSeenAt-desc">Last messaged</option>
               </select>
-              <div className="flex items-center bg-white border border-[#e8ebe8] rounded-xl p-1">
+              <div className="flex items-center bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
                 {([['list', LayoutList], ['grid', LayoutGrid]] as const).map(([v, Icon]) => (
-                  <button key={v} onClick={() => setView(v)} className={cn('w-7 h-7 flex items-center justify-center rounded-lg transition-all', view === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-400')}>
+                  <button key={v} onClick={() => setView(v)} className={cn('w-7 h-7 flex items-center justify-center rounded-lg transition-all', view === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-400 dark:text-gray-500')}>
                     <Icon size={14} />
                   </button>
                 ))}
@@ -352,7 +392,7 @@ export default function Contacts() {
           {/* active tag chips */}
           {activeTags.length > 0 && (
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs text-gray-500">Filtered by tag:</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Filtered by tag:</span>
               {activeTags.map(tag => (
                 <span key={tag} className="flex items-center gap-1 bg-[#1a5c3a] text-white text-xs rounded-full px-2.5 py-1">
                   {tag}
@@ -364,7 +404,7 @@ export default function Contacts() {
 
           {/* result count */}
           {(filterCount > 0 || activeTags.length > 0) && contacts.length !== allContacts.length && (
-            <p className="text-xs text-gray-400 mb-3">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
               Showing {contacts.length} of {allContacts.length} contacts
             </p>
           )}
@@ -378,7 +418,9 @@ export default function Contacts() {
             onRemoveTag={() => setTagAction('remove')}
             onExport={handleBulkExport}
             onCampaign={() => toast('Campaign wizard coming soon', { icon: '📣' })}
-            onOptOut={() => toast('Opt-out flow coming soon', { icon: '🚫' })}
+            onOptOut={handleBulkOptOut}
+            onRemoveOptOut={handleBulkRemoveOptOut}
+            allOptedOut={selectedAllOptedOut}
             onDelete={() => setShowDeleteConfirm(true)}
           />
 
@@ -406,7 +448,7 @@ export default function Contacts() {
                 />
               ))}
               {contacts.length === 0 && (
-                <div className="col-span-3 text-center py-16 text-gray-400">
+                <div className="col-span-3 text-center py-16 text-gray-400 dark:text-gray-500">
                   <Users size={32} className="mx-auto mb-2 opacity-40" />
                   <p className="text-sm">No contacts match the current filters</p>
                 </div>
@@ -419,17 +461,17 @@ export default function Contacts() {
       {/* ── Manage tags modal ── */}
       {showManageTags && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-[#e8ebe8]">
-              <div className="w-9 h-9 rounded-xl bg-[#e8f5ee] flex items-center justify-center">
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+              <div className="w-9 h-9 rounded-xl bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center">
                 <Tag size={16} className="text-[#1a5c3a]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-gray-900">Manage tags</h3>
-                <p className="text-xs text-gray-500">{allTags.length} tag{allTags.length !== 1 ? 's' : ''} in use</p>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Manage tags</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{allTags.length} tag{allTags.length !== 1 ? 's' : ''} in use</p>
               </div>
               <button
-                className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-[#f7f8f6] transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors"
                 onClick={() => setShowManageTags(false)}
               >
                 <X size={16} />
@@ -439,21 +481,21 @@ export default function Contacts() {
             <div className="px-6 py-4 max-h-96 overflow-y-auto">
               {allTags.length === 0 ? (
                 <div className="text-center py-10">
-                  <Tag size={28} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm text-gray-400">No tags yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Add tags via the bulk action bar above the contacts list</p>
+                  <Tag size={28} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No tags yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Add tags via the bulk action bar above the contacts list</p>
                 </div>
               ) : (
                 <div className="space-y-1">
                   {allTags.map(tag => (
-                    <div key={tag} className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-[#f7f8f6] group">
+                    <div key={tag} className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-[#f7f8f6] dark:hover:bg-white/5 group">
                       <span className="w-2 h-2 rounded-full bg-[#1a5c3a] flex-shrink-0" />
-                      <span className="text-sm text-gray-800 flex-1 font-medium">{tag}</span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 font-medium">{tag}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
                         {tagCounts[tag] ?? 0} contact{(tagCounts[tag] ?? 0) !== 1 ? 's' : ''}
                       </span>
                       <button
-                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs px-2 py-0.5 rounded-lg hover:bg-red-50 transition-all disabled:opacity-30"
+                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 dark:hover:text-red-400 text-xs px-2 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-all disabled:opacity-30"
                         onClick={() => deleteTag.mutate(tag)}
                         disabled={deleteTag.isPending}
                       >
@@ -465,7 +507,7 @@ export default function Contacts() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-[#e8ebe8]">
+            <div className="px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10">
               <button className="btn btn-outline w-full h-9" onClick={() => setShowManageTags(false)}>
                 Close
               </button>
@@ -477,14 +519,14 @@ export default function Contacts() {
       {/* ── Delete confirmation ── */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={24} className="text-red-500" />
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={24} className="text-red-500 dark:text-red-400" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 text-center">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center">
               Delete {selectedIds.size} contact{selectedIds.size !== 1 ? 's' : ''}?
             </h3>
-            <p className="text-sm text-gray-500 text-center mt-1 mb-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-6">
               This will permanently remove the selected contacts. This cannot be undone.
             </p>
             <div className="flex gap-3">
@@ -506,21 +548,21 @@ export default function Contacts() {
       {/* ── Add / Remove tag modal ── */}
       {tagAction && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="w-12 h-12 rounded-full bg-[#e8f5ee] flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 rounded-full bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center mx-auto mb-4">
               <Tag size={20} className="text-[#1a5c3a]" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 text-center">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center">
               {tagAction === 'add' ? 'Add tags' : 'Remove tags'}
             </h3>
-            <p className="text-sm text-gray-500 text-center mt-1 mb-5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-5">
               {tagAction === 'add' ? 'Add' : 'Remove'} tags {tagAction === 'add' ? 'to' : 'from'}{' '}
               {selectedIds.size} selected contact{selectedIds.size !== 1 ? 's' : ''}
             </p>
 
             {tagAction === 'remove' && existingTagsOnSelected.length > 0 && (
               <div className="mb-4">
-                <p className="text-xs text-gray-500 mb-2">Tags on selected contacts — click to mark for removal:</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tags on selected contacts — click to mark for removal:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {existingTagsOnSelected.map(tag => (
                     <button
@@ -529,8 +571,8 @@ export default function Contacts() {
                       className={cn(
                         'text-xs rounded-full px-2.5 py-1 transition-colors border',
                         tagsToApply.includes(tag)
-                          ? 'bg-red-50 border-red-200 text-red-600'
-                          : 'bg-[#f7f8f6] border-[#e8ebe8] text-gray-600 hover:border-[#c8e6d4]'
+                          ? 'bg-red-50 dark:bg-red-950/30 border-red-200 text-red-600 dark:text-red-400'
+                          : 'bg-[#f7f8f6] dark:bg-[#0f1724] border-[#e8ebe8] dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-[#c8e6d4]'
                       )}
                     >
                       {tag}
@@ -559,7 +601,7 @@ export default function Contacts() {
                     key={tag}
                     className={cn(
                       'flex items-center gap-1 text-xs rounded-full px-2.5 py-1',
-                      tagAction === 'add' ? 'bg-[#e8f5ee] text-[#1a5c3a]' : 'bg-red-50 text-red-600'
+                      tagAction === 'add' ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
                     )}
                   >
                     {tag}
@@ -592,13 +634,13 @@ export default function Contacts() {
       {/* ── Create segment modal ── */}
       {showCreateSegment && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Create segment</h3>
-            <p className="text-sm text-gray-500 mb-5">Save current filters as a named segment for quick access.</p>
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Create segment</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Save current filters as a named segment for quick access.</p>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Segment name</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5 block">Segment name</label>
                 <input
                   className="input"
                   placeholder="e.g. High-value customers"
@@ -609,7 +651,7 @@ export default function Contacts() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Color</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 block">Color</label>
                 <div className="flex items-center gap-2">
                   {['#1a5c3a', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#374151'].map(c => (
                     <button
@@ -623,8 +665,8 @@ export default function Contacts() {
               </div>
 
               {(filterCount > 0 || activeTags.length > 0) && (
-                <div className="bg-[#f7f8f6] rounded-xl p-3">
-                  <p className="text-xs text-gray-500">
+                <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Active filters ({filterCount + activeTags.length}) will be saved with this segment.
                   </p>
                 </div>
@@ -664,7 +706,7 @@ export default function Contacts() {
           onClose={() => setShowFilters(false)}
         />
       )}
-      {showImport && <ContactImport onClose={() => setShowImport(false)} />}
+      {showImport && <ContactImport onClose={() => setShowImport(false)} existingContacts={allContacts} />}
       {(showForm || editContact) && (
         <ContactForm
           contact={editContact ?? undefined}

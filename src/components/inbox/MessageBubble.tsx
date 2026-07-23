@@ -12,6 +12,7 @@ import {
   Lock,
   ZoomIn,
   Loader2,
+  AlertCircle,
 } from 'lucide-react'
 import type { Message, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
@@ -49,6 +50,20 @@ function OutboundTick({ status }: { status: MessageStatus }) {
   if (status === 'READ') return <CheckCheck size={11} className="text-blue-300 flex-shrink-0" />
   if (status === 'FAILED') return <X size={11} className="text-red-400 flex-shrink-0" />
   return null
+}
+
+function MediaError({ label, inbound }: { label: string; inbound: boolean }) {
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2 rounded-xl px-3 py-2.5 max-w-[200px]',
+        inbound ? 'bg-[#f7f8f6] dark:bg-gray-700' : 'bg-white/10'
+      )}
+    >
+      <AlertCircle size={14} className={inbound ? 'text-gray-400' : 'text-white/60'} />
+      <p className={cn('text-xs', inbound ? 'text-gray-400 dark:text-gray-500' : 'text-white/60')}>{label}</p>
+    </div>
+  )
 }
 
 function InboundAvatar({ name }: { name: string }) {
@@ -164,6 +179,8 @@ export default function MessageBubble({ msg, senderName }: Props) {
   const inbound = (msg.direction as string)?.toLowerCase() === 'inbound'
   const time = formatTime(msg.createdAt)
   const contactName = senderName ?? 'Contact'
+  const [imgError, setImgError] = useState(false)
+  const [videoError, setVideoError] = useState(false)
 
   // System event — centered pill
   if (msg.type === 'system') {
@@ -209,16 +226,21 @@ export default function MessageBubble({ msg, senderName }: Props) {
       <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
         {inbound && <InboundAvatar name={contactName} />}
         <div className={cn(bubbleCls, 'p-2 max-w-[280px]')}>
-          <div className="relative group cursor-pointer">
-            <img
-              src={msg.mediaUrl ?? 'https://placehold.co/400x300/e8f5ee/1a5c3a?text=Image'}
-              alt="shared"
-              className="w-full rounded-xl object-cover max-h-64"
-            />
-            <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <ZoomIn size={20} className="text-white" />
+          {!msg.mediaUrl || imgError ? (
+            <MediaError label="Image unavailable" inbound={inbound} />
+          ) : (
+            <div className="relative group cursor-pointer" onClick={() => window.open(msg.mediaUrl, '_blank')}>
+              <img
+                src={msg.mediaUrl}
+                alt="shared"
+                onError={() => setImgError(true)}
+                className="w-full rounded-xl object-cover max-h-64"
+              />
+              <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <ZoomIn size={20} className="text-white" />
+              </div>
             </div>
-          </div>
+          )}
           {msg.caption && (
             <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-white/80')}>
               {msg.caption}
@@ -230,38 +252,105 @@ export default function MessageBubble({ msg, senderName }: Props) {
     )
   }
 
+  // Video — includes animated GIFs (backend marks these with mimeType 'image/gif')
+  if (msg.type === 'video') {
+    const isGif = msg.mimeType === 'image/gif'
+
+    return (
+      <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
+        {inbound && <InboundAvatar name={contactName} />}
+        <div className={cn(bubbleCls, 'p-2 max-w-[280px]')}>
+          {!msg.mediaUrl || videoError ? (
+            <MediaError label={isGif ? 'GIF unavailable' : 'Video unavailable'} inbound={inbound} />
+          ) : (
+            <video
+              src={msg.mediaUrl}
+              autoPlay={isGif}
+              loop={isGif}
+              muted={isGif}
+              controls={!isGif}
+              playsInline
+              onError={() => setVideoError(true)}
+              className="w-full max-h-64 rounded-xl object-cover"
+            />
+          )}
+          {msg.caption && (
+            <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-white/80')}>
+              {msg.caption}
+            </p>
+          )}
+          <p className={cn('text-2xs text-right mt-1', timeColor)}>{time}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Sticker — transparent, no bubble background
+  if (msg.type === 'sticker') {
+    return (
+      <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
+        {inbound && <InboundAvatar name={contactName} />}
+        {!msg.mediaUrl || imgError ? (
+          <div className={cn(bubbleCls, 'p-2')}>
+            <MediaError label="Sticker unavailable" inbound={inbound} />
+          </div>
+        ) : (
+          <img
+            src={msg.mediaUrl}
+            alt="sticker"
+            onError={() => setImgError(true)}
+            className="w-24 h-24 object-contain"
+          />
+        )}
+      </div>
+    )
+  }
+
   // Document
   if (msg.type === 'document') {
+    const mimeType = msg.mimeType ?? ''
+    const fileLabel = mimeType.includes('pdf')
+      ? 'PDF Document'
+      : mimeType.includes('sheet')
+      ? 'Spreadsheet'
+      : mimeType.includes('word')
+      ? 'Word Document'
+      : 'Document'
+
     return (
       <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
         {inbound && <InboundAvatar name={contactName} />}
         <div className={cn(bubbleCls, 'px-3 py-3')}>
-          <div
-            className={cn(
-              'rounded-xl p-3 flex items-center gap-3',
-              inbound ? 'bg-[#f7f8f6] dark:bg-gray-700' : 'bg-white/10'
-            )}
-          >
-            <div className="w-9 h-9 bg-[#e8f5ee] dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FileText size={16} className="text-[#1a5c3a]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={cn('text-xs font-medium truncate', inbound ? 'text-gray-800 dark:text-gray-100' : 'text-white')}>
-                {msg.mediaName ?? 'Document'}
-              </p>
-              {msg.mediaSize && (
-                <p className={cn('text-2xs mt-0.5', timeColor)}>{formatSize(msg.mediaSize)}</p>
-              )}
-            </div>
+          {!msg.mediaUrl ? (
+            <MediaError label="Document unavailable" inbound={inbound} />
+          ) : (
             <a
-              href={msg.mediaUrl ?? '#'}
-              download
-              className={cn('flex-shrink-0 transition-opacity hover:opacity-70', inbound ? 'text-[#1a5c3a]' : 'text-white/80')}
-              onClick={(e) => e.stopPropagation()}
+              href={msg.mediaUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={cn(
+                'rounded-xl p-3 flex items-center gap-3 transition-colors',
+                inbound ? 'bg-[#f7f8f6] dark:bg-gray-700 hover:bg-[#e8ebe8] dark:hover:bg-gray-600' : 'bg-white/10 hover:bg-white/20'
+              )}
             >
-              <Download size={16} />
+              <div className="w-9 h-9 bg-[#e8f5ee] dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FileText size={16} className="text-[#1a5c3a]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={cn('text-xs font-medium truncate', inbound ? 'text-gray-800 dark:text-gray-100' : 'text-white')}>
+                  {msg.mediaName ?? 'Document'}
+                </p>
+                <p className={cn('text-2xs mt-0.5', timeColor)}>
+                  {fileLabel}
+                  {msg.mediaSize ? ` · ${formatSize(msg.mediaSize)}` : ''}
+                </p>
+              </div>
+              <Download
+                size={16}
+                className={cn('flex-shrink-0', inbound ? 'text-[#1a5c3a]' : 'text-white/80')}
+              />
             </a>
-          </div>
+          )}
           <p className={cn('text-2xs text-right mt-1.5', timeColor)}>{time}</p>
         </div>
       </div>
@@ -274,7 +363,11 @@ export default function MessageBubble({ msg, senderName }: Props) {
       <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
         {inbound && <InboundAvatar name={contactName} />}
         <div className={cn(bubbleCls, 'px-4 py-3')}>
-          <AudioPlayer mediaUrl={msg.mediaUrl} inbound={inbound} />
+          {!msg.mediaUrl ? (
+            <MediaError label="Audio unavailable" inbound={inbound} />
+          ) : (
+            <AudioPlayer mediaUrl={msg.mediaUrl} inbound={inbound} />
+          )}
           <p className={cn('text-2xs text-right mt-2', timeColor)}>{time}</p>
         </div>
       </div>

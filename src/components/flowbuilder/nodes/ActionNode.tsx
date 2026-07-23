@@ -37,18 +37,18 @@ export default function ActionNode({ id, data, selected }: NodeProps<FlowNodeDat
       </div>
 
       <div className="px-4 py-3">
-        <p className="text-xs text-gray-700">{data.label}</p>
+        <p className="text-xs text-gray-700 dark:text-gray-300">{data.label}</p>
         {actionType === 'assign_agent' && data.config?.strategy != null && (
-          <p className="text-2xs text-gray-400 mt-0.5 capitalize">{String(data.config.strategy).replace(/_/g, ' ')}</p>
+          <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">{String(data.config.strategy).replace(/_/g, ' ')}</p>
         )}
         {(actionType === 'add_tag' || actionType === 'remove_tag') && Boolean(data.config?.tag) && (
-          <p className="text-2xs text-gray-400 mt-0.5">#{String(data.config.tag)}</p>
+          <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">#{String(data.config.tag)}</p>
         )}
         {actionType === 'update_field' && Boolean(data.config?.field) && (
-          <p className="text-2xs text-gray-400 mt-0.5">{String(data.config.field)} = {String(data.config?.value ?? '')}</p>
+          <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">{String(data.config.field)} = {String(data.config?.value ?? '')}</p>
         )}
         {actionType === 'webhook' && Boolean(data.config?.url) && (
-          <p className="text-2xs text-gray-400 mt-0.5 truncate">{String(data.config.url)}</p>
+          <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{String(data.config.url)}</p>
         )}
       </div>
 

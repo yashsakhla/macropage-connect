@@ -30,7 +30,7 @@ export default function WhatsAppRequiredModal() {
       onClick={(e) => e.target === e.currentTarget && dismiss()}
     >
       <div
-        className={`bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
+        className={`bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
           transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       >
         <div className="relative bg-[#1a3d2b] px-6 pt-7 pb-8 overflow-hidden">
@@ -72,8 +72,8 @@ export default function WhatsAppRequiredModal() {
 
           <button
             onClick={dismiss}
-            className="w-full h-10 text-gray-400 hover:text-gray-600 text-sm transition-colors
-              rounded-2xl hover:bg-gray-50"
+            className="w-full h-10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors
+              rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5"
           >
             Not now
           </button>

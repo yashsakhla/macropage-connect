@@ -94,6 +94,11 @@ export function useSendMessage() {
         templateId?: string
         templateName?: string
         variables?: Record<string, string>
+        mediaUrl?: string
+        mediaName?: string
+        mediaSize?: number
+        mimeType?: string
+        caption?: string
       }
     }) =>
       api
@@ -107,9 +112,14 @@ export function useSendMessage() {
         id: tempId,
         conversationId,
         direction: 'outbound',
-        type: data.type === 'TEMPLATE' ? 'template' : 'text',
+        type: (data.type ?? 'TEXT').toLowerCase() as Message['type'],
         status: 'SENDING',
         content: data.content,
+        mediaUrl: data.mediaUrl,
+        mediaName: data.mediaName,
+        mediaSize: data.mediaSize,
+        mimeType: data.mimeType,
+        caption: data.caption,
         templateName: data.templateName,
         agentId: user?.id,
         agentName: user?.name,
@@ -125,6 +135,7 @@ export function useSendMessage() {
       if (!realMsg) {
         qc.invalidateQueries({ queryKey: ['messages', conversationId] })
         qc.invalidateQueries({ queryKey: ['conversations'] })
+        qc.invalidateQueries({ queryKey: ['message-usage'] })
         return
       }
       qc.setQueryData(['messages', conversationId, 1], (old: any) => {
@@ -139,6 +150,7 @@ export function useSendMessage() {
         return { ...old, data: alreadyPresent ? filtered : [...filtered, realMsg] }
       })
       qc.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['message-usage'] })
     },
     onError: (_err, { conversationId }, context: any) => {
       qc.setQueryData(['messages', conversationId, 1], (old: any) => {

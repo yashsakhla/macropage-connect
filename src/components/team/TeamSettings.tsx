@@ -6,7 +6,7 @@ import { useTeamMembers } from '@/hooks/useTeam'
 function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
   return (
     <button onClick={onChange}
-      className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', value ? 'bg-[#1a5c3a]' : 'bg-gray-200')}>
+      className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', value ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10')}>
       <span className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform', value ? 'translate-x-4' : 'translate-x-0.5')} />
     </button>
   )
@@ -27,20 +27,20 @@ export default function TeamSettings() {
   return (
     <div className="px-5 py-6 max-w-2xl space-y-6">
       {/* general */}
-      <section className="bg-white border border-[#e8ebe8] rounded-2xl p-6 space-y-5">
-        <p className="text-sm font-semibold text-gray-800">General</p>
+      <section className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 space-y-5">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">General</p>
 
         <div>
-          <p className="text-sm font-medium text-gray-700">Maximum team members</p>
-          <p className="text-xs text-gray-500 mt-0.5">Your plan allows up to {MAX_SEATS} members</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Maximum team members</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your plan allows up to {MAX_SEATS} members</p>
           <div className="mt-3">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
               <span>{usedSeats} of {MAX_SEATS} seats used</span>
               {usedSeats >= MAX_SEATS - 1 && (
                 <button className="text-[#1a5c3a] underline">Upgrade plan</button>
               )}
             </div>
-            <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
+            <div className="bg-gray-100 dark:bg-white/10 rounded-full h-2 overflow-hidden">
               <div className={cn('h-2 rounded-full transition-all', usedSeats / MAX_SEATS > 0.8 ? 'bg-amber-500' : 'bg-[#1a5c3a]')}
                 style={{ width: `${(usedSeats / MAX_SEATS) * 100}%` }} />
             </div>
@@ -48,19 +48,19 @@ export default function TeamSettings() {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-1.5 block">Default role for new members</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Default role for new members</label>
           <select value={defaultRole} onChange={e => setDefaultRole(e.target.value)} className="input w-48">
             <option value="agent">Agent</option>
             <option value="manager">Manager</option>
             <option value="admin">Admin</option>
           </select>
-          <p className="text-xs text-gray-400 mt-1">Role assigned when invitation is accepted</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Role assigned when invitation is accepted</p>
         </div>
       </section>
 
       {/* notifications */}
-      <section className="bg-white border border-[#e8ebe8] rounded-2xl p-6 space-y-4">
-        <p className="text-sm font-semibold text-gray-800">Notify owner when</p>
+      <section className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 space-y-4">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Notify owner when</p>
         {[
           { label: 'New member joins',          value: notifyJoin,       set: setNotifyJoin },
           { label: 'Member role changed',        value: notifyRole,       set: setNotifyRole },
@@ -68,18 +68,18 @@ export default function TeamSettings() {
           { label: 'Failed login attempts (>5)', value: notifyFailedLogin, set: setNotifyFailedLogin },
         ].map(item => (
           <div key={item.label} className="flex items-center justify-between">
-            <span className="text-sm text-gray-700">{item.label}</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">{item.label}</span>
             <Toggle value={item.value} onChange={() => item.set(v => !v)} />
           </div>
         ))}
       </section>
 
       {/* session */}
-      <section className="bg-white border border-[#e8ebe8] rounded-2xl p-6 space-y-4">
-        <p className="text-sm font-semibold text-gray-800">Session Management</p>
+      <section className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 space-y-4">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Session Management</p>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-1.5 block">Session timeout</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Session timeout</label>
           <select value={sessionTimeout} onChange={e => setSessionTimeout(e.target.value)} className="input w-48">
             <option value="1h">1 hour</option>
             <option value="8h">8 hours</option>
@@ -90,8 +90,8 @@ export default function TeamSettings() {
 
         <div className="flex items-center justify-between pt-2 border-t border-[#f5f5f5]">
           <div>
-            <p className="text-sm font-medium text-gray-700">Force logout all members</p>
-            <p className="text-xs text-gray-500 mt-0.5">Signs out all team members except you</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Force logout all members</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Signs out all team members except you</p>
           </div>
           <button
             className="btn btn-danger h-9 px-4 text-sm"
@@ -103,18 +103,18 @@ export default function TeamSettings() {
       </section>
 
       {/* danger zone */}
-      <section className="bg-white border-2 border-red-200 rounded-2xl p-6 space-y-4">
+      <section className="bg-white dark:bg-[#0b1220] border-2 border-red-200 rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-red-500" />
-          <p className="text-sm font-semibold text-red-600">Danger Zone</p>
+          <AlertTriangle size={16} className="text-red-500 dark:text-red-400" />
+          <p className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</p>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-700">Delete all team members</p>
-            <p className="text-xs text-gray-500 mt-0.5">Removes all members except the account owner</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Delete all team members</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Removes all members except the account owner</p>
           </div>
           <button
-            className="bg-white border border-red-300 text-red-600 text-sm h-9 px-4 rounded-xl hover:bg-red-50 transition-colors font-medium"
+            className="bg-white dark:bg-[#0b1220] border border-red-300 text-red-600 dark:text-red-400 text-sm h-9 px-4 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors font-medium"
             onClick={() => window.confirm('Delete ALL team members? This cannot be undone.')}
           >
             Delete all members

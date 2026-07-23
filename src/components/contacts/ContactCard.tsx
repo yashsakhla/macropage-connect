@@ -13,10 +13,10 @@ const AVATAR_GRADIENTS = [
 ]
 
 const STATUS_BADGE = {
-  active:    { bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]', label: 'Active' },
-  inactive:  { bg: 'bg-gray-100',  text: 'text-gray-500',   label: 'Inactive' },
-  opted_out: { bg: 'bg-red-50',    text: 'text-red-600',    label: 'Opted out' },
-  new:       { bg: 'bg-blue-50',   text: 'text-blue-600',   label: 'New' },
+  active:    { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', text: 'text-[#1a5c3a]', label: 'Active' },
+  inactive:  { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400',   label: 'Inactive' },
+  opted_out: { bg: 'bg-red-50 dark:bg-red-950/30',    text: 'text-red-600 dark:text-red-400',    label: 'Opted out' },
+  new:       { bg: 'bg-blue-50 dark:bg-blue-950/30',   text: 'text-blue-600 dark:text-blue-400',   label: 'New' },
 }
 
 export function ContactAvatar({ contact, size = 'md' }: { contact: Contact; size?: 'sm' | 'md' | 'lg' }) {
@@ -47,7 +47,7 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
 
   return (
     <div
-      className={cn('bg-white border border-[#e8ebe8] rounded-2xl p-5 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer relative', selected && 'border-[#1a5c3a] bg-[#fafffe]')}
+      className={cn('bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer relative', selected && 'border-[#1a5c3a] bg-[#fafffe] dark:bg-white/5')}
       onClick={() => onClick(contact)}
     >
       {/* checkbox */}
@@ -59,11 +59,11 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
       <div className="absolute top-4 right-4" onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}>
         <button className="btn-ghost w-7 h-7"><MoreVertical size={14} /></button>
         {menuOpen && (
-          <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-40 text-sm">
-            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onClick(contact); setMenuOpen(false) }}>View profile</button>
-            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onMessage?.(contact); setMenuOpen(false) }}>Send message</button>
-            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onEdit?.(contact); setMenuOpen(false) }}>Edit contact</button>
-            <button className="w-full px-3 py-2 text-left text-red-500 hover:bg-[#f7f8f6]">Delete</button>
+          <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { onClick(contact); setMenuOpen(false) }}>View profile</button>
+            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { onMessage?.(contact); setMenuOpen(false) }}>Send message</button>
+            <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { onEdit?.(contact); setMenuOpen(false) }}>Edit contact</button>
+            <button className="w-full px-3 py-2 text-left text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5">Delete</button>
           </div>
         )}
       </div>
@@ -71,8 +71,8 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
       {/* avatar + info */}
       <div className="flex flex-col items-center pt-3">
         <ContactAvatar contact={contact} size="lg" />
-        <p className="text-base font-semibold text-gray-900 mt-3 text-center">{contact.name}</p>
-        <p className="text-sm text-gray-500 text-center mt-0.5 flex items-center gap-1">
+        <p className="text-base font-semibold text-gray-900 dark:text-white mt-3 text-center">{contact.name}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-0.5 flex items-center gap-1">
           <span className="text-[#25D366] text-xs">●</span> {formatPhone(contact.phone)}
         </p>
       </div>
@@ -81,7 +81,7 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
       {contact.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 justify-center mt-3">
           {contact.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="bg-[#f7f8f6] text-gray-600 text-[10px] font-medium rounded-full px-2 py-0.5">{tag}</span>
+            <span key={tag} className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded-full px-2 py-0.5">{tag}</span>
           ))}
         </div>
       )}
@@ -89,16 +89,16 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
       {/* stats */}
       <div className="flex justify-around mt-4 pt-4 border-t border-[#f5f5f5]">
         <div className="text-center">
-          <p className="text-sm font-bold text-gray-800">{contact.totalCampaigns}</p>
-          <p className="text-[10px] text-gray-400">Campaigns</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{contact.totalCampaigns}</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">Campaigns</p>
         </div>
         <div className="text-center">
-          <p className="text-sm font-bold text-gray-800">{contact.totalMessages}</p>
-          <p className="text-[10px] text-gray-400">Messages</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{contact.totalMessages}</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">Messages</p>
         </div>
         <div className="text-center">
           <span className={cn('text-xs font-medium rounded-full px-2 py-0.5', status.bg, status.text)}>{status.label}</span>
-          <p className="text-[10px] text-gray-400 mt-1">Status</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Status</p>
         </div>
       </div>
 

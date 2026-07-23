@@ -59,19 +59,23 @@ function getTemplatePreview(msg: NonNullable<Conversation['lastMessage']>): stri
 }
 
 function LastMessagePreview({ msg }: { msg: NonNullable<Conversation['lastMessage']> }) {
-  const isTemplate = msg.type === 'template' || (msg.type as string) === 'TEMPLATE'
+  // Backend payloads aren't guaranteed to send `type` lowercase — normalize
+  // here so the preview badge doesn't fall through to raw message content.
+  const type = (msg.type as string)?.toLowerCase()
+  const isTemplate = type === 'template'
   let text = msg.content
-  if (msg.type === 'image') text = '📷 Photo'
-  else if (msg.type === 'document') text = '📄 Document'
-  else if (msg.type === 'audio') text = '🎵 Voice message'
-  else if (msg.type === 'video') text = '🎬 Video'
-  else if (msg.type === 'location') text = '📍 Location'
+  if (type === 'image') text = '📷 Image'
+  else if (type === 'document') text = `📄 ${msg.mediaName ?? 'Document'}`
+  else if (type === 'audio') text = '🎵 Audio'
+  else if (type === 'video') text = msg.mimeType === 'image/gif' ? '🎞️ GIF' : '🎬 Video'
+  else if (type === 'sticker') text = '🎉 Sticker'
+  else if (type === 'location') text = '📍 Location'
   else if (isTemplate) text = getTemplatePreview(msg)
-  else if (msg.type === 'note') text = '🔒 Internal note'
+  else if (type === 'note') text = '🔒 Internal note'
 
   return (
     <span className="text-xs text-gray-500 dark:text-gray-400 truncate flex-1 min-w-0">
-      {msg.direction === 'outbound' && msg.type !== 'note' && (
+      {msg.direction === 'outbound' && type !== 'note' && (
         <span className="text-gray-400 dark:text-gray-500">You: </span>
       )}
       {text}

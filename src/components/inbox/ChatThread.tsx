@@ -31,7 +31,7 @@ import { usePermissions } from '@/lib/permissions'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 import { avatarGradient } from './ConversationItem'
 import MessageBubble, { TypingBubble } from './MessageBubble'
-import MessageInput from './MessageInput'
+import MessageInput, { type SentMedia } from './MessageInput'
 import AssignModal from './AssignModal'
 import { getSocket } from '@/lib/socket'
 
@@ -400,7 +400,15 @@ export default function ChatThread({ mobileBack }: Props) {
       seenKeys.add(key)
       return true
     })
-    .map((m: any) => ({ ...m, id: m.id ?? m._id ?? m.metaMessageId }))
+    .map((m: any) => ({
+      ...m,
+      id: m.id ?? m._id ?? m.metaMessageId,
+      direction: (m.direction ?? '').toString().toLowerCase(),
+      // Historical messages from the REST API aren't guaranteed to be lowercase
+      // the way socket.io's message:new normalizes them — without this, past
+      // media messages (type "IMAGE" etc.) fall through to the text bubble.
+      type: (m.type ?? 'text').toString().toLowerCase(),
+    }))
     .filter((m: any) => {
       const type = (m.type ?? 'text').toLowerCase()
       if (['image', 'document', 'audio', 'video', 'location', 'template'].includes(type)) return true
@@ -478,6 +486,26 @@ export default function ChatThread({ mobileBack }: Props) {
     endRef.current?.scrollIntoView({ behavior: 'auto' })
   }, [selectedConversationId])
 
+  // Clear the unread badge once the agent actually opens the conversation.
+  useEffect(() => {
+    if (!selectedConv?.id || !(selectedConv.unreadCount > 0)) return
+    const id = selectedConv.id
+
+    qc.setQueriesData<any>({ queryKey: ['conversations'] }, (old: any) => {
+      if (!old?.data) return old
+      return {
+        ...old,
+        data: old.data.map((c: Conversation) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
+      }
+    })
+    qc.setQueryData(['conversation', id], (old: any) => (old ? { ...old, unreadCount: 0 } : old))
+
+    updateConversation.mutate({ id, data: { unreadCount: 0 } })
+    // Only re-run when the conversation identity or its unread count changes —
+    // not on every updateConversation re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConv?.id, selectedConv?.unreadCount])
+
   useEffect(() => {
     if (shouldAutoScroll.current) {
       endRef.current?.scrollIntoView({ behavior: 'instant' })
@@ -551,6 +579,25 @@ export default function ChatThread({ mobileBack }: Props) {
         data: { content, type: 'TEXT' },
       })
     }
+    shouldAutoScroll.current = true
+    endRef.current?.scrollIntoView({ behavior: 'instant' })
+  }
+
+  function handleSendMedia(media: SentMedia) {
+    if (!selectedConversationId) return
+    if (!requireConnected()) return
+    sendMessage.mutate({
+      conversationId: selectedConversationId,
+      data: {
+        type: media.type.toUpperCase(),
+        content: media.caption ?? '',
+        caption: media.caption,
+        mediaUrl: media.url,
+        mediaName: media.mediaName,
+        mediaSize: media.mediaSize,
+        mimeType: media.mimeType,
+      },
+    })
     shouldAutoScroll.current = true
     endRef.current?.scrollIntoView({ behavior: 'instant' })
   }
@@ -777,6 +824,7 @@ export default function ChatThread({ mobileBack }: Props) {
       <MessageInput
         onSend={handleSend}
         onSendTemplate={handleSendTemplate}
+        onSendMedia={handleSendMedia}
         mode={inputMode}
         setMode={setInputMode}
         disabled={false}

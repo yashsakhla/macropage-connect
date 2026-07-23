@@ -34,13 +34,13 @@ export default function QuickRepliesPanel() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search quick replies..."
-            className="w-full h-9 pl-9 pr-3 rounded-xl border border-[#e8ebe8] text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c3a]/20 focus:border-[#1a5c3a] placeholder:text-gray-300"
+            className="w-full h-9 pl-9 pr-3 rounded-xl border border-[#e8ebe8] dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c3a]/20 focus:border-[#1a5c3a] placeholder:text-gray-300 dark:text-gray-600"
           />
         </div>
         <button
@@ -55,17 +55,17 @@ export default function QuickRepliesPanel() {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-20 bg-gray-100 dark:bg-white/10 rounded-2xl animate-pulse" />
           ))}
         </div>
       )}
 
       {/* Error */}
       {isError && !isLoading && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-4">
+        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-2xl px-4 py-4">
           <AlertCircle size={15} className="text-red-400 flex-shrink-0" />
-          <p className="text-sm text-red-600 flex-1">Could not load quick replies</p>
-          <button onClick={() => refetch()} className="text-xs text-red-600 font-medium">
+          <p className="text-sm text-red-600 dark:text-red-400 flex-1">Could not load quick replies</p>
+          <button onClick={() => refetch()} className="text-xs text-red-600 dark:text-red-400 font-medium">
             Retry
           </button>
         </div>
@@ -75,12 +75,12 @@ export default function QuickRepliesPanel() {
       {!isLoading && !isError && filtered.length === 0 && (
         <div className="card p-12 text-center">
           <MessageSquare size={36} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {search ? 'No quick replies match your search' : 'No quick replies yet'}
           </p>
           {!search && (
             <>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                 Save common responses to reply faster in chats
               </p>
               <button
@@ -100,23 +100,23 @@ export default function QuickRepliesPanel() {
           {filtered.map((qr) => (
             <div
               key={qr.id}
-              className="bg-white border border-[#e8ebe8] rounded-2xl px-4 py-3.5 hover:border-[#c8e6d4] transition-colors"
+              className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl px-4 py-3.5 hover:border-[#c8e6d4] transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[#e8f5ee] rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
                   <MessageSquare size={14} className="text-[#1a5c3a]" />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{qr.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{qr.content}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{qr.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{qr.content}</p>
 
                   {qr.tags && qr.tags.length > 0 && (
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                       {qr.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="flex items-center gap-1 text-2xs bg-[#f7f8f6] text-gray-500 rounded-full px-2 py-0.5"
+                          className="flex items-center gap-1 text-2xs bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5"
                         >
                           <Tag size={9} />
                           {tag}
@@ -129,7 +129,7 @@ export default function QuickRepliesPanel() {
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => { setEditing(qr); setShowForm(true) }}
-                    className="w-7 h-7 rounded-lg hover:bg-[#f7f8f6] flex items-center justify-center text-gray-400 hover:text-[#1a5c3a]"
+                    className="w-7 h-7 rounded-lg hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-[#1a5c3a]"
                   >
                     <Edit2 size={13} />
                   </button>
@@ -138,13 +138,13 @@ export default function QuickRepliesPanel() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => { deleteReply(qr.id); setConfirmDelete(null) }}
-                        className="text-2xs font-bold text-red-500"
+                        className="text-2xs font-bold text-red-500 dark:text-red-400"
                       >
                         Yes
                       </button>
                       <button
                         onClick={() => setConfirmDelete(null)}
-                        className="text-2xs text-gray-400"
+                        className="text-2xs text-gray-400 dark:text-gray-500"
                       >
                         No
                       </button>
@@ -152,7 +152,7 @@ export default function QuickRepliesPanel() {
                   ) : (
                     <button
                       onClick={() => setConfirmDelete(qr.id)}
-                      className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500"
+                      className="w-7 h-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
                     >
                       <Trash2 size={13} />
                     </button>

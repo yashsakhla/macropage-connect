@@ -66,27 +66,27 @@ const GROUPS = [
 
 export default function RolePermissionsTable() {
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
-      <div className="grid grid-cols-4 bg-[#f7f8f6] border-b border-[#e8ebe8] px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+      <div className="grid grid-cols-4 bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
         <span>Feature</span>
-        <span className="text-center text-purple-600">Admin</span>
-        <span className="text-center text-blue-600">Manager</span>
+        <span className="text-center text-purple-600 dark:text-purple-400">Admin</span>
+        <span className="text-center text-blue-600 dark:text-blue-400">Manager</span>
         <span className="text-center text-[#1a5c3a]">Agent</span>
       </div>
 
       {GROUPS.map(group => (
         <div key={group.name}>
-          <div className="bg-[#f7f8f6] px-5 py-2 border-t border-[#e8ebe8]">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{group.name}</p>
+          <div className="bg-[#f7f8f6] dark:bg-[#0f1724] px-5 py-2 border-t border-[#e8ebe8] dark:border-white/10">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.name}</p>
           </div>
           {group.rows.map(row => (
-            <div key={row.feature} className="grid grid-cols-4 px-5 py-3 border-t border-[#f5f5f5] items-center hover:bg-[#fafffe] transition-colors">
-              <span className="text-sm text-gray-700">{row.feature}</span>
+            <div key={row.feature} className="grid grid-cols-4 px-5 py-3 border-t border-[#f5f5f5] items-center hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
+              <span className="text-sm text-gray-700 dark:text-gray-300">{row.feature}</span>
               {[row.admin, row.manager, row.agent].map((has, i) => (
                 <div key={i} className="flex justify-center">
                   {has
                     ? <CheckCircle size={16} className="text-[#1a5c3a]" />
-                    : <X size={14} className="text-gray-300" />
+                    : <X size={14} className="text-gray-300 dark:text-gray-600" />
                   }
                 </div>
               ))}

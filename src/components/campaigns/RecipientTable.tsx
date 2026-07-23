@@ -13,17 +13,17 @@ const STATUS_TABS = [
 ] as const
 
 const STATUS_BADGE = {
-  pending:   { bg: 'bg-gray-100',   text: 'text-gray-500',   label: 'Pending' },
-  sent:      { bg: 'bg-blue-50',    text: 'text-blue-600',   label: 'Sent' },
-  delivered: { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', label: 'Delivered' },
-  read:      { bg: 'bg-purple-50',  text: 'text-purple-600', label: 'Read' },
-  failed:    { bg: 'bg-red-50',     text: 'text-red-500',    label: 'Failed' },
+  pending:   { bg: 'bg-gray-100 dark:bg-white/10',   text: 'text-gray-500 dark:text-gray-400',   label: 'Pending' },
+  sent:      { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-600 dark:text-blue-400',   label: 'Sent' },
+  delivered: { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', label: 'Delivered' },
+  read:      { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-600 dark:text-purple-400', label: 'Read' },
+  failed:    { bg: 'bg-red-50 dark:bg-red-950/30',     text: 'text-red-500 dark:text-red-400',    label: 'Failed' },
 }
 
 function Avatar({ name }: { name: string }) {
   const safe = name || '?'
   const initials = safe.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
-  const colors = ['bg-purple-100 text-purple-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-green-100 text-green-700', 'bg-pink-100 text-pink-700']
+  const colors = ['bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400', 'bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400', 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400', 'bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400', 'bg-pink-100 dark:bg-pink-950/30 text-pink-700 dark:text-pink-400']
   const color = colors[safe.charCodeAt(0) % colors.length]
   return (
     <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0', color)}>
@@ -60,13 +60,13 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
   recipients.forEach(r => { counts[r.status] = (counts[r.status] ?? 0) + 1 })
 
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       {/* header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8]">
-        <p className="text-sm font-semibold text-gray-800">Recipients</p>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Recipients</p>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
@@ -98,11 +98,11 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
             onClick={() => { setStatusFilter(tab.value); setPage(1) }}
             className={cn(
               'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
-              statusFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 hover:text-gray-700'
+              statusFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             )}
           >
             {tab.label}
-            <span className={cn('text-[10px] rounded-full px-1.5', statusFilter === tab.value ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] text-gray-400')}>
+            <span className={cn('text-[10px] rounded-full px-1.5', statusFilter === tab.value ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
               {counts[tab.value] ?? 0}
             </span>
           </button>
@@ -111,7 +111,7 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
 
       {/* table */}
       {isLoading ? (
-        <div className="p-10 text-center text-gray-400 text-sm">Loading recipients...</div>
+        <div className="p-10 text-center text-gray-400 dark:text-gray-500 text-sm">Loading recipients...</div>
       ) : (
         <table className="data-table w-full">
           <thead>
@@ -127,41 +127,41 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-gray-400 py-10">No recipients found</td>
+                <td colSpan={6} className="text-center text-gray-400 dark:text-gray-500 py-10">No recipients found</td>
               </tr>
             ) : paged.map(r => {
               const badge = STATUS_BADGE[r.status]
               return (
-                <tr key={r.id} className="hover:bg-[#fafffe] transition-colors">
+                <tr key={r.id} className="hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                   <td>
                     <div className="flex items-center gap-2">
                       <Avatar name={r.contactName} />
-                      <span className="text-sm font-medium text-gray-900">{r.contactName}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{r.contactName}</span>
                     </div>
                   </td>
                   <td>
-                    <span className="font-mono text-xs text-gray-500">{formatPhone(r.phone)}</span>
+                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{formatPhone(r.phone)}</span>
                   </td>
                   <td>
                     <span className={cn('badge text-xs', badge.bg, badge.text)}>{badge.label}</span>
                   </td>
                   <td>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {r.deliveredAt ? fromNow(r.deliveredAt) : '—'}
                     </span>
                   </td>
                   <td>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {r.readAt ? fromNow(r.readAt) : '—'}
                     </span>
                   </td>
                   <td>
                     {r.failureReason ? (
-                      <span className="text-xs text-red-500 truncate max-w-32 block" title={r.failureReason}>
+                      <span className="text-xs text-red-500 dark:text-red-400 truncate max-w-32 block" title={r.failureReason}>
                         {r.failureReason}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
                     )}
                   </td>
                 </tr>
@@ -174,7 +174,7 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
       {/* pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-5 py-3 border-t border-[#f7f8f6]">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             Showing {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
           </p>
           <div className="flex items-center gap-1">
@@ -185,7 +185,7 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
             >
               <ChevronLeft size={14} />
             </button>
-            <span className="text-xs text-gray-600 px-2">
+            <span className="text-xs text-gray-600 dark:text-gray-400 px-2">
               Page {page} of {totalPages}
             </span>
             <button

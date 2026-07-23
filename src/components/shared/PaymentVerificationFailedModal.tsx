@@ -27,7 +27,7 @@ export default function PaymentVerificationFailedModal() {
       onClick={(e) => e.target === e.currentTarget && dismiss()}
     >
       <div
-        className={`bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
+        className={`bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
           transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       >
         {/* Header */}
@@ -58,22 +58,22 @@ export default function PaymentVerificationFailedModal() {
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
-            <Clock size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
+            <Clock size={15} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
               If any amount was deducted, it has <strong>not been lost</strong> — your plan will be
               updated automatically within a few minutes once we confirm the payment.
             </p>
           </div>
 
           {paymentIssueReferenceId && (
-            <div className="bg-gray-50 border border-[#e8ebe8] rounded-xl px-3.5 py-2.5">
-              <p className="text-[0.65rem] text-gray-400 uppercase tracking-wide">Reference ID</p>
-              <p className="text-xs font-mono text-gray-700 mt-0.5 break-all">{paymentIssueReferenceId}</p>
+            <div className="bg-gray-50 dark:bg-white/5 border border-[#e8ebe8] dark:border-white/10 rounded-xl px-3.5 py-2.5">
+              <p className="text-[0.65rem] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Reference ID</p>
+              <p className="text-xs font-mono text-gray-700 dark:text-gray-300 mt-0.5 break-all">{paymentIssueReferenceId}</p>
             </div>
           )}
 
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
             Still facing an issue after a few minutes? Reach out and share the reference ID above —
             we'll sort it out quickly.
           </p>
@@ -81,8 +81,8 @@ export default function PaymentVerificationFailedModal() {
           <div className="space-y-2">
             <a
               href={`tel:${SUPPORT_PHONE.replace(/\s/g, '')}`}
-              className="w-full h-11 border border-[#e8ebe8] rounded-2xl font-semibold text-sm
-                text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+              className="w-full h-11 border border-[#e8ebe8] dark:border-white/10 rounded-2xl font-semibold text-sm
+                text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             >
               <Phone size={15} className="text-[#1a5c3a]" />
               Call us · {SUPPORT_PHONE}
@@ -101,7 +101,7 @@ export default function PaymentVerificationFailedModal() {
             </a>
             <a
               href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Payment verification failed')}${paymentIssueReferenceId ? `&body=${encodeURIComponent(`Reference ID: ${paymentIssueReferenceId}`)}` : ''}`}
-              className="w-full h-9 text-gray-400 hover:text-gray-600 text-xs transition-colors
+              className="w-full h-9 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-xs transition-colors
                 rounded-2xl flex items-center justify-center gap-1.5"
             >
               <Mail size={12} />

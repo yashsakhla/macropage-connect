@@ -28,12 +28,12 @@ function avatarGradient(name: string) {
 }
 
 const TYPE_CHIP: Record<string, { bg: string; text: string }> = {
-  conversation: { bg: 'bg-blue-50',   text: 'text-blue-600'   },
-  campaign:     { bg: 'bg-purple-50', text: 'text-purple-600' },
-  contact:      { bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]' },
-  template:     { bg: 'bg-amber-50',  text: 'text-amber-600'  },
+  conversation: { bg: 'bg-blue-50 dark:bg-blue-950/30',   text: 'text-blue-600 dark:text-blue-400'   },
+  campaign:     { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600 dark:text-purple-400' },
+  contact:      { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', text: 'text-[#1a5c3a]' },
+  template:     { bg: 'bg-amber-50 dark:bg-amber-950/30',  text: 'text-amber-600 dark:text-amber-400'  },
   team:         { bg: 'bg-rose-50',   text: 'text-rose-600'   },
-  settings:     { bg: 'bg-gray-100',  text: 'text-gray-500'   },
+  settings:     { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400'   },
 }
 
 export default function MemberProfile() {
@@ -46,8 +46,8 @@ export default function MemberProfile() {
   if (isLoading || !member) {
     return (
       <div className="p-6 space-y-4">
-        <div className="h-8 bg-gray-200 rounded w-32 animate-pulse" />
-        <div className="h-64 bg-gray-200 rounded-2xl animate-pulse" />
+        <div className="h-8 bg-gray-200 dark:bg-white/10 rounded w-32 animate-pulse" />
+        <div className="h-64 bg-gray-200 dark:bg-white/10 rounded-2xl animate-pulse" />
       </div>
     )
   }
@@ -64,7 +64,7 @@ export default function MemberProfile() {
   ]
 
   return (
-    <div className="p-6 bg-[#f7f8f6] min-h-screen">
+    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
       <div className="flex items-center justify-between mb-6">
         <button className="btn-ghost h-8 px-3 text-sm flex items-center gap-1" onClick={() => navigate('/team')}>
@@ -82,7 +82,7 @@ export default function MemberProfile() {
         {/* LEFT */}
         <div className="col-span-1 space-y-4">
           {/* profile card */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6 text-center">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 text-center">
             <div className="flex justify-center">
               <div className={cn('w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white text-2xl font-semibold', grad)}>
                 {getInitials(member.name || member.email)}
@@ -91,14 +91,14 @@ export default function MemberProfile() {
             <div className="flex items-center justify-center mt-2">
               <OnlineIndicator status={member.onlineStatus} lastActiveAt={member.lastActiveAt} showLabel />
             </div>
-            <p className="text-xl font-bold text-gray-900 mt-3">{member.name || member.email}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white mt-3">{member.name || member.email}</p>
             <div className="flex justify-center mt-2">
               <RoleBadge role={member.role} size="md" />
             </div>
-            <p className="text-sm text-gray-500 mt-1">{member.email}</p>
-            {member.joinedAt && <p className="text-xs text-gray-400 mt-1">Member since {format(new Date(member.joinedAt), 'MMMM dd, yyyy')}</p>}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{member.email}</p>
+            {member.joinedAt && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Member since {format(new Date(member.joinedAt), 'MMMM dd, yyyy')}</p>}
             {member.department && (
-              <span className="bg-[#f7f8f6] rounded-full px-3 py-1 text-xs text-gray-600 inline-block mt-2">{member.department}</span>
+              <span className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-full px-3 py-1 text-xs text-gray-600 dark:text-gray-400 inline-block mt-2">{member.department}</span>
             )}
             <div className="flex gap-2 mt-5">
               <a href={`mailto:${member.email}`} className="btn btn-primary flex-1 h-9 text-sm gap-1.5 flex items-center justify-center">
@@ -111,8 +111,8 @@ export default function MemberProfile() {
           </div>
 
           {/* permissions card */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-            <p className="text-sm font-semibold text-gray-800 mb-3">Access & Permissions</p>
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Access & Permissions</p>
             <div className="flex justify-center mb-3">
               <RoleBadge role={member.role} size="lg" />
             </div>
@@ -120,7 +120,7 @@ export default function MemberProfile() {
               {KEY_PERMS.map(p => {
                 const has = perms.includes(p as never)
                 return (
-                  <div key={p} className={cn('flex items-center gap-1.5 text-xs', has ? 'text-[#1a5c3a]' : 'text-gray-300')}>
+                  <div key={p} className={cn('flex items-center gap-1.5 text-xs', has ? 'text-[#1a5c3a]' : 'text-gray-300 dark:text-gray-600')}>
                     {has ? <CheckCircle size={11} /> : <XCircle size={11} />}
                     <span className="capitalize">{p.replace(/_/g, ' ')}</span>
                   </div>
@@ -134,8 +134,8 @@ export default function MemberProfile() {
 
           {/* quick stats */}
           {member.stats && (
-            <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-              <p className="text-sm font-semibold text-gray-800 mb-3">This month</p>
+            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">This month</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Conversations', value: member.stats.conversationsThisMonth },
@@ -143,9 +143,9 @@ export default function MemberProfile() {
                   { label: 'Avg response',  value: `${Math.floor(member.stats.avgResponseTimeSeconds / 60)}m` },
                   { label: 'Resolution',    value: `${member.stats.resolutionRate}%` },
                 ].map(s => (
-                  <div key={s.label} className="bg-[#f7f8f6] rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-gray-900">{s.value}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{s.label}</p>
+                  <div key={s.label} className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{s.value}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -156,10 +156,10 @@ export default function MemberProfile() {
         {/* RIGHT */}
         <div className="col-span-2 space-y-4">
           {/* performance chart */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-gray-800">Performance</p>
-              <select className="bg-white border border-[#e8ebe8] rounded-xl h-8 px-3 text-xs text-gray-600 focus:outline-none">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Performance</p>
+              <select className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-8 px-3 text-xs text-gray-600 dark:text-gray-400 focus:outline-none">
                 <option>Last 30 days</option><option>Last 7 days</option><option>This month</option>
               </select>
             </div>
@@ -177,52 +177,52 @@ export default function MemberProfile() {
           </div>
 
           {/* current conversations */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#e8ebe8]">
-              <p className="text-sm font-semibold text-gray-800">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 Assigned conversations ({member.openConversations})
               </p>
             </div>
             {member.openConversations === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No assigned conversations</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No assigned conversations</p>
             ) : (
               <div className="divide-y divide-[#f5f5f5]">
                 {Array.from({ length: Math.min(member.openConversations, 5) }, (_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#fafffe] cursor-pointer transition-colors" onClick={() => navigate('/inbox')}>
+                  <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#fafffe] dark:hover:bg-white/5 cursor-pointer transition-colors" onClick={() => navigate('/inbox')}>
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                       {['RS', 'AM', 'KP', 'DN', 'SF'][i] ?? 'U'}
                     </div>
-                    <p className="text-xs text-gray-600 flex-1 truncate">Latest message from contact {i + 1}...</p>
-                    <span className="badge bg-[#e8f5ee] text-[#1a5c3a] text-[10px]">Open</span>
-                    <span className="text-[10px] text-gray-400">{fromNow(new Date(Date.now() - i * 3600000).toISOString())}</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 flex-1 truncate">Latest message from contact {i + 1}...</p>
+                    <span className="badge bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px]">Open</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{fromNow(new Date(Date.now() - i * 3600000).toISOString())}</span>
                   </div>
                 ))}
               </div>
             )}
-            <button className="w-full text-xs text-[#1a5c3a] font-medium p-4 border-t border-[#f5f5f5] hover:bg-[#f7f8f6] text-left transition-colors"
+            <button className="w-full text-xs text-[#1a5c3a] font-medium p-4 border-t border-[#f5f5f5] hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-left transition-colors"
               onClick={() => navigate('/inbox')}>
               View all conversations →
             </button>
           </div>
 
           {/* activity timeline */}
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8]">
-              <p className="text-sm font-semibold text-gray-800">Recent activity</p>
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent activity</p>
               <button className="text-xs text-[#1a5c3a] font-medium hover:underline">View full log →</button>
             </div>
             <div className="divide-y divide-[#f5f5f5]">
               {memberActivity.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">No recent activity</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No recent activity</p>
               ) : (memberActivity as import('@/types').ActivityLog[]).map(log => {
                 const ts = TYPE_CHIP[log.actionType as keyof typeof TYPE_CHIP]
                 return (
-                  <div key={log.id} className="flex items-start gap-4 px-5 py-3.5 hover:bg-[#fafffe] transition-colors">
+                  <div key={log.id} className="flex items-start gap-4 px-5 py-3.5 hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                     <div className={cn('mt-0.5 text-[10px] rounded-full px-2 py-0.5 font-medium flex-shrink-0', ts.bg, ts.text)}>{log.actionType}</div>
-                    <p className="text-xs text-gray-700 flex-1 leading-relaxed">
+                    <p className="text-xs text-gray-700 dark:text-gray-300 flex-1 leading-relaxed">
                       {log.action} <span className="text-[#1a5c3a] font-medium">{log.targetName}</span>
                     </p>
-                    <p className="text-[10px] text-gray-400 flex-shrink-0">{fromNow(log.createdAt)}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{fromNow(log.createdAt)}</p>
                   </div>
                 )
               })}

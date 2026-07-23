@@ -21,7 +21,7 @@ function renderBody(body: string, variables?: Record<string, string>) {
 
 function VariablePill({ label }: { label: string }) {
   return (
-    <span className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-[10px] font-mono rounded px-1 mx-0.5">
+    <span className="inline-block bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] font-mono rounded px-1 mx-0.5">
       {label}
     </span>
   )
@@ -52,28 +52,28 @@ export default function TemplatePreview({ template, variables, compact, classNam
         <>
           {header.type === 'TEXT' && header.text && (
             <div className="px-3 pt-3 pb-1">
-              <p className="text-xs font-semibold text-gray-800">{header.text}</p>
+              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{header.text}</p>
             </div>
           )}
           {(header.type === 'IMAGE' || header.type === 'VIDEO') && (
-            <div className="bg-gray-200 h-28 flex items-center justify-center">
+            <div className="bg-gray-200 dark:bg-white/10 h-28 flex items-center justify-center">
               {header.mediaUrl
                 ? <img src={header.mediaUrl} alt="header" className="w-full h-full object-cover" />
-                : <Image size={28} className="text-gray-400" />
+                : <Image size={28} className="text-gray-400 dark:text-gray-500" />
               }
             </div>
           )}
           {header.type === 'DOCUMENT' && (
-            <div className="bg-gray-100 mx-3 mt-3 rounded-xl px-3 py-2 flex items-center gap-2">
-              <FileText size={16} className="text-gray-500" />
-              <span className="text-xs text-gray-600">Document</span>
+            <div className="bg-gray-100 dark:bg-white/10 mx-3 mt-3 rounded-xl px-3 py-2 flex items-center gap-2">
+              <FileText size={16} className="text-gray-500 dark:text-gray-400" />
+              <span className="text-xs text-gray-600 dark:text-gray-400">Document</span>
             </div>
           )}
         </>
       )}
 
       <div className={cn('px-3 pb-1', header ? 'pt-2' : 'pt-3')}>
-        <p className={cn('text-gray-800 leading-relaxed', compact ? 'text-[11px]' : 'text-xs')}>
+        <p className={cn('text-gray-800 dark:text-gray-200 leading-relaxed', compact ? 'text-[11px]' : 'text-xs')}>
           {variables
             ? <span dangerouslySetInnerHTML={{ __html: renderBody(body ?? '', variables) }} />
             : renderBodyWithPills(body ?? '')
@@ -81,13 +81,13 @@ export default function TemplatePreview({ template, variables, compact, classNam
         </p>
 
         {footer && (
-          <p className={cn('mt-1 italic text-gray-500', compact ? 'text-[9px]' : 'text-[10px]')}>
+          <p className={cn('mt-1 italic text-gray-500 dark:text-gray-400', compact ? 'text-[9px]' : 'text-[10px]')}>
             {footer}
           </p>
         )}
 
         <div className="flex justify-end mt-1 mb-1">
-          <span className="text-[9px] text-gray-500">
+          <span className="text-[9px] text-gray-500 dark:text-gray-400">
             {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} ✓✓
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function TemplatePreview({ template, variables, compact, classNam
   if (compact) return bubble
 
   return (
-    <div className="flex flex-col items-center bg-[#eae6df] rounded-2xl p-4 min-h-40">
+    <div className="flex flex-col items-center bg-[#eae6df] dark:bg-white/10 rounded-2xl p-4 min-h-40">
       <div className="w-full max-w-[300px]">
         {bubble}
       </div>

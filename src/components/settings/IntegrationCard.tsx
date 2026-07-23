@@ -21,7 +21,7 @@ interface Props {
 
 export default function IntegrationCard({ integration, onConnect, onConfigure }: Props) {
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 hover:border-[#c8e6d4] transition-all relative">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-[#c8e6d4] transition-all relative">
       <div className="absolute top-4 right-4">
         <span className={cn('w-2 h-2 rounded-full block', integration.isConnected ? 'bg-green-500' : 'bg-gray-300')} />
       </div>
@@ -30,12 +30,12 @@ export default function IntegrationCard({ integration, onConnect, onConfigure }:
         {integration.logoText}
       </div>
 
-      <p className="text-sm font-semibold text-gray-900 mt-3">{integration.name}</p>
-      <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{integration.description}</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-white mt-3">{integration.name}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">{integration.description}</p>
 
       <div className="border-t border-[#f5f5f5] pt-4 mt-4 flex items-center justify-between">
         {integration.isSoon ? (
-          <span className="text-xs text-gray-400">Coming soon</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Coming soon</span>
         ) : integration.isConnected ? (
           <>
             <span className="text-xs text-[#1a5c3a]">Connected ✓</span>

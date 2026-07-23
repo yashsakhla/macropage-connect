@@ -1,7 +1,19 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { Contact, ContactFilters, CreateContactPayload, ImportPayload } from '@/types'
+import type { Contact, ContactFilters, ContactSegment, CreateContactPayload, ImportPayload } from '@/types'
+
+function normalizeSegment(raw: any): ContactSegment {
+  return {
+    id: raw._id ?? raw.id,
+    name: raw.name,
+    color: raw.color,
+    filters: raw.filters ?? {},
+    contactCount: raw.contactCount ?? 0,
+    isBuiltIn: raw.isBuiltIn ?? false,
+    createdAt: raw.createdAt,
+  }
+}
 
 function normaliseContact(raw: any): Contact {
   if (!raw) return raw
@@ -142,6 +154,18 @@ export function useBulkDeleteContacts() {
   })
 }
 
+export function useSegments() {
+  return useQuery({
+    queryKey: ['segments'],
+    queryFn: () =>
+      api.get('/contacts/segments').then((r) => {
+        const raw = r.data?.data ?? r.data
+        const list: any[] = Array.isArray(raw) ? raw : []
+        return list.map(normalizeSegment)
+      }),
+  })
+}
+
 export function useCreateSegment() {
   const qc = useQueryClient()
   return useMutation({
@@ -157,14 +181,29 @@ export function useCreateSegment() {
 }
 
 export function useImportContacts() {
-  const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: ImportPayload) =>
-      api.post('/contacts/import', payload).then((r) => r.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['contacts'] })
-    },
+      api.post('/contacts/import', payload).then((r) => r.data?.data ?? r.data),
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Import failed'),
+  })
+}
+
+export interface ImportProgress {
+  processed: number
+  total: number
+  status: string
+  imported?: number
+  skipped?: number
+  failed?: number
+}
+
+/** Purely reactive — populated by the `import:progress` socket handler in useSocket.ts, never fetched. */
+export function useImportProgress(jobId: string | null) {
+  return useQuery<ImportProgress | undefined>({
+    queryKey: ['import-progress', jobId],
+    queryFn: () => Promise.resolve(undefined),
+    enabled: false,
+    staleTime: Infinity,
   })
 }

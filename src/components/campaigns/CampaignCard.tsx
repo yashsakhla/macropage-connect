@@ -6,13 +6,13 @@ import { format } from 'date-fns'
 import { usePermissions } from '@/lib/permissions'
 
 const STATUS_CONFIG = {
-  draft:     { label: 'Draft',     bg: 'bg-gray-200',      text: 'text-gray-600',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100',       rowBorder: 'border-gray-300',   rowHover: 'hover:border-gray-400'   },
-  scheduled: { label: 'Scheduled', bg: 'bg-blue-100',      text: 'text-blue-700',   dot: 'bg-blue-500',   pulse: false, rowBg: 'bg-blue-50',        rowBorder: 'border-blue-200',   rowHover: 'hover:border-blue-400'   },
+  draft:     { label: 'Draft',     bg: 'bg-gray-200 dark:bg-white/10',      text: 'text-gray-600 dark:text-gray-400',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100 dark:bg-white/10',       rowBorder: 'border-gray-300 dark:border-gray-700',   rowHover: 'hover:border-gray-400'   },
+  scheduled: { label: 'Scheduled', bg: 'bg-blue-100 dark:bg-blue-950/30',      text: 'text-blue-700 dark:text-blue-400',   dot: 'bg-blue-500',   pulse: false, rowBg: 'bg-blue-50 dark:bg-blue-950/30',        rowBorder: 'border-blue-200',   rowHover: 'hover:border-blue-400'   },
   running:   { label: 'Running',   bg: 'bg-[#c4edda]',     text: 'text-[#1a5c3a]', dot: 'bg-[#1a5c3a]', pulse: true,  rowBg: '',                  rowBorder: 'border-[#1a5c3a]',  rowHover: ''                        },
-  completed: { label: 'Completed', bg: 'bg-purple-100',    text: 'text-purple-700', dot: 'bg-purple-500', pulse: false, rowBg: 'bg-purple-50',      rowBorder: 'border-purple-200', rowHover: 'hover:border-purple-400' },
-  paused:    { label: 'Paused',    bg: 'bg-amber-100',     text: 'text-amber-700',  dot: 'bg-amber-500',  pulse: false, rowBg: 'bg-amber-50',       rowBorder: 'border-amber-200',  rowHover: 'hover:border-amber-400'  },
-  failed:    { label: 'Failed',    bg: 'bg-red-100',       text: 'text-red-600',    dot: 'bg-red-500',    pulse: false, rowBg: 'bg-red-50',         rowBorder: 'border-red-200',    rowHover: 'hover:border-red-400'    },
-  cancelled: { label: 'Cancelled', bg: 'bg-gray-200',      text: 'text-gray-500',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100',       rowBorder: 'border-gray-300',   rowHover: 'hover:border-gray-400'   },
+  completed: { label: 'Completed', bg: 'bg-purple-100 dark:bg-purple-950/30',    text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500', pulse: false, rowBg: 'bg-purple-50 dark:bg-purple-950/30',      rowBorder: 'border-purple-200', rowHover: 'hover:border-purple-400' },
+  paused:    { label: 'Paused',    bg: 'bg-amber-100 dark:bg-amber-950/30',     text: 'text-amber-700 dark:text-amber-400',  dot: 'bg-amber-500',  pulse: false, rowBg: 'bg-amber-50 dark:bg-amber-950/30',       rowBorder: 'border-amber-200',  rowHover: 'hover:border-amber-400'  },
+  failed:    { label: 'Failed',    bg: 'bg-red-100 dark:bg-red-950/30',       text: 'text-red-600 dark:text-red-400',    dot: 'bg-red-500',    pulse: false, rowBg: 'bg-red-50 dark:bg-red-950/30',         rowBorder: 'border-red-200',    rowHover: 'hover:border-red-400'    },
+  cancelled: { label: 'Cancelled', bg: 'bg-gray-200 dark:bg-white/10',      text: 'text-gray-500 dark:text-gray-400',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100 dark:bg-white/10',       rowBorder: 'border-gray-300 dark:border-gray-700',   rowHover: 'hover:border-gray-400'   },
 } as const
 
 function DeliveryRing({ pct, size = 'sm' }: { pct: number; size?: 'sm' | 'lg' }) {
@@ -101,13 +101,13 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
                 <MoreVertical size={14} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-36 text-sm">
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] flex items-center gap-2"
+                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-36 text-sm">
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"
                     onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}>
                     <Copy size={12} /> Duplicate
                   </button>
                   {canDeleteCampaign && (
-                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2">
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2">
                       <Trash2 size={12} /> Delete
                     </button>
                   )}
@@ -117,8 +117,8 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           </div>
 
           {/* name + template */}
-          <p className="text-sm font-semibold text-gray-900 mb-0.5">{campaign.name}</p>
-          <p className="text-xs text-gray-400 flex items-center gap-1 mb-4">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5">{campaign.name}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mb-4">
             <FileText size={10} /> {campaign.templateName}
           </p>
 
@@ -126,20 +126,20 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           {(isRunning || campaign.status === 'completed') && (
             <div className="flex flex-col items-center gap-1 mb-4">
               <DeliveryRing pct={delivPct} size="lg" />
-              <p className="text-[10px] text-gray-400">delivery rate</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">delivery rate</p>
             </div>
           )}
 
           {/* stat pills */}
           <div className="flex gap-2">
             {[
-              { label: 'Sent',   value: campaign.sent.toLocaleString(),   color: 'text-gray-700' },
-              { label: 'Read',   value: campaign.read.toLocaleString(),   color: 'text-gray-700' },
-              { label: 'Failed', value: campaign.failed.toLocaleString(), color: 'text-red-500'  },
+              { label: 'Sent',   value: campaign.sent.toLocaleString(),   color: 'text-gray-700 dark:text-gray-300' },
+              { label: 'Read',   value: campaign.read.toLocaleString(),   color: 'text-gray-700 dark:text-gray-300' },
+              { label: 'Failed', value: campaign.failed.toLocaleString(), color: 'text-red-500 dark:text-red-400'  },
             ].map(stat => (
               <div key={stat.label} className="flex-1 bg-white/60 rounded-xl py-2 text-center">
                 <p className={cn('text-xs font-semibold', stat.color)}>{stat.value}</p>
-                <p className="text-[10px] text-gray-400">{stat.label}</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -200,12 +200,12 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
         style={{ gridTemplateColumns: '2fr 108px 68px 64px 60px 60px 60px 116px 96px' }}>
         {/* col 1: info */}
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">{campaign.name}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{campaign.name}</p>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="bg-[#f7f8f6] text-gray-500 text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1">
+            <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1">
               <FileText size={9} /> {campaign.templateName}
             </span>
-            <span className="text-[10px] text-gray-400">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
               {format(new Date(campaign.createdAt), 'dd MMM yyyy')}
             </span>
           </div>
@@ -219,42 +219,42 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
 
         {/* col 3: audience */}
         <div>
-          <p className="text-sm font-semibold text-gray-800">{campaign.totalContacts.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">contacts</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{campaign.totalContacts.toLocaleString()}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">contacts</p>
         </div>
 
         {/* col 4: delivery */}
         <div className="flex flex-col items-center gap-1">
           <DeliveryRing pct={delivPct} size="sm" />
-          <p className="text-[10px] text-gray-400">Delivered</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">Delivered</p>
         </div>
 
         {/* col 5-7: stat cells — same typographic treatment as "contacts" above, no icons/emoji needed */}
         <div>
-          <p className="text-sm font-semibold text-gray-800">{campaign.sent.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">sent</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{campaign.sent.toLocaleString()}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">sent</p>
         </div>
         <div>
-          <p className="text-sm font-semibold text-blue-600">{campaign.read.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">read</p>
+          <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{campaign.read.toLocaleString()}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">read</p>
         </div>
         <div>
-          <p className={cn('text-sm font-semibold', campaign.failed > 0 ? 'text-red-500' : 'text-gray-300')}>
+          <p className={cn('text-sm font-semibold', campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-300 dark:text-gray-600')}>
             {campaign.failed.toLocaleString()}
           </p>
-          <p className="text-xs text-gray-400">failed</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">failed</p>
         </div>
 
         {/* col 8: schedule/progress */}
         <div>
           {campaign.status === 'scheduled' && campaign.scheduledAt && (
-            <div className="text-xs text-gray-600 flex items-center gap-1">
-              <Calendar size={11} className="text-gray-400 flex-shrink-0" />
+            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <Calendar size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
               {format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a')}
             </div>
           )}
           {campaign.status === 'completed' && campaign.completedAt && (
-            <div className="text-xs text-gray-500 flex items-center gap-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <CheckCircle2 size={11} className="text-purple-400 flex-shrink-0" />
               {format(new Date(campaign.completedAt), 'dd MMM, h:mm a')}
             </div>
@@ -264,11 +264,11 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
               <div className="bg-[#1a5c3a]/15 rounded-full h-1.5 w-24 overflow-hidden">
                 <div className="bg-[#1a5c3a] h-1.5 rounded-full transition-all" style={{ width: `${sentPct}%` }} />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">{sentPct}% sent</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{sentPct}% sent</p>
             </div>
           )}
           {(campaign.status === 'draft' || campaign.status === 'failed') && (
-            <span className="text-xs text-gray-400">—</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
           )}
         </div>
 
@@ -295,11 +295,11 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
               <MoreVertical size={14} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-40 text-sm">
-                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
-                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] flex items-center gap-2"><Users size={12} /> View recipients</button>
+              <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
+                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"><Users size={12} /> View recipients</button>
                 {canDeleteCampaign && (
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
                 )}
               </div>
             )}

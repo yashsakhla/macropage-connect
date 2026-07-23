@@ -58,23 +58,23 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
     return (
       <div className="space-y-3 mt-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Message content</label>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Message content</label>
           <textarea
             className="input w-full text-sm min-h-20 resize-none"
             placeholder="Type your message..."
             value={(action.config.message as string) ?? ''}
             onChange={(e) => onUpdate({ ...action.config, message: e.target.value })}
           />
-          <div className="text-right text-xs text-gray-400 mt-0.5">{((action.config.message as string) ?? '').length}/1000</div>
+          <div className="text-right text-xs text-gray-400 dark:text-gray-500 mt-0.5">{((action.config.message as string) ?? '').length}/1000</div>
         </div>
         {action.type === 'send_buttons' && (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Reply buttons (max 3):</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Reply buttons (max 3):</label>
             <div className="space-y-1.5 mb-2">
               {btns.map((btn, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="flex-1 bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5">{btn}</span>
-                  <button onClick={() => removeBtn(i)}><X size={12} className="text-gray-400 hover:text-red-500" /></button>
+                  <span className="flex-1 bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5">{btn}</span>
+                  <button onClick={() => removeBtn(i)}><X size={12} className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" /></button>
                 </div>
               ))}
             </div>
@@ -93,7 +93,7 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
   if (action.type === 'send_template') {
     return (
       <div className="mt-3">
-        <label className="block text-xs font-medium text-gray-700 mb-1">Template</label>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
         <select className="input w-full h-9 text-sm" value={(action.config.templateId as string) ?? ''} onChange={(e) => onUpdate({ ...action.config, templateId: e.target.value })}>
           <option value="">Select template...</option>
           <option value="tpl-pricing">Pricing inquiry</option>
@@ -107,7 +107,7 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
   if (action.type === 'assign_agent') {
     return (
       <div className="mt-3 space-y-2">
-        <label className="block text-xs font-medium text-gray-700 mb-1">Assign strategy</label>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assign strategy</label>
         <select className="input w-full h-9 text-sm" value={(action.config.strategy as string) ?? 'round_robin'} onChange={(e) => onUpdate({ ...action.config, strategy: e.target.value })}>
           <option value="round_robin">Round robin</option>
           <option value="least_loaded">Least loaded agent</option>
@@ -120,10 +120,10 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
   if (action.type === 'add_tag' || action.type === 'remove_tag') {
     return (
       <div className="mt-3">
-        <label className="block text-xs font-medium text-gray-700 mb-1.5">Tags</label>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tags</label>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {tags.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1 bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1">
+            <span key={t} className="inline-flex items-center gap-1 bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-full px-3 py-1">
               {t}
               <button onClick={() => { const nt = tags.filter((x) => x !== t); setTags(nt); onUpdate({ ...action.config, tags: nt }) }}><X size={10} /></button>
             </span>
@@ -168,10 +168,10 @@ export default function ActionBuilder({ value, onChange }: Props) {
   return (
     <div className="space-y-3">
       {value.map((action, i) => (
-        <div key={i} className="border border-[#e8ebe8] rounded-xl p-4 bg-white">
+        <div key={i} className="border border-[#e8ebe8] dark:border-white/10 rounded-xl p-4 bg-white dark:bg-[#0b1220]">
           <div className="flex items-center gap-2">
-            <GripVertical size={14} className="text-gray-300 cursor-grab flex-shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 w-5">{i + 1}</span>
+            <GripVertical size={14} className="text-gray-300 dark:text-gray-600 cursor-grab flex-shrink-0" />
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-5">{i + 1}</span>
             <select
               className="input flex-1 h-8 text-xs"
               value={action.type}
@@ -179,14 +179,14 @@ export default function ActionBuilder({ value, onChange }: Props) {
             >
               {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <button onClick={() => removeAction(i)}><X size={14} className="text-gray-400 hover:text-red-500" /></button>
+            <button onClick={() => removeAction(i)}><X size={14} className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" /></button>
           </div>
 
           <ActionConfig action={action} onUpdate={(config) => updateAction(i, { config })} />
 
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#f5f5f5]">
-            <ChevronDown size={12} className="text-gray-400" />
-            <span className="text-xs text-gray-400">Delay before this action:</span>
+            <ChevronDown size={12} className="text-gray-400 dark:text-gray-500" />
+            <span className="text-xs text-gray-400 dark:text-gray-500">Delay before this action:</span>
             <input
               type="number"
               min={0}
@@ -195,7 +195,7 @@ export default function ActionBuilder({ value, onChange }: Props) {
               value={action.delay ?? ''}
               onChange={(e) => updateAction(i, { delay: Number(e.target.value) })}
             />
-            <span className="text-xs text-gray-400">seconds</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">seconds</span>
           </div>
         </div>
       ))}

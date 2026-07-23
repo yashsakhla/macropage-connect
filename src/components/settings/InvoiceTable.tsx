@@ -27,8 +27,8 @@ export default function InvoiceTable({ invoices }: Props) {
         <tbody>
           {invoices.map((inv) => (
             <tr key={inv.id}>
-              <td className="text-sm text-gray-700">{format(new Date(inv.createdAt), 'dd MMM yyyy')}</td>
-              <td><span className="font-mono text-xs text-gray-500">{inv.number}</span></td>
+              <td className="text-sm text-gray-700 dark:text-gray-300">{format(new Date(inv.createdAt), 'dd MMM yyyy')}</td>
+              <td><span className="font-mono text-xs text-gray-500 dark:text-gray-400">{inv.number}</span></td>
               <td className="text-sm font-medium">₹{inv.amount.toLocaleString('en-IN')}</td>
               <td><span className={cn('badge text-2xs capitalize', STATUS_STYLE[inv.status])}>{inv.status}</span></td>
               <td>
@@ -40,11 +40,11 @@ export default function InvoiceTable({ invoices }: Props) {
                     className="btn-ghost w-8 h-8 flex items-center justify-center rounded-lg"
                     title="Download PDF"
                   >
-                    <Download size={14} className="text-gray-400" />
+                    <Download size={14} className="text-gray-400 dark:text-gray-500" />
                   </a>
                 ) : (
                   <span className="w-8 h-8 flex items-center justify-center opacity-30" title="No invoice available">
-                    <Download size={14} className="text-gray-400" />
+                    <Download size={14} className="text-gray-400 dark:text-gray-500" />
                   </span>
                 )}
               </td>

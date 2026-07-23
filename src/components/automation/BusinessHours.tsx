@@ -107,13 +107,13 @@ export default function BusinessHours({ onSave }: Props) {
       <div className="space-y-2">
         {DAYS.map(({ key, label }) => (
           <div key={key} className="flex items-center gap-3 py-2 border-b border-[#f5f5f5] last:border-0">
-            <div className="w-28 text-sm text-gray-700 font-medium">{label}</div>
+            <div className="w-28 text-sm text-gray-700 dark:text-gray-300 font-medium">{label}</div>
 
             <button
               onClick={() => toggle(key)}
               className={cn(
                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0',
-                schedule[key].enabled ? 'bg-[#1a5c3a]' : 'bg-gray-200'
+                schedule[key].enabled ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10'
               )}
             >
               <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', schedule[key].enabled ? 'translate-x-4.5' : 'translate-x-0.5')} />
@@ -127,7 +127,7 @@ export default function BusinessHours({ onSave }: Props) {
                   onChange={(e) => setTime(key, 'from', e.target.value)}
                   className="input h-8 text-xs w-28"
                 />
-                <span className="text-xs text-gray-400">to</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">to</span>
                 <input
                   type="time"
                   value={schedule[key].to}
@@ -144,13 +144,13 @@ export default function BusinessHours({ onSave }: Props) {
                 )}
               </div>
             ) : (
-              <span className="text-xs text-gray-400 italic">Closed</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 italic">Closed</span>
             )}
           </div>
         ))}
       </div>
 
-      <div className="bg-[#e8f5ee] rounded-xl p-3 flex items-center gap-2">
+      <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-xl p-3 flex items-center gap-2">
         <Clock size={14} className="text-[#1a5c3a]" />
         <span className="text-sm text-[#1a5c3a] font-medium">Currently: {getStatus(schedule)}</span>
       </div>

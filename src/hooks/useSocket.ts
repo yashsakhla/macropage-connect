@@ -255,21 +255,22 @@ export function useSocket() {
 
     // ── CONTACT IMPORT ────────────────────────────────────────
 
-    socket.on('import:progress', ({
-      jobId,
-      processed,
-      total,
-      status,
-    }: {
+    socket.on('import:progress', (payload: {
       jobId:     string
       processed: number
       total:     number
       status:    string
+      imported?: number
+      skipped?:  number
+      failed?:   number
     }) => {
-      qc.setQueryData(['import-progress', jobId], { processed, total, status })
+      const { jobId, processed, total, status, imported, skipped, failed } = payload
+      qc.setQueryData(['import-progress', jobId], { processed, total, status, imported, skipped, failed })
       if (status === 'completed') {
         qc.invalidateQueries({ queryKey: ['contacts'] })
-        toast.success(`Imported ${processed} contacts successfully!`)
+        toast.success(`Imported ${imported ?? processed} contacts successfully!`)
+      } else if (status === 'failed') {
+        toast.error('Contact import failed')
       }
     })
 
