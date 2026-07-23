@@ -7,10 +7,10 @@ import { ContactAvatar } from './ContactCard'
 import toast from 'react-hot-toast'
 
 const STATUS_BADGE = {
-  active:    { bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]', label: 'Active' },
-  inactive:  { bg: 'bg-gray-100',  text: 'text-gray-500',   label: 'Inactive' },
-  opted_out: { bg: 'bg-red-50',    text: 'text-red-600',    label: 'Opted out' },
-  new:       { bg: 'bg-blue-50',   text: 'text-blue-600',   label: 'New' },
+  active:    { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', text: 'text-[#1a5c3a]', label: 'Active' },
+  inactive:  { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400',   label: 'Inactive' },
+  opted_out: { bg: 'bg-red-50 dark:bg-red-950/30',    text: 'text-red-600 dark:text-red-400',    label: 'Opted out' },
+  new:       { bg: 'bg-blue-50 dark:bg-blue-950/30',   text: 'text-blue-600 dark:text-blue-400',   label: 'New' },
 }
 
 interface ContactsTableProps {
@@ -57,20 +57,20 @@ export default function ContactsTable({
   const allSelected = contacts.length > 0 && contacts.every(c => selectedIds.has(c.id))
 
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       <table className="data-table w-full">
         <thead>
           <tr>
             <th className="w-12 px-4">
               <input type="checkbox" checked={allSelected} onChange={() => allSelected ? contacts.forEach(c => onToggle(c.id)) : onToggleAll(contacts.map(c => c.id))} className="accent-[#1a5c3a] w-4 h-4 cursor-pointer" />
             </th>
-            <th className="cursor-pointer hover:bg-[#f0f0f0] min-w-52" onClick={() => setSort('name')}>
+            <th className="cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-white/10 min-w-52" onClick={() => setSort('name')}>
               <span className="flex items-center gap-1">Contact <SortIcon col="name" /></span>
             </th>
             <th className="w-36">Phone</th>
             <th className="w-44">Tags</th>
             <th className="w-28">Status</th>
-            <th className="cursor-pointer hover:bg-[#f0f0f0] w-32" onClick={() => setSort('createdAt')}>
+            <th className="cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-white/10 w-32" onClick={() => setSort('createdAt')}>
               <span className="flex items-center gap-1">Added <SortIcon col="createdAt" /></span>
             </th>
             <th className="w-24 text-center">Campaigns</th>
@@ -79,12 +79,12 @@ export default function ContactsTable({
         </thead>
         <tbody>
           {contacts.length === 0 ? (
-            <tr><td colSpan={8} className="text-center text-gray-400 py-12 text-sm">No contacts found</td></tr>
+            <tr><td colSpan={8} className="text-center text-gray-400 dark:text-gray-500 py-12 text-sm">No contacts found</td></tr>
           ) : contacts.map(contact => {
             const s = STATUS_BADGE[contact.status] ?? STATUS_BADGE.inactive
             return (
               <tr key={contact.id}
-                className={cn('hover:bg-[#fafffe] transition-colors h-15', selectedIds.has(contact.id) && 'bg-[#fafffe]')}>
+                className={cn('hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors h-15', selectedIds.has(contact.id) && 'bg-[#fafffe] dark:bg-white/5')}>
                 <td className="px-4">
                   <input type="checkbox" checked={selectedIds.has(contact.id)} onChange={() => onToggle(contact.id)} className="accent-[#1a5c3a] w-4 h-4 cursor-pointer" />
                 </td>
@@ -93,11 +93,11 @@ export default function ContactsTable({
                   <div className="flex items-center gap-3">
                     <ContactAvatar contact={contact} size="sm" />
                     <div>
-                      <button className="text-sm font-medium text-gray-900 hover:text-[#1a5c3a] hover:underline text-left"
+                      <button className="text-sm font-medium text-gray-900 dark:text-white hover:text-[#1a5c3a] hover:underline text-left"
                         onClick={() => navigate(`/contacts/${contact.id}`)}>
                         {contact.name}
                       </button>
-                      {contact.city && <p className="text-xs text-gray-400">{contact.city}{contact.company ? `, ${contact.company}` : ''}</p>}
+                      {contact.city && <p className="text-xs text-gray-400 dark:text-gray-500">{contact.city}{contact.company ? `, ${contact.company}` : ''}</p>}
                     </div>
                   </div>
                 </td>
@@ -105,9 +105,9 @@ export default function ContactsTable({
                 <td className="whitespace-nowrap">
                   <div className="flex items-center gap-1.5 group/phone">
                     <span className="text-[10px] text-[#25D366]">●</span>
-                    <span className="font-mono text-xs text-gray-600">{formatPhone(contact.phone)}</span>
-                    <button className="opacity-0 group-hover/phone:opacity-100 transition-opacity w-5 h-5 rounded hover:bg-[#f7f8f6] flex items-center justify-center" onClick={() => copyPhone(contact)}>
-                      <Copy size={10} className="text-gray-400" />
+                    <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{formatPhone(contact.phone)}</span>
+                    <button className="opacity-0 group-hover/phone:opacity-100 transition-opacity w-5 h-5 rounded hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center justify-center" onClick={() => copyPhone(contact)}>
+                      <Copy size={10} className="text-gray-400 dark:text-gray-500" />
                     </button>
                   </div>
                 </td>
@@ -115,10 +115,10 @@ export default function ContactsTable({
                 <td>
                   <div className="flex flex-wrap gap-1">
                     {contact.tags.slice(0, 2).map(tag => (
-                      <span key={tag} className="bg-[#f7f8f6] text-gray-600 text-[10px] font-medium rounded-full px-2 py-0.5 max-w-20 truncate">{tag}</span>
+                      <span key={tag} className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded-full px-2 py-0.5 max-w-20 truncate">{tag}</span>
                     ))}
                     {contact.tags.length > 2 && (
-                      <span className="bg-[#e8f5ee] text-[#1a5c3a] text-[10px] font-medium rounded-full px-2 py-0.5">+{contact.tags.length - 2}</span>
+                      <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] font-medium rounded-full px-2 py-0.5">+{contact.tags.length - 2}</span>
                     )}
                   </div>
                 </td>
@@ -128,11 +128,11 @@ export default function ContactsTable({
                 </td>
 
                 <td>
-                  <span className="text-xs text-gray-500">{new Date(contact.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(contact.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </td>
 
                 <td className="text-center">
-                  <span className={cn('text-sm font-medium', contact.totalCampaigns === 0 ? 'text-gray-300' : 'text-gray-700')}>
+                  <span className={cn('text-sm font-medium', contact.totalCampaigns === 0 ? 'text-gray-300 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300')}>
                     {contact.totalCampaigns || '—'}
                   </span>
                 </td>
@@ -140,20 +140,20 @@ export default function ContactsTable({
                 <td className="pr-3">
                   <div className="flex items-center gap-1 justify-end opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity"
                     style={{ opacity: openMenu === contact.id ? 1 : undefined }}>
-                    <button className="w-7 h-7 rounded-lg bg-[#e8f5ee] text-[#1a5c3a] flex items-center justify-center hover:bg-[#c8e6d4] transition-colors"
+                    <button className="w-7 h-7 rounded-lg bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] flex items-center justify-center hover:bg-[#c8e6d4] transition-colors"
                       onClick={() => navigate(`/inbox`)}>
                       <MessageSquare size={13} />
                     </button>
                     <div className="relative">
-                      <button className="w-7 h-7 rounded-lg hover:bg-[#f7f8f6] text-gray-400 flex items-center justify-center"
+                      <button className="w-7 h-7 rounded-lg hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-gray-400 dark:text-gray-500 flex items-center justify-center"
                         onClick={() => setOpenMenu(openMenu === contact.id ? null : contact.id)}>
                         <MoreVertical size={13} />
                       </button>
                       {openMenu === contact.id && (
-                        <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-44 text-sm">
-                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { navigate(`/contacts/${contact.id}`); setOpenMenu(null) }}>View profile</button>
-                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => { onEdit(contact); setOpenMenu(null) }}>Edit contact</button>
-                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500">Delete contact</button>
+                        <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
+                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { navigate(`/contacts/${contact.id}`); setOpenMenu(null) }}>View profile</button>
+                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { onEdit(contact); setOpenMenu(null) }}>Edit contact</button>
+                          <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400">Delete contact</button>
                         </div>
                       )}
                     </div>
@@ -166,9 +166,9 @@ export default function ContactsTable({
       </table>
 
       {/* footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-[#e8ebe8]">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-[#e8ebe8] dark:border-white/10">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             Showing {Math.min((page - 1) * limit + 1, totalCount)}–{Math.min(page * limit, totalCount)} of {totalCount.toLocaleString()}
           </span>
           <select
@@ -189,12 +189,12 @@ export default function ContactsTable({
             const p = i + 1
             return (
               <button key={p} onClick={() => onFiltersChange({ ...filters, page: p })}
-                className={cn('w-8 h-8 rounded-lg text-sm', page === p ? 'bg-[#1a5c3a] text-white' : 'text-gray-600 hover:bg-[#f7f8f6]')}>
+                className={cn('w-8 h-8 rounded-lg text-sm', page === p ? 'bg-[#1a5c3a] text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5')}>
                 {p}
               </button>
             )
           })}
-          {totalPages > 5 && <span className="text-gray-400 px-1">...</span>}
+          {totalPages > 5 && <span className="text-gray-400 dark:text-gray-500 px-1">...</span>}
           <button className="btn-ghost h-8 px-2 text-sm disabled:opacity-40" disabled={page >= totalPages}
             onClick={() => onFiltersChange({ ...filters, page: page + 1 })}>
             Next <ChevronRight size={14} />

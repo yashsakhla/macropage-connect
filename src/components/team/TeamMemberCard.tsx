@@ -8,19 +8,19 @@ import { usePermissions } from '@/lib/permissions'
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; icon: typeof Shield; label: string }> = {
   owner:   { bg: 'bg-rose-50',    text: 'text-rose-700',   icon: Shield,     label: 'Owner'   },
-  admin:   { bg: 'bg-purple-50',  text: 'text-purple-700', icon: Shield,     label: 'Admin'   },
-  manager: { bg: 'bg-blue-50',    text: 'text-blue-700',   icon: Users,      label: 'Manager' },
-  agent:   { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', icon: Headphones, label: 'Agent'   },
+  admin:   { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-700 dark:text-purple-400', icon: Shield,     label: 'Admin'   },
+  manager: { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-700 dark:text-blue-400',   icon: Users,      label: 'Manager' },
+  agent:   { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', icon: Headphones, label: 'Agent'   },
   OWNER:   { bg: 'bg-rose-50',    text: 'text-rose-700',   icon: Shield,     label: 'Owner'   },
-  ADMIN:   { bg: 'bg-purple-50',  text: 'text-purple-700', icon: Shield,     label: 'Admin'   },
-  MANAGER: { bg: 'bg-blue-50',    text: 'text-blue-700',   icon: Users,      label: 'Manager' },
-  AGENT:   { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', icon: Headphones, label: 'Agent'   },
+  ADMIN:   { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-700 dark:text-purple-400', icon: Shield,     label: 'Admin'   },
+  MANAGER: { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-700 dark:text-blue-400',   icon: Users,      label: 'Manager' },
+  AGENT:   { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', icon: Headphones, label: 'Agent'   },
 }
 
 const STATUS_CONFIG = {
-  active:   { bg: 'bg-[#e8f5ee]', text: 'text-[#1a5c3a]', label: 'Active'         },
-  pending:  { bg: 'bg-amber-50',  text: 'text-amber-700',  label: 'Pending invite' },
-  inactive: { bg: 'bg-gray-100',  text: 'text-gray-500',   label: 'Inactive'       },
+  active:   { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', text: 'text-[#1a5c3a]', label: 'Active'         },
+  pending:  { bg: 'bg-amber-50 dark:bg-amber-950/30',  text: 'text-amber-700 dark:text-amber-400',  label: 'Pending invite' },
+  inactive: { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400',   label: 'Inactive'       },
 }
 
 interface TeamMemberCardProps {
@@ -61,7 +61,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
   }
 
   return (
-    <div className="grid items-center gap-4 px-4 py-4 border-b border-[#f5f5f5] hover:bg-[#fafffe] transition-colors"
+    <div className="grid items-center gap-4 px-4 py-4 border-b border-[#f5f5f5] hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors"
       style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr 80px' }}>
 
       {/* member */}
@@ -74,12 +74,12 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-gray-900">{member.name || member.email}</p>
-            {isCurrentUser && <span className="bg-[#e8f5ee] text-[#1a5c3a] text-[10px] rounded-full px-2 font-medium">You</span>}
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{member.name || member.email}</p>
+            {isCurrentUser && <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] rounded-full px-2 font-medium">You</span>}
           </div>
-          <p className="text-xs text-gray-400">{member.email}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{member.email}</p>
           {member.status === 'pending' && member.invitedBy && (
-            <p className="text-[10px] text-gray-400 mt-0.5">Invited by {member.invitedBy.name}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Invited by {member.invitedBy.name}</p>
           )}
         </div>
       </div>
@@ -93,9 +93,9 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
           <RoleIcon size={11} /> {role.label}
         </button>
         {roleMenuOpen && canChangeTeamRole && (
-          <div className="absolute left-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-32 text-sm">
+          <div className="absolute left-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-32 text-sm">
             {(['admin', 'manager', 'agent'] as UserRole[]).map(r => (
-              <button key={r} className={cn('w-full px-3 py-2 text-left hover:bg-[#f7f8f6] capitalize', member.role === r && 'text-[#1a5c3a] font-medium')} onClick={() => handleChangeRole(r)}>
+              <button key={r} className={cn('w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 capitalize', member.role === r && 'text-[#1a5c3a] font-medium')} onClick={() => handleChangeRole(r)}>
                 {r}
               </button>
             ))}
@@ -109,7 +109,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
         {member.status === 'pending' && (
           <div className="flex gap-2 mt-1">
             <button className="text-[10px] text-[#1a5c3a] hover:underline">Resend</button>
-            <button className="text-[10px] text-red-500 hover:underline">Cancel</button>
+            <button className="text-[10px] text-red-500 dark:text-red-400 hover:underline">Cancel</button>
           </div>
         )}
       </div>
@@ -118,18 +118,18 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
       <div>
         {member.stats ? (
           <>
-            <p className="text-sm font-medium text-gray-700">{member.stats.conversationsThisMonth} this month</p>
-            <p className="text-xs text-gray-400">{member.stats.resolutionRate}% resolved</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{member.stats.conversationsThisMonth} this month</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{member.stats.resolutionRate}% resolved</p>
           </>
-        ) : <span className="text-gray-300 text-sm">—</span>}
+        ) : <span className="text-gray-300 dark:text-gray-600 text-sm">—</span>}
       </div>
 
       {/* last active */}
       <div>
         {member.status === 'pending' ? (
-          <p className="text-xs text-gray-400">Invited {member.invitedAt ? fromNow(member.invitedAt) : ''}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Invited {member.invitedAt ? fromNow(member.invitedAt) : ''}</p>
         ) : (
-          <p className="text-xs text-gray-500">{member.lastActiveAt ? fromNow(member.lastActiveAt) : '—'}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{member.lastActiveAt ? fromNow(member.lastActiveAt) : '—'}</p>
         )}
       </div>
 
@@ -141,24 +141,24 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
               <MoreVertical size={14} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 bg-white border border-[#e8ebe8] rounded-xl shadow-lg py-1 w-44 text-sm">
+              <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
                 {canChangeTeamRole && (
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]" onClick={() => setRoleMenuOpen(v => !v)}>Change role</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => setRoleMenuOpen(v => !v)}>Change role</button>
                 )}
                 {canRemoveTeamMember && (
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] text-red-500" onClick={handleRemove}>Remove member</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400" onClick={handleRemove}>Remove member</button>
                 )}
                 {member.status === 'pending' && (
                   <>
-                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6]">Resend invitation</button>
-                    <button className="w-full px-3 py-2 text-left text-red-500 hover:bg-[#f7f8f6]">Cancel invitation</button>
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5">Resend invitation</button>
+                    <button className="w-full px-3 py-2 text-left text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5">Cancel invitation</button>
                   </>
                 )}
               </div>
             )}
           </div>
         )}
-        {isCurrentUser && <span className="text-xs text-gray-300 pr-1">—</span>}
+        {isCurrentUser && <span className="text-xs text-gray-300 dark:text-gray-600 pr-1">—</span>}
       </div>
     </div>
   )

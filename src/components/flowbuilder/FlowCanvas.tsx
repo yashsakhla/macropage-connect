@@ -16,6 +16,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import { Plus } from 'lucide-react'
 import { useFlowStore } from '@/store/flowStore'
+import { useUIStore } from '@/store/uiStore'
 import FlowMiniMap from './FlowMiniMap'
 import StartNode from './nodes/StartNode'
 import MessageNode from './nodes/MessageNode'
@@ -54,6 +55,7 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
   const { nodes, edges, setNodes, setEdges, addNode, pushHistory } = useFlowStore()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
+  const isDark = useUIStore(s => s.theme === 'dark')
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -118,8 +120,7 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
   return (
     <div
       ref={reactFlowWrapper}
-      className="absolute inset-0"
-      style={{ background: '#f7f8f6' }}
+      className="absolute inset-0 bg-[#f7f8f6] dark:bg-[#0f1724]"
       onDrop={onDrop}
       onDragOver={onDragOver}
     >
@@ -141,16 +142,25 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
         proOptions={{ hideAttribution: true }}
         style={{ width: '100%', height: '100%' }}
       >
-        <Background variant={BackgroundVariant.Dots} color="#d1d5db" size={1} gap={24} />
-        <Controls style={{ button: { background: 'white', border: '1px solid #e8ebe8', borderRadius: 8 } } as React.CSSProperties} />
+        <Background variant={BackgroundVariant.Dots} color={isDark ? '#334155' : '#d1d5db'} size={1} gap={24} />
+        <Controls
+          style={{
+            button: {
+              background: isDark ? '#0b1220' : 'white',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e8ebe8',
+              borderRadius: 8,
+              color: isDark ? '#e6eef0' : undefined,
+            },
+          } as React.CSSProperties}
+        />
         <FlowMiniMap />
       </ReactFlow>
 
       {!hasNodes && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center pointer-events-auto">
-            <p className="text-sm font-semibold text-gray-500 mb-3">Start building your flow</p>
-            <div className="text-xs text-gray-400 space-y-1 mb-4">
+            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">Start building your flow</p>
+            <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1 mb-4">
               <p>1. Drag nodes from the left panel</p>
               <p>2. Connect them by dragging from outputs</p>
               <p>3. Configure each node by clicking it</p>

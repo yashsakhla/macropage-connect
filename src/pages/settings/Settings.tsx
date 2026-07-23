@@ -30,8 +30,8 @@ const SECTIONS: Record<string, React.ComponentType> = {
 function UsageSettings() {
   return (
     <SettingsSection title="Usage" subtitle="Monitor your current resource usage">
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6">
-        <p className="text-sm text-gray-500">Detailed usage analytics coming soon.</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Detailed usage analytics coming soon.</p>
       </div>
     </SettingsSection>
   )
@@ -54,7 +54,7 @@ export default function Settings() {
 
   return (
     <div
-      className="flex bg-[#f7f8f6]"
+      className="flex bg-[#f7f8f6] dark:bg-[#0f1724]"
       style={{ height: `calc(100vh - 56px)` }}
     >
       {/* Left sidebar — fixed 240px */}

@@ -25,12 +25,12 @@ export default function ConditionNode({ id, data, selected }: NodeProps<FlowNode
       </div>
 
       <div className="px-4 py-3">
-        <p className="text-xs text-gray-700 mb-3">
+        <p className="text-xs text-gray-700 dark:text-gray-300 mb-3">
           IF {condType.replace(/_/g, ' ')}: <span className="font-medium">'{value || 'set condition'}'</span>
         </p>
         <div className="flex justify-between">
-          <span className="text-xs bg-green-50 text-green-700 rounded-full px-2 py-0.5 font-medium">✓ Yes</span>
-          <span className="text-xs bg-red-50 text-red-600 rounded-full px-2 py-0.5 font-medium">✗ No</span>
+          <span className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 rounded-full px-2 py-0.5 font-medium">✓ Yes</span>
+          <span className="text-xs bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-full px-2 py-0.5 font-medium">✗ No</span>
         </div>
       </div>
 

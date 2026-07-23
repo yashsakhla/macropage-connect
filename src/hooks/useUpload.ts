@@ -7,7 +7,15 @@ function uploadFile(endpoint: string, file: File): Promise<UploadResponse> {
   form.append('file', file)
   return api
     .post(endpoint, form, { headers: { 'Content-Type': 'multipart/form-data' } })
-    .then((r) => r.data.data)
+    .then((r) => {
+      // Response shape isn't consistent across endpoints — some nest under
+      // `data.data`, some return the payload directly at the top level.
+      const body = r.data?.data ?? r.data ?? {}
+      const url = body.url ?? body.fileUrl ?? body.location ?? body.secure_url
+      const key = body.key ?? body.fileKey ?? body.path ?? url
+      if (!url) throw new Error('Upload response did not include a file URL')
+      return { url, key }
+    })
 }
 
 export const uploadImage = (file: File) => uploadFile('/upload/image', file)

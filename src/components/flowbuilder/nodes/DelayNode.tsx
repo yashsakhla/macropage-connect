@@ -26,8 +26,8 @@ export default function DelayNode({ id, data, selected }: NodeProps<FlowNodeData
       </div>
 
       <div className="px-4 py-4 text-center">
-        <p className="text-3xl font-bold text-gray-800">{duration}{short[unit] ?? unit}</p>
-        <p className="text-xs text-gray-400 mt-1">then continue</p>
+        <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">{duration}{short[unit] ?? unit}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">then continue</p>
       </div>
 
       <Handle type="source" position={Position.Bottom} style={{ width: 10, height: 10, background: '#94a3b8', bottom: -6 }} />

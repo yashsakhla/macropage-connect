@@ -54,7 +54,7 @@ export default function PlanExpiredModal() {
       onClick={(e) => e.target === e.currentTarget && dismiss()}
     >
       <div
-        className={`bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
+        className={`bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
           transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
         style={{ animation: closing ? undefined : 'planExpiredIn 0.32s cubic-bezier(0.34,1.56,0.64,1)' }}
       >
@@ -103,16 +103,16 @@ export default function PlanExpiredModal() {
 
         {/* What you're missing */}
         <div className="px-6 py-5">
-          <p className="text-[0.7rem] font-semibold text-gray-400 uppercase tracking-widest mb-3">
+          <p className="text-[0.7rem] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
             What you're missing 👇
           </p>
           <ul className="space-y-2.5">
             {MISSING_FEATURES.map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center flex-shrink-0">
                   <Icon size={13} className="text-red-400" />
                 </div>
-                <span className="text-sm text-gray-600">{label}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
               </li>
             ))}
           </ul>
@@ -133,8 +133,8 @@ export default function PlanExpiredModal() {
 
           <button
             onClick={dismiss}
-            className="w-full h-10 text-gray-400 hover:text-gray-600 text-sm transition-colors
-              rounded-2xl hover:bg-gray-50"
+            className="w-full h-10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors
+              rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5"
           >
             Continue with limited access
           </button>

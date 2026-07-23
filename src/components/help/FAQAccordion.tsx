@@ -20,7 +20,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-6 mb-10">
-      <h2 className="text-xl font-bold text-gray-900">Frequently asked questions</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
 
       {/* Category pills */}
       <div className="flex items-center gap-2 flex-wrap mt-4 mb-6">
@@ -32,7 +32,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
               'text-xs rounded-full px-4 py-1.5 font-medium transition-colors',
               activeCategory === cat
                 ? 'bg-[#1a5c3a] text-white'
-                : 'bg-white border border-[#e8ebe8] text-gray-600 hover:border-[#c8e6d4]'
+                : 'bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-[#c8e6d4]'
             )}
           >
             {cat === 'All' ? cat : getCategoryLabel(cat)}
@@ -40,7 +40,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
         ))}
       </div>
 
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
         {faqs.map(faq => {
           const isOpen = openId === faq._id
           const colors = getCategoryColor(faq.category)
@@ -50,7 +50,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
               {/* Question */}
               <button
                 onClick={() => setOpenId(isOpen ? null : faq._id)}
-                className="w-full px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-[#fafffe] transition-colors text-left"
+                className="w-full px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors text-left"
               >
                 <div
                   className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
@@ -58,34 +58,34 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
                 >
                   <HelpCircle size={14} />
                 </div>
-                <span className="text-sm font-medium text-gray-900 flex-1">{faq.question}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white flex-1">{faq.question}</span>
                 <ChevronDown
                   size={16}
-                  className={cn('text-gray-400 flex-shrink-0 transition-transform', isOpen && 'rotate-180')}
+                  className={cn('text-gray-400 dark:text-gray-500 flex-shrink-0 transition-transform', isOpen && 'rotate-180')}
                 />
               </button>
 
               {/* Answer */}
               {isOpen && (
                 <div className="px-6 pb-5 pl-16">
-                  <p className="text-sm text-gray-600 leading-relaxed">{faq.answer}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.answer}</p>
 
                   {/* Feedback row */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[#f5f5f5]">
-                    <span className="text-xs text-gray-500">Was this helpful?</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Was this helpful?</span>
                     {feedback[faq._id] ? (
-                      <span className="text-xs text-gray-500">Thanks for your feedback!</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Thanks for your feedback!</span>
                     ) : (
                       <>
                         <button
                           onClick={() => setFeedback(p => ({ ...p, [faq._id]: 'yes' }))}
-                          className="bg-[#e8f5ee] text-[#1a5c3a] h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-[#c8e6d4] transition-colors"
+                          className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-[#c8e6d4] transition-colors"
                         >
                           <ThumbsUp size={12} /> Yes
                         </button>
                         <button
                           onClick={() => setFeedback(p => ({ ...p, [faq._id]: 'no' }))}
-                          className="bg-[#f7f8f6] text-gray-500 h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-gray-200 transition-colors"
+                          className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 h-7 text-xs rounded-lg px-3 flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                         >
                           <ThumbsDown size={12} /> No
                         </button>

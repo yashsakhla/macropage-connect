@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
+import type { MessageUsageData } from '@/types'
 
 export function useDashboardStats(from?: string, to?: string) {
   return useQuery({
@@ -73,5 +74,15 @@ export function useCampaignAnalytics() {
   return useQuery({
     queryKey: ['analytics-campaigns'],
     queryFn: () => api.get('/analytics/campaigns').then(r => r.data.data),
+  })
+}
+
+export function useMessageUsage(months = 6) {
+  return useQuery<MessageUsageData>({
+    queryKey: ['message-usage', months],
+    queryFn: () =>
+      api.get('/analytics/usage', { params: { months } })
+        .then(r => r.data?.data ?? r.data),
+    staleTime: 2 * 60 * 1000,
   })
 }

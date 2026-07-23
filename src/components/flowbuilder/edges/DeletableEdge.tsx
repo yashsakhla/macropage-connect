@@ -61,7 +61,7 @@ export default function DeletableEdge({
           <button
             onClick={handleDelete}
             title="Remove connection"
-            className="w-4 h-4 rounded-full bg-white border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"
+            className="w-4 h-4 rounded-full bg-white dark:bg-[#0b1220] border border-red-200 text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"
           >
             <X size={9} />
           </button>

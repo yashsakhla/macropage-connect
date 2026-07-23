@@ -10,19 +10,19 @@ import type { BillingCycle, BillingPlan } from '@/types'
 import {
   CheckCircle, Zap, ArrowLeft, Crown,
   MessageSquare, Globe, Headphones,
-  Sparkles, Check, X, Loader2
+  Sparkles, Check, X, Loader2, Info
 } from 'lucide-react'
 
 // ─── Presentation metadata only — icon/colour per plan id.                    ──
 // ─── Price, features, badges and highlight always come from the API.         ──
 
 const PLAN_META: Record<string, { icon: React.ElementType; iconBg: string; iconColor: string }> = {
-  STARTER:    { icon: MessageSquare, iconBg: 'bg-blue-50',   iconColor: 'text-blue-600' },
-  GROWTH:     { icon: Zap,           iconBg: 'bg-[#e8f5ee]', iconColor: 'text-[#1a5c3a]' },
-  BUSINESS:   { icon: Crown,         iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
-  ENTERPRISE: { icon: Globe,         iconBg: 'bg-gray-50',   iconColor: 'text-gray-600' },
+  STARTER:    { icon: MessageSquare, iconBg: 'bg-blue-50 dark:bg-blue-950/30',   iconColor: 'text-blue-600 dark:text-blue-400' },
+  GROWTH:     { icon: Zap,           iconBg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', iconColor: 'text-[#1a5c3a]' },
+  BUSINESS:   { icon: Crown,         iconBg: 'bg-purple-50 dark:bg-purple-950/30', iconColor: 'text-purple-600 dark:text-purple-400' },
+  ENTERPRISE: { icon: Globe,         iconBg: 'bg-gray-50 dark:bg-white/5',   iconColor: 'text-gray-600 dark:text-gray-400' },
 }
-const DEFAULT_META = { icon: MessageSquare, iconBg: 'bg-gray-50', iconColor: 'text-gray-600' }
+const DEFAULT_META = { icon: MessageSquare, iconBg: 'bg-gray-50 dark:bg-white/5', iconColor: 'text-gray-600 dark:text-gray-400' }
 
 function metaFor(plan: BillingPlan) {
   return PLAN_META[plan.id] ?? DEFAULT_META
@@ -142,26 +142,26 @@ export default function Plans() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6]">
+    <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724]">
 
       {/* Top bar */}
-      <div className="bg-white border-b border-[#e8ebe8] sticky top-0 z-30">
+      <div className="bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
           >
             <ArrowLeft size={16} />
             <span className="hidden sm:inline">Back</span>
           </button>
 
           <div className="text-center">
-            <h1 className="text-base font-bold text-gray-900">Choose your plan</h1>
-            <p className="text-xs text-gray-400 hidden sm:block">Upgrade or change your subscription</p>
+            <h1 className="text-base font-bold text-gray-900 dark:text-white">Choose your plan</h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">Upgrade or change your subscription</p>
           </div>
 
           <div className="flex items-center">
-            <span className="text-xs bg-[#e8f5ee] text-[#1a5c3a] rounded-full px-3 py-1 font-semibold">
+            <span className="text-xs bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] rounded-full px-3 py-1 font-semibold">
               Current: {currentPlanId}{activeCycleLabel ? ` · ${activeCycleLabel}` : ''}
             </span>
           </div>
@@ -196,7 +196,7 @@ export default function Plans() {
 
         {/* Trial status banner */}
         {isTrial && user?.trialEndsAt && (
-          <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 flex-wrap">
+          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 flex-wrap">
             <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center flex-shrink-0">
               <Sparkles size={18} className="text-white" />
             </div>
@@ -216,7 +216,7 @@ export default function Plans() {
 
         {/* Billing toggle */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl p-1.5 flex gap-1 shadow-sm">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-sm">
             {(Object.keys(CYCLE_LABEL) as BillingCycle[]).map(cycle => {
               const savings = cycleSavings(cycle)
               return (
@@ -225,14 +225,14 @@ export default function Plans() {
                   onClick={() => setBillingCycle(cycle)}
                   className={cn(
                     'px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2',
-                    billingCycle === cycle ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                    billingCycle === cycle ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
                   )}
                 >
                   {CYCLE_LABEL[cycle]}
                   {savings && (
                     <span className={cn(
                       'text-2xs font-bold px-2 py-0.5 rounded-full',
-                      billingCycle === cycle ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                      billingCycle === cycle ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
                     )}>
                       {savings}
                     </span>
@@ -244,7 +244,7 @@ export default function Plans() {
         </div>
 
         {plansLoading ? (
-          <div className="py-24 text-center text-gray-400 text-sm">Loading plans…</div>
+          <div className="py-24 text-center text-gray-400 dark:text-gray-500 text-sm">Loading plans…</div>
         ) : plansError || orderedPlans.length === 0 ? (
           <div className="py-24 text-center text-red-400 text-sm">Failed to load plans. Please try again later.</div>
         ) : (
@@ -269,12 +269,12 @@ export default function Plans() {
                 <div
                   key={plan.id}
                   className={cn(
-                    'bg-white rounded-2xl border-2 flex flex-col transition-all duration-200 relative',
+                    'bg-white dark:bg-[#0b1220] rounded-2xl border-2 flex flex-col transition-all duration-200 relative',
                     isCurrent
-                      ? 'border-[#1a5c3a] bg-[#f0faf5]'
+                      ? 'border-[#1a5c3a] bg-[#f0faf5] dark:bg-emerald-950/30'
                       : isPopular || isHighlighted
                       ? 'border-[#1a5c3a] shadow-xl shadow-[#1a5c3a]/10'
-                      : 'border-[#e8ebe8] hover:border-[#c8e6d4] hover:shadow-md'
+                      : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4] hover:shadow-md'
                   )}
                 >
                   {ribbon && (
@@ -294,27 +294,27 @@ export default function Plans() {
                         <meta.icon size={18} className={meta.iconColor} />
                       </div>
                       <div>
-                        <h3 className="text-base font-bold text-gray-900">{plan.name}</h3>
-                        <p className="text-xs text-gray-400">{plan.desc}</p>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{plan.desc}</p>
                       </div>
                     </div>
 
                     <div className="mb-5">
                       {plan.custom ? (
                         <div>
-                          <span className="text-2xl font-black text-gray-900">Custom</span>
-                          <p className="text-xs text-gray-400 mt-0.5">Talk to our sales team</p>
+                          <span className="text-2xl font-black text-gray-900 dark:text-white">Custom</span>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Talk to our sales team</p>
                         </div>
                       ) : (
                         <div>
                           <div className="flex items-end gap-1">
-                            <span className="text-xs text-gray-400 mb-1">₹</span>
-                            <span className="text-3xl font-black text-gray-900">
+                            <span className="text-xs text-gray-400 dark:text-gray-500 mb-1">₹</span>
+                            <span className="text-3xl font-black text-gray-900 dark:text-white">
                               {tier.price.toLocaleString('en-IN')}
                             </span>
-                            <span className="text-sm text-gray-400 mb-1">/mo</span>
+                            <span className="text-sm text-gray-400 dark:text-gray-500 mb-1">/mo</span>
                           </div>
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                             {tier.billedAs}
                             {tier.savings && (
                               <span className="ml-1.5 font-semibold text-[#1a5c3a]">{tier.savings}</span>
@@ -343,7 +343,7 @@ export default function Plans() {
                           'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
                           isPopular || plan.custom
                             ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
-                            : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee]'
+                            : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee] dark:hover:bg-emerald-950/30'
                         )}
                       >
                         {isProcessing ? (
@@ -366,13 +366,13 @@ export default function Plans() {
                       {plan.features.map(f => (
                         <li key={f} className="flex items-start gap-2 text-xs">
                           <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0 mt-0.5" />
-                          <span className="leading-relaxed text-gray-600">{f}</span>
+                          <span className="leading-relaxed text-gray-600 dark:text-gray-400">{f}</span>
                         </li>
                       ))}
                       {plan.notIncluded.map(f => (
                         <li key={f} className="flex items-start gap-2 text-xs opacity-40">
-                          <X size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                          <span className="leading-relaxed text-gray-400 line-through">{f}</span>
+                          <X size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                          <span className="leading-relaxed text-gray-400 dark:text-gray-500 line-through">{f}</span>
                         </li>
                       ))}
                     </ul>
@@ -383,15 +383,28 @@ export default function Plans() {
           </div>
         )}
 
+        {/* Meta charges disclaimer */}
+        <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl px-5 py-4 max-w-2xl mx-auto">
+          <div className="flex items-start gap-3">
+            <Info size={15} className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">About WhatsApp message charges</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                All plans include unlimited WhatsApp messages. WhatsApp conversation charges are billed directly
+                by Meta to your WhatsApp Business account — separate from your Macropage Connect subscription.
+                India rates: Marketing ₹0.86 · Utility ₹0.115 · Authentication ₹0.115 per message (+ 18% GST).
+                Customer replies within 24 hours are free.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Footer */}
-        <div className="text-center mt-10 space-y-2">
-          <p className="text-xs text-gray-400">
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             All plans include SSL encryption · 99.9% uptime SLA · GDPR compliant · Indian data residency
           </p>
-          <p className="text-xs text-gray-400">
-            WhatsApp message charges are billed separately by Meta.
-          </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             Questions?{' '}
             <a href="mailto:support@macropage.in" className="text-[#1a5c3a] underline">
               support@macropage.in

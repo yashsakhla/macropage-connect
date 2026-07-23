@@ -20,7 +20,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Growth',
     planId:       'GROWTH',
     icon:         GitBranch,
-    color:        'text-teal-600',
+    color:        'text-teal-600 dark:text-teal-400',
     benefits: [
       'Drag-and-drop flow editor',
       'Conditional branching',
@@ -35,7 +35,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Growth',
     planId:       'GROWTH',
     icon:         Sparkles,
-    color:        'text-pink-600',
+    color:        'text-pink-600 dark:text-pink-400',
     benefits: [
       '500 AI sessions per month',
       'Custom knowledge base',
@@ -50,7 +50,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Growth',
     planId:       'GROWTH',
     icon:         Code2,
-    color:        'text-blue-600',
+    color:        'text-blue-600 dark:text-blue-400',
     benefits: [
       'Full REST API',
       'Webhook events',
@@ -65,7 +65,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Scale',
     planId:       'BUSINESS',
     icon:         Sparkles,
-    color:        'text-pink-600',
+    color:        'text-pink-600 dark:text-pink-400',
     benefits: [
       'AI auto-reply node',
       'AI classify intent node',
@@ -79,7 +79,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Business',
     planId:       'BUSINESS',
     icon:         BarChart2,
-    color:        'text-purple-600',
+    color:        'text-purple-600 dark:text-purple-400',
     benefits: [
       'Agent performance reports',
       'Campaign ROI tracking',
@@ -94,7 +94,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Business',
     planId:       'BUSINESS',
     icon:         Puzzle,
-    color:        'text-orange-600',
+    color:        'text-orange-600 dark:text-orange-400',
     benefits: [
       'Zoho CRM sync',
       'HubSpot integration',
@@ -109,7 +109,7 @@ export const LOCKED_FEATURES: Record<string, {
     requiredPlan: 'Enterprise',
     planId:       'ENTERPRISE',
     icon:         Globe,
-    color:        'text-gray-600',
+    color:        'text-gray-600 dark:text-gray-400',
     benefits: [
       'Custom branding',
       'Your own domain',
@@ -143,7 +143,7 @@ export default function LockedFeaturePopup({ feature, onClose }: LockedFeaturePo
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
 
         {/* Header */}
         <div className="bg-[#1a3d2b] px-6 pt-6 pb-8 relative overflow-hidden">
@@ -180,14 +180,14 @@ export default function LockedFeaturePopup({ feature, onClose }: LockedFeaturePo
 
         {/* Benefits */}
         <div className="px-6 py-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
             What you'll unlock
           </p>
           <ul className="space-y-2.5">
             {info.benefits.map(benefit => (
               <li key={benefit} className="flex items-center gap-2.5">
                 <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0" />
-                <span className="text-sm text-gray-700">{benefit}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{benefit}</span>
               </li>
             ))}
           </ul>
@@ -206,7 +206,7 @@ export default function LockedFeaturePopup({ feature, onClose }: LockedFeaturePo
 
           <button
             onClick={onClose}
-            className="w-full h-10 text-gray-400 hover:text-gray-600 text-sm transition-colors rounded-2xl hover:bg-[#f7f8f6]"
+            className="w-full h-10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors rounded-2xl hover:bg-[#f7f8f6] dark:hover:bg-white/5"
           >
             Maybe later
           </button>

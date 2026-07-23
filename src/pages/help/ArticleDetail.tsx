@@ -42,10 +42,10 @@ export default function ArticleDetail() {
   if (!article) return null
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6]">
+    <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724]">
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs text-gray-400 mb-6">
+        <nav className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-6">
           <Link to="/help" className="hover:text-[#1a5c3a]">Help</Link>
           <ChevronRight size={12} />
           <button
@@ -55,7 +55,7 @@ export default function ArticleDetail() {
             {getCategoryLabel(article.category)}
           </button>
           <ChevronRight size={12} />
-          <span className="text-gray-700 truncate max-w-xs">{article.title}</span>
+          <span className="text-gray-700 dark:text-gray-300 truncate max-w-xs">{article.title}</span>
         </nav>
 
         <div className="lg:grid lg:grid-cols-[1fr_280px] gap-10">
@@ -69,20 +69,20 @@ export default function ArticleDetail() {
               {getCategoryLabel(article.category)}
             </span>
 
-            <h1 className="text-2xl lg:text-3xl font-black text-gray-900 mt-3 leading-tight">
+            <h1 className="text-2xl lg:text-3xl font-black text-gray-900 dark:text-white mt-3 leading-tight">
               {article.title}
             </h1>
 
             <div className="flex items-center gap-4 mt-4 flex-wrap">
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 Updated {fromNow(article.updatedAt)}
               </span>
-              <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                 <Clock size={11} /> {estimateReadTime(article.content)} min read
               </span>
             </div>
 
-            <div className="mt-5 h-px bg-[#e8ebe8]" />
+            <div className="mt-5 h-px bg-[#e8ebe8] dark:bg-white/10" />
 
             {/* Article body */}
             <div
@@ -103,8 +103,8 @@ export default function ArticleDetail() {
           <div>
             {/* Table of contents */}
             {toc.length > 0 && (
-              <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 sticky top-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 sticky top-6">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                   In this article
                 </p>
                 <nav className="space-y-0.5">
@@ -116,7 +116,7 @@ export default function ArticleDetail() {
                       }}
                       className={cn(
                         'block w-full text-left py-1.5 text-xs border-l-2 transition-colors',
-                        item.level === 3 ? 'pl-6 text-gray-500' : 'pl-3 text-gray-600',
+                        item.level === 3 ? 'pl-6 text-gray-500 dark:text-gray-400' : 'pl-3 text-gray-600 dark:text-gray-400',
                         activeSection === item.id
                           ? 'border-[#1a5c3a] text-[#1a5c3a] font-medium'
                           : 'border-transparent hover:text-[#1a5c3a]'
@@ -133,12 +133,12 @@ export default function ArticleDetail() {
             <RelatedArticles articles={related} />
 
             {/* Get help box */}
-            <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl p-5 mt-4">
-              <div className="bg-white rounded-xl p-2 w-8 h-8 mb-3 flex items-center justify-center">
+            <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl p-5 mt-4">
+              <div className="bg-white dark:bg-[#0b1220] rounded-xl p-2 w-8 h-8 mb-3 flex items-center justify-center">
                 <Headphones size={16} className="text-[#1a5c3a]" />
               </div>
-              <p className="text-sm font-semibold text-gray-900">Still need help?</p>
-              <p className="text-xs text-gray-500 mt-1">Our support team is ready to help</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Still need help?</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Our support team is ready to help</p>
               <button
                 onClick={() => {/* open chat */}}
                 className="btn-primary w-full h-9 mt-4 flex items-center justify-center gap-2 text-sm"
@@ -305,13 +305,59 @@ export default function ArticleDetail() {
           font-size: 0.875rem;
           color: #1a5c3a;
         }
+
+        /* Dark theme — article body sits on a dark card (see bg-white dark:bg-[#0b1220]
+           above), so every light-mode-only color here needs a dark counterpart. */
+        .dark .article-content h2,
+        .dark .article-content h3,
+        .dark .article-content th {
+          color: #f1f5f4;
+        }
+        .dark .article-content h2 { border-bottom-color: rgba(255,255,255,0.08); }
+        .dark .article-content p,
+        .dark .article-content ul li,
+        .dark .article-content ol li {
+          color: #d1d5db;
+        }
+        .dark .article-content ul li::before { background: #4ade80; }
+        .dark .article-content ol li::before { background: rgba(45,122,79,0.25); color: #6ee7b7; }
+        .dark .article-content a { color: #6ee7b7; }
+        .dark .article-content a:hover { color: #86efac; }
+        .dark .article-content code {
+          background: rgba(255,255,255,0.06);
+          color: #6ee7b7;
+          border-color: rgba(255,255,255,0.08);
+        }
+        .dark .article-content blockquote {
+          color: #9ca3af;
+          background: rgba(45,122,79,0.15);
+        }
+        .dark .article-content th, .dark .article-content td {
+          border-color: rgba(255,255,255,0.08);
+        }
+        .dark .article-content th { background: rgba(255,255,255,0.05); }
+        .dark .article-content .info-box {
+          background: rgba(59,130,246,0.12);
+          border-color: rgba(59,130,246,0.3);
+          color: #93c5fd;
+        }
+        .dark .article-content .warning-box {
+          background: rgba(245,158,11,0.12);
+          border-color: rgba(245,158,11,0.3);
+          color: #fcd34d;
+        }
+        .dark .article-content .success-box {
+          background: rgba(45,122,79,0.15);
+          border-color: rgba(45,122,79,0.35);
+          color: #6ee7b7;
+        }
       `}</style>
 
       {/* Ticket drawer */}
       {ticketOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-black/30" onClick={() => setTicketOpen(false)} />
-          <div className="relative bg-white w-full max-w-md h-full shadow-2xl flex flex-col overflow-hidden">
+          <div className="relative bg-white dark:bg-[#0b1220] w-full max-w-md h-full shadow-2xl flex flex-col overflow-hidden">
             <SupportTicketForm onClose={() => setTicketOpen(false)} />
           </div>
         </div>

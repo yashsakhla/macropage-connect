@@ -129,7 +129,7 @@ function FlowBuilderInner() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col" style={{ background: '#f7f8f6' }}>
+    <div className="fixed inset-0 flex flex-col bg-[#f7f8f6] dark:bg-[#0f1724]">
       <FlowToolbar
         zoom={reactFlow.getZoom()}
         onZoomIn={() => reactFlow.zoomIn()}

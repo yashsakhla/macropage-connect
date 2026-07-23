@@ -21,7 +21,10 @@ export function useOpenConversation() {
         return cId === contactId
       })
       if (existing) {
-        const id = existing._id ?? existing.id
+        const existingId = existing._id ?? existing.id
+        const fetched = await api.get(`/conversations/${existingId}`)
+        const conv = fetched.data?.data ?? fetched.data
+        const id = conv?._id ?? conv?.id ?? existingId
         navigate(`/inbox?conversationId=${id}`)
         return
       }

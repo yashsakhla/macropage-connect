@@ -6,12 +6,12 @@ import { useTeamActivity } from '@/hooks/useTeamActivity'
 import { getInitials } from '@/lib/utils'
 
 const TYPE_STYLE = {
-  conversation: { bg: 'bg-blue-50',    text: 'text-blue-600',   label: 'Conversation' },
-  campaign:     { bg: 'bg-purple-50',  text: 'text-purple-600', label: 'Campaign'     },
-  contact:      { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', label: 'Contact'      },
-  template:     { bg: 'bg-amber-50',   text: 'text-amber-600',  label: 'Template'     },
+  conversation: { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-600 dark:text-blue-400',   label: 'Conversation' },
+  campaign:     { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-600 dark:text-purple-400', label: 'Campaign'     },
+  contact:      { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', label: 'Contact'      },
+  template:     { bg: 'bg-amber-50 dark:bg-amber-950/30',   text: 'text-amber-600 dark:text-amber-400',  label: 'Template'     },
   team:         { bg: 'bg-rose-50',    text: 'text-rose-600',   label: 'Team'         },
-  settings:     { bg: 'bg-gray-100',   text: 'text-gray-500',   label: 'Settings'     },
+  settings:     { bg: 'bg-gray-100 dark:bg-white/10',   text: 'text-gray-500 dark:text-gray-400',   label: 'Settings'     },
 } as const
 
 interface ActivityLogProps {
@@ -32,12 +32,12 @@ export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
       {!compact && (
         <div className="flex items-center justify-between mb-2">
           <div>
-            <p className="text-base font-semibold text-gray-900">Activity Log</p>
-            <p className="text-sm text-gray-500 mt-0.5">All actions taken by your team members</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-white">Activity Log</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">All actions taken by your team members</p>
           </div>
           <div className="flex items-center gap-2">
             <select
-              className="bg-white border border-[#e8ebe8] rounded-xl h-8 px-3 text-xs text-gray-600 focus:outline-none"
+              className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-8 px-3 text-xs text-gray-600 dark:text-gray-400 focus:outline-none"
               value={filters.memberId ?? ''}
               onChange={e => setFilters(f => ({ ...f, memberId: e.target.value || undefined }))}
             >
@@ -45,7 +45,7 @@ export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
               {/* Members loaded from API when filters dropdown used */}
             </select>
             <select
-              className="bg-white border border-[#e8ebe8] rounded-xl h-8 px-3 text-xs text-gray-600 focus:outline-none"
+              className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-8 px-3 text-xs text-gray-600 dark:text-gray-400 focus:outline-none"
               value={filters.actionType ?? ''}
               onChange={e => setFilters(f => ({ ...f, actionType: e.target.value || undefined }))}
             >
@@ -59,20 +59,20 @@ export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
         </div>
       )}
 
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
         <div className="divide-y divide-[#f5f5f5]">
           {displayedLogs.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">No activity found</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-10">No activity found</p>
           ) : (displayedLogs as AL[]).map(log => {
             const ts = TYPE_STYLE[log.actionType as keyof typeof TYPE_STYLE]
             return (
-              <div key={log.id} className="flex items-start gap-4 px-5 py-4 hover:bg-[#fafffe] transition-colors">
+              <div key={log.id} className="flex items-start gap-4 px-5 py-4 hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a5c3a] to-teal-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                   {getInitials(log.memberName)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 leading-relaxed">
-                    <span className="font-semibold text-gray-900">{log.memberName} </span>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+                    <span className="font-semibold text-gray-900 dark:text-white">{log.memberName} </span>
                     {log.action}{' '}
                     {log.targetName && (
                       <span className="text-[#1a5c3a] font-medium cursor-pointer hover:underline">{log.targetName}</span>
@@ -80,11 +80,11 @@ export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
                   </p>
                   <div className="flex items-center gap-3 mt-1.5">
                     <span className={cn('text-[10px] rounded-full px-2 py-0.5 font-medium', ts.bg, ts.text)}>{ts.label}</span>
-                    {log.ipAddress && <span className="text-[10px] text-gray-400">{log.ipAddress}</span>}
-                    {log.location && <span className="text-[10px] text-gray-400">{log.location}</span>}
+                    {log.ipAddress && <span className="text-[10px] text-gray-400 dark:text-gray-500">{log.ipAddress}</span>}
+                    {log.location && <span className="text-[10px] text-gray-400 dark:text-gray-500">{log.location}</span>}
                   </div>
                 </div>
-                <p className="text-xs text-gray-400 flex-shrink-0 mt-0.5">{fromNow(log.createdAt)}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5">{fromNow(log.createdAt)}</p>
               </div>
             )
           })}
@@ -92,7 +92,7 @@ export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
 
         {shown < logs.length && (
           <button onClick={() => setShown(n => n + 10)}
-            className="w-full text-sm text-[#1a5c3a] font-medium text-center py-4 border-t border-[#e8ebe8] hover:bg-[#f7f8f6] transition-colors">
+            className="w-full text-sm text-[#1a5c3a] font-medium text-center py-4 border-t border-[#e8ebe8] dark:border-white/10 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors">
             Load more activity ({logs.length - shown} remaining)
           </button>
         )}

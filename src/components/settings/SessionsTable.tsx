@@ -17,8 +17,8 @@ export default function SessionsTable({ sessions, onRevoke, onRevokeAll }: Props
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-gray-800">Active sessions</p>
-        <button onClick={onRevokeAll} className="text-sm text-red-500 hover:underline">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Active sessions</p>
+        <button onClick={onRevokeAll} className="text-sm text-red-500 dark:text-red-400 hover:underline">
           Sign out all other sessions
         </button>
       </div>
@@ -27,21 +27,21 @@ export default function SessionsTable({ sessions, onRevoke, onRevokeAll }: Props
           const Icon = DEVICE_ICON[session.device] ?? Monitor
           return (
             <div key={session.id} className="flex items-start gap-4 py-4">
-              <div className="w-9 h-9 rounded-xl bg-[#f7f8f6] flex items-center justify-center flex-shrink-0">
-                <Icon size={16} className="text-gray-500" />
+              <div className="w-9 h-9 rounded-xl bg-[#f7f8f6] dark:bg-[#0f1724] flex items-center justify-center flex-shrink-0">
+                <Icon size={16} className="text-gray-500 dark:text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{session.browser} on {session.os}</p>
-                {session.location && <p className="text-xs text-gray-500 mt-0.5">{session.location}</p>}
-                <p className="text-xs text-gray-400 mt-0.5 font-mono">{session.ipAddress}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{session.browser} on {session.os}</p>
+                {session.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{session.location}</p>}
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-mono">{session.ipAddress}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 {session.isCurrent ? (
-                  <span className="text-2xs bg-[#e8f5ee] text-[#1a5c3a] rounded-full px-2.5 py-1 font-medium">Current session</span>
+                  <span className="text-2xs bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] rounded-full px-2.5 py-1 font-medium">Current session</span>
                 ) : (
                   <div>
-                    <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(session.lastActiveAt), { addSuffix: true })}</p>
-                    <button onClick={() => onRevoke(session.id)} className={cn('text-xs text-red-500 hover:underline mt-1')}>Sign out</button>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{formatDistanceToNow(new Date(session.lastActiveAt), { addSuffix: true })}</p>
+                    <button onClick={() => onRevoke(session.id)} className={cn('text-xs text-red-500 dark:text-red-400 hover:underline mt-1')}>Sign out</button>
                   </div>
                 )}
               </div>

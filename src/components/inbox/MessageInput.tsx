@@ -1,11 +1,28 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriangle } from 'lucide-react'
+import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriangle, Loader2, Music } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
+import { useUploadImage, useUploadDocument, useUploadAudio } from '@/hooks/useUpload'
 import type { Template, QuickReply } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSocket } from '@/lib/socket'
 import { useInboxStore } from '@/store/inboxStore'
+
+export interface SentMedia {
+  url: string
+  type: 'image' | 'document' | 'audio'
+  mediaName?: string
+  mediaSize?: number
+  mimeType?: string
+  caption?: string
+}
+
+interface PendingMedia {
+  file: File
+  previewUrl: string
+  type: SentMedia['type']
+}
 
 const ALL_EMOJIS: string[] = [
   '😀','😂','🤣','😍','🥰','😊','😎','😢','😭','😤',
@@ -22,9 +39,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   AUTHENTICATION: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 }
 
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 interface Props {
   onSend: (text: string) => void
   onSendTemplate?: (tpl: Template) => void
+  onSendMedia?: (media: SentMedia) => void
   mode: 'reply' | 'note'
   setMode: (m: 'reply' | 'note') => void
   disabled?: boolean
@@ -32,13 +56,14 @@ interface Props {
   templateRequired?: boolean
 }
 
-export default function MessageInput({ onSend, onSendTemplate, mode, setMode, disabled, templateRequired }: Props) {
+export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode, setMode, disabled, templateRequired }: Props) {
   const [text, setText] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showTpl, setShowTpl] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [quickReplySearch, setQuickReplySearch] = useState('')
   const [slashTriggerPos, setSlashTriggerPos] = useState<number | null>(null)
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia | null>(null)
 
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -51,6 +76,11 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
 
   const { data: quickReplies = [] } = useQuickReplies()
   const { mutate: markUsed } = useMarkQuickReplyUsed()
+
+  const uploadImage = useUploadImage()
+  const uploadDocument = useUploadDocument()
+  const uploadAudio = useUploadAudio()
+  const uploadingMedia = uploadImage.isPending || uploadDocument.isPending || uploadAudio.isPending
 
   const filteredQuickReplies = useMemo<QuickReply[]>(() => {
     const q = quickReplySearch.toLowerCase().trim()
@@ -109,12 +139,61 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
     }
   }
 
-  function send() {
-    const trimmed = text.trim()
-    if (!trimmed || disabled) return
-    onSend(trimmed)
+  function resetComposer() {
     setText('')
     if (taRef.current) taRef.current.style.height = '44px'
+  }
+
+  function clearPendingMedia() {
+    if (pendingMedia) URL.revokeObjectURL(pendingMedia.previewUrl)
+    setPendingMedia(null)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pendingMedia) URL.revokeObjectURL(pendingMedia.previewUrl)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function send() {
+    if (disabled) return
+    if (pendingMedia) {
+      sendPendingMedia()
+      return
+    }
+    const trimmed = text.trim()
+    if (!trimmed) return
+    onSend(trimmed)
+    resetComposer()
+  }
+
+  function sendPendingMedia() {
+    if (!pendingMedia || uploadingMedia) return
+    const { file, type, previewUrl } = pendingMedia
+    const upload = type === 'image' ? uploadImage : type === 'audio' ? uploadAudio : uploadDocument
+    const caption = text.trim()
+
+    upload.mutate(file, {
+      onSuccess: (res) => {
+        if (!res?.url) {
+          toast.error('Upload failed — no file URL returned')
+          return
+        }
+        onSendMedia?.({
+          url: res.url,
+          type,
+          mediaName: file.name,
+          mediaSize: file.size,
+          mimeType: file.type,
+          caption: caption || undefined,
+        })
+        URL.revokeObjectURL(previewUrl)
+        setPendingMedia(null)
+        resetComposer()
+      },
+      onError: () => toast.error('Failed to upload file'),
+    })
   }
 
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -172,6 +251,7 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
       setShowEmoji(false)
       setSlashTriggerPos(null)
       setQuickReplySearch('')
+      if (pendingMedia) clearPendingMedia()
     }
   }
 
@@ -186,6 +266,20 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
     setText(tpl.body)
     setShowTpl(false)
     taRef.current?.focus()
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || disabled) return
+
+    const isImage = file.type.startsWith('image/')
+    const isAudio = file.type.startsWith('audio/')
+    const type: SentMedia['type'] = isImage ? 'image' : isAudio ? 'audio' : 'document'
+
+    if (pendingMedia) URL.revokeObjectURL(pendingMedia.previewUrl)
+    setPendingMedia({ file, previewUrl: URL.createObjectURL(file), type })
+    setTimeout(() => taRef.current?.focus(), 0)
   }
 
   function insertEmoji(emoji: string) {
@@ -382,6 +476,43 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
             </div>
           ) : (
             <>
+              {/* Pending media preview */}
+              {pendingMedia && (
+                <div className="flex items-center gap-3 rounded-xl border border-[#e8ebe8] dark:border-gray-700 bg-[#f7f8f6] dark:bg-gray-800 px-3 py-2 mb-2">
+                  {pendingMedia.type === 'image' ? (
+                    <img
+                      src={pendingMedia.previewUrl}
+                      alt="Selected"
+                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-[#e8f5ee] dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                      {pendingMedia.type === 'audio' ? (
+                        <Music size={16} className="text-[#1a5c3a]" />
+                      ) : (
+                        <FileText size={16} className="text-[#1a5c3a]" />
+                      )}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">
+                      {pendingMedia.file.name}
+                    </p>
+                    <p className="text-2xs text-gray-400 dark:text-gray-500">
+                      {formatFileSize(pendingMedia.file.size)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={clearPendingMedia}
+                    disabled={uploadingMedia}
+                    className="w-7 h-7 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 flex-shrink-0 disabled:opacity-40 transition-colors"
+                    title="Remove"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               {/* Textarea */}
               <div
                 className={cn(
@@ -395,7 +526,9 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
                   onChange={handleTextChange}
                   onKeyDown={handleKey}
                   placeholder={
-                    isNote
+                    pendingMedia
+                      ? 'Add a caption (optional)...'
+                      : isNote
                       ? 'Add a note (only visible to team)...'
                       : 'Type a message or / for quick replies...'
                   }
@@ -428,15 +561,17 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
                   </button>
                   <button
                     onClick={() => fileRef.current?.click()}
-                    className={iconBtnCls}
+                    disabled={uploadingMedia}
+                    className={cn(iconBtnCls, uploadingMedia && 'opacity-50 cursor-not-allowed')}
                     title="Attach file"
                   >
-                    <Paperclip size={16} />
+                    {uploadingMedia ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                   </button>
                   <input
                     ref={fileRef}
                     type="file"
                     accept="image/*,application/pdf,audio/*"
+                    onChange={handleFileChange}
                     className="hidden"
                   />
                   <button
@@ -473,15 +608,15 @@ export default function MessageInput({ onSend, onSendTemplate, mode, setMode, di
 
                 <button
                   onClick={send}
-                  disabled={!text.trim() || !!disabled}
+                  disabled={(!text.trim() && !pendingMedia) || !!disabled || uploadingMedia}
                   className={cn(
                     'w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95',
-                    text.trim() && !disabled
+                    (text.trim() || pendingMedia) && !disabled && !uploadingMedia
                       ? cn('text-white', sendCls)
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed'
                   )}
                 >
-                  <Send size={16} />
+                  {uploadingMedia ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 </button>
               </div>
             </>

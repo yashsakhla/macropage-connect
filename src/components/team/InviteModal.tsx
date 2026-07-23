@@ -94,25 +94,25 @@ export default function InviteModal({ onClose }: InviteModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* header */}
-        <div className="flex items-center gap-4 px-6 pt-6 pb-5 border-b border-[#e8ebe8]">
-          <div className="w-10 h-10 bg-[#e8f5ee] rounded-xl flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-4 px-6 pt-6 pb-5 border-b border-[#e8ebe8] dark:border-white/10">
+          <div className="w-10 h-10 bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
             <UserPlus size={18} className="text-[#1a5c3a]" />
           </div>
           <div className="flex-1">
-            <p className="text-base font-semibold text-gray-900">Invite team member</p>
-            <p className="text-sm text-gray-400">They'll get an email to join your account</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-white">Invite team member</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">They'll get an email to join your account</p>
           </div>
-          <button className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-[#f7f8f6] transition-colors" onClick={onClose}><X size={16} /></button>
+          <button className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={16} /></button>
         </div>
 
         {/* step indicator */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-[#f5f5f5]">
           {[['1. Details', 1], ['2. Role & Permissions', 2]].map(([label, s]) => (
-            <div key={s} className={cn('flex items-center gap-1.5 text-xs font-medium', step >= Number(s) ? 'text-[#1a5c3a]' : 'text-gray-400')}>
+            <div key={s} className={cn('flex items-center gap-1.5 text-xs font-medium', step >= Number(s) ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>
               <div className={cn('w-5 h-5 rounded-full flex items-center justify-center text-[10px]',
-                step >= Number(s) ? 'bg-[#1a5c3a] text-white' : 'bg-gray-100 text-gray-400')}>
+                step >= Number(s) ? 'bg-[#1a5c3a] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500')}>
                 {step > Number(s) ? <Check size={10} /> : s}
               </div>
               {label}
@@ -124,10 +124,10 @@ export default function InviteModal({ onClose }: InviteModalProps) {
           {step === 1 && (
             <div className="space-y-4">
               {/* mode toggle */}
-              <div className="flex bg-[#f7f8f6] p-1 rounded-xl w-fit">
+              <div className="flex bg-[#f7f8f6] dark:bg-[#0f1724] p-1 rounded-xl w-fit">
                 {[['single', 'Single invite'], ['bulk', 'Bulk invite']].map(([v, l]) => (
                   <button key={v} onClick={() => setMode(v as 'single' | 'bulk')}
-                    className={cn('px-4 py-1.5 rounded-lg text-sm font-medium transition-all', mode === v ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')}>
+                    className={cn('px-4 py-1.5 rounded-lg text-sm font-medium transition-all', mode === v ? 'bg-white dark:bg-[#0b1220] shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
                     {l}
                   </button>
                 ))}
@@ -136,22 +136,22 @@ export default function InviteModal({ onClose }: InviteModalProps) {
               {mode === 'single' ? (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Full name <span className="text-gray-400">(optional)</span></label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Full name <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
                     <input {...form1.register('name')} className="input" placeholder="John Doe" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Email *</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Email *</label>
                     <input {...form1.register('email')} type="email" className={cn('input', form1.formState.errors.email && 'border-red-300')} placeholder="john@company.com" />
-                    {form1.formState.errors.email && <p className="text-xs text-red-500 mt-1">{form1.formState.errors.email.message}</p>}
+                    {form1.formState.errors.email && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{form1.formState.errors.email.message}</p>}
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Department <span className="text-gray-400">(optional)</span></label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Department <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
                     <input {...form1.register('department')} className="input" placeholder="e.g. Sales, Support" />
                   </div>
                 </>
               ) : (
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Email addresses</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Email addresses</label>
                   <textarea
                     value={bulkEmails} onChange={e => setBulkEmails(e.target.value)}
                     className="input h-auto py-2 resize-none text-sm font-mono"
@@ -162,14 +162,14 @@ export default function InviteModal({ onClose }: InviteModalProps) {
                     {parsedBulk.map(email => {
                       const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
                       return (
-                        <span key={email} className={cn('text-xs rounded-full px-3 py-1.5 font-medium', valid ? 'bg-[#e8f5ee] text-[#1a5c3a]' : 'bg-red-50 text-red-600')}>
+                        <span key={email} className={cn('text-xs rounded-full px-3 py-1.5 font-medium', valid ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400')}>
                           {email}
                         </span>
                       )
                     })}
                   </div>
                   {parsedBulk.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2">{validBulk.length} valid email{validBulk.length !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{validBulk.length} valid email{validBulk.length !== 1 ? 's' : ''}</p>
                   )}
                 </div>
               )}
@@ -183,11 +183,11 @@ export default function InviteModal({ onClose }: InviteModalProps) {
 
           {step === 2 && (
             <div className="space-y-5">
-              <button type="button" className="btn-ghost text-sm flex items-center gap-1 text-gray-500" onClick={() => setStep(1)}>← Back</button>
+              <button type="button" className="btn-ghost text-sm flex items-center gap-1 text-gray-500 dark:text-gray-400" onClick={() => setStep(1)}>← Back</button>
 
               {/* role cards */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Assign role *</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Assign role *</label>
                 <div className="grid grid-cols-3 gap-2">
                   {ROLE_CARDS.map(r => {
                     const Icon = r.icon
@@ -195,36 +195,36 @@ export default function InviteModal({ onClose }: InviteModalProps) {
                     const rs = ROLE_STYLE[r.value]
                     return (
                       <div key={r.value} onClick={() => form2.setValue('role', r.value as 'admin' | 'manager' | 'agent')}
-                        className={cn('border-2 rounded-xl p-3 cursor-pointer transition-all relative', isSelected ? 'border-[#1a5c3a] bg-[#e8f5ee]/30' : 'border-[#e8ebe8] hover:border-[#c8e6d4]')}>
+                        className={cn('border-2 rounded-xl p-3 cursor-pointer transition-all relative', isSelected ? 'border-[#1a5c3a] bg-[#e8f5ee]/30' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]')}>
                         {isSelected && <CheckCircle size={13} className="absolute top-2 right-2 text-[#1a5c3a]" />}
                         <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mb-2', rs.bg)}>
                           <Icon size={15} className={rs.text} />
                         </div>
-                        <p className="text-sm font-semibold text-gray-800">{r.title}</p>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{r.title}</p>
                         <div className="mt-2 space-y-0.5">
                           {r.can.map(p => <p key={p} className="text-[10px] text-[#1a5c3a]">✓ {p}</p>)}
-                          {r.cannot.map(p => <p key={p} className="text-[10px] text-gray-400">✗ {p}</p>)}
+                          {r.cannot.map(p => <p key={p} className="text-[10px] text-gray-400 dark:text-gray-500">✗ {p}</p>)}
                         </div>
                       </div>
                     )
                   })}
                 </div>
-                <p className="text-[10px] text-gray-400 mt-2">{permCount} permissions enabled for this role</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">{permCount} permissions enabled for this role</p>
               </div>
 
               {/* message */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Personal note <span className="text-gray-400">(optional)</span></label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Personal note <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
                 <textarea {...form2.register('message')} className="input h-auto py-2 resize-none" rows={2} placeholder="Welcome to the team! We're excited to have you." maxLength={200} />
-                <p className="text-[10px] text-gray-400 text-right mt-1">{msgLen}/200</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 text-right mt-1">{msgLen}/200</p>
               </div>
 
               {/* expiry */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Invitation expires after</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Invitation expires after</label>
                 <div className="flex gap-2 flex-wrap">
                   {EXPIRY_OPTIONS.map(opt => (
-                    <label key={opt.value} className={cn('flex items-center gap-1.5 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all', form2.watch('expiresIn') === opt.value ? 'border-[#1a5c3a] bg-[#e8f5ee]/30 text-[#1a5c3a]' : 'border-[#e8ebe8] text-gray-600')}>
+                    <label key={opt.value} className={cn('flex items-center gap-1.5 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all', form2.watch('expiresIn') === opt.value ? 'border-[#1a5c3a] bg-[#e8f5ee]/30 text-[#1a5c3a]' : 'border-[#e8ebe8] dark:border-white/10 text-gray-600 dark:text-gray-400')}>
                       <input type="radio" {...form2.register('expiresIn')} value={opt.value} className="sr-only" />
                       {opt.label}
                     </label>
@@ -241,14 +241,14 @@ export default function InviteModal({ onClose }: InviteModalProps) {
 
         {/* footer invite link */}
         <div className="px-6 pb-5 border-t border-[#f5f5f5] pt-4">
-          <p className="text-xs text-gray-500 mb-2">Or share invite link</p>
-          <div className="bg-[#f7f8f6] rounded-xl px-3 py-2.5 flex items-center gap-2">
-            <span className="font-mono text-xs text-gray-600 flex-1 truncate">https://app.macropage.in/invite/abc123xyz</span>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Or share invite link</p>
+          <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl px-3 py-2.5 flex items-center gap-2">
+            <span className="font-mono text-xs text-gray-600 dark:text-gray-400 flex-1 truncate">https://app.macropage.in/invite/abc123xyz</span>
             <button className="btn-ghost text-xs h-7 px-3 flex items-center gap-1" onClick={copyLink}>
               {copied ? <><Check size={11} /> Copied!</> : <><Copy size={11} /> Copy</>}
             </button>
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">Link valid for 7 days</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Link valid for 7 days</p>
         </div>
       </div>
     </div>

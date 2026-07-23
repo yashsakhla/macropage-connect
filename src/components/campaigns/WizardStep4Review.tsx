@@ -35,9 +35,9 @@ function ChecklistItem({ ok, label }: { ok: boolean; label: string }) {
     <div className="flex items-center gap-2 text-sm">
       {ok
         ? <CheckCircle size={16} className="text-[#1a5c3a] flex-shrink-0" />
-        : <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
+        : <AlertTriangle size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
       }
-      <span className={ok ? 'text-gray-700' : 'text-amber-700'}>{label}</span>
+      <span className={ok ? 'text-gray-700 dark:text-gray-300' : 'text-amber-700 dark:text-amber-400'}>{label}</span>
     </div>
   )
 }
@@ -85,44 +85,44 @@ export default function WizardStep4Review({
       {/* LEFT — summary cards */}
       <div className="col-span-3 space-y-4">
         {/* campaign details */}
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-2.5">
-          <p className="text-sm font-semibold text-gray-800 mb-3">Campaign details</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2.5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Campaign details</p>
           {[
             ['Campaign name', campaignName || '—'],
             ['Status', 'Draft → Scheduled/Live'],
             ['A/B test', isAbTest ? `Yes (${abSplit}% / ${100 - abSplit}%)` : 'No'],
           ].map(([label, val]) => (
             <div key={label} className="flex justify-between text-sm">
-              <span className="text-gray-500">{label}</span>
-              <span className="text-gray-900 font-medium">{val}</span>
+              <span className="text-gray-500 dark:text-gray-400">{label}</span>
+              <span className="text-gray-900 dark:text-white font-medium">{val}</span>
             </div>
           ))}
         </div>
 
         {/* template */}
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-2.5">
-          <p className="text-sm font-semibold text-gray-800 mb-3">Template</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2.5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Template</p>
           {selectedTemplate ? (
             <>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Name</span>
-                <span className="text-gray-900 font-medium flex items-center gap-1">
+                <span className="text-gray-500 dark:text-gray-400">Name</span>
+                <span className="text-gray-900 dark:text-white font-medium flex items-center gap-1">
                   <FileText size={12} /> {selectedTemplate.name}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Category</span>
-                <span className="bg-[#f7f8f6] text-gray-600 text-xs rounded-full px-2 py-0.5">{selectedTemplate.category}</span>
+                <span className="text-gray-500 dark:text-gray-400">Category</span>
+                <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-600 dark:text-gray-400 text-xs rounded-full px-2 py-0.5">{selectedTemplate.category}</span>
               </div>
-              <div className="bg-[#f7f8f6] rounded-xl p-3 mt-2 max-h-32 overflow-y-auto">
-                <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{selectedTemplate.body}</p>
+              <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-3 mt-2 max-h-32 overflow-y-auto">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{selectedTemplate.body}</p>
               </div>
               {Object.keys(variableMapping).length > 0 && (
                 <div className="space-y-1 mt-2">
-                  <p className="text-xs font-medium text-gray-500">Variable mapping</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Variable mapping</p>
                   {Object.entries(variableMapping).map(([k, v]) => (
-                    <p key={k} className="text-xs text-gray-600">
-                      <span className="font-mono bg-[#e8f5ee] text-[#1a5c3a] rounded px-1">{k}</span>
+                    <p key={k} className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-mono bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] rounded px-1">{k}</span>
                       {' → '}
                       {v.startsWith('fixed:') ? `"${v.slice(6)}"` : v}
                     </p>
@@ -131,47 +131,47 @@ export default function WizardStep4Review({
               )}
             </>
           ) : (
-            <p className="text-sm text-amber-600 flex items-center gap-1"><AlertTriangle size={14} /> No template selected</p>
+            <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1"><AlertTriangle size={14} /> No template selected</p>
           )}
         </div>
 
         {/* audience */}
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-2.5">
-          <p className="text-sm font-semibold text-gray-800 mb-3">Audience</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2.5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Audience</p>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-gray-900">{totalContacts.toLocaleString('en-IN')}</span>
-            <span className="text-gray-500 text-sm mb-1">contacts</span>
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">{totalContacts.toLocaleString('en-IN')}</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm mb-1">contacts</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Source</span>
-            <span className="text-gray-900 font-medium flex items-center gap-1">
+            <span className="text-gray-500 dark:text-gray-400">Source</span>
+            <span className="text-gray-900 dark:text-white font-medium flex items-center gap-1">
               {audienceLabel}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <CheckCircle size={12} className="text-[#1a5c3a]" />
             Opted-out contacts automatically excluded
           </div>
         </div>
 
         {/* schedule */}
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-2.5">
-          <p className="text-sm font-semibold text-gray-800 mb-3">Schedule</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2.5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Schedule</p>
           {[
             ['Send time', scheduleText],
             ['Timezone', timezone || 'Asia/Kolkata'],
             ['Speed', SPEED_LABELS[sendSpeed]],
           ].map(([label, val]) => (
             <div key={label} className="flex justify-between text-sm">
-              <span className="text-gray-500">{label}</span>
-              <span className="text-gray-900 font-medium">{val}</span>
+              <span className="text-gray-500 dark:text-gray-400">{label}</span>
+              <span className="text-gray-900 dark:text-white font-medium">{val}</span>
             </div>
           ))}
         </div>
 
         {/* checklist + launch */}
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 space-y-3">
-          <p className="text-sm font-semibold text-gray-800">Final checks</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-3">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Final checks</p>
           <ChecklistItem ok={hasTemplate && selectedTemplate?.status === 'APPROVED'} label="Template approved by Meta" />
           <ChecklistItem ok={hasAudience} label={`${totalContacts.toLocaleString()} valid contacts ready`} />
           <ChecklistItem ok={hasMapping} label="Variable mapping complete" />
@@ -185,7 +185,7 @@ export default function WizardStep4Review({
               onChange={e => onConfirmChange(e.target.checked)}
               className="mt-0.5 accent-[#1a5c3a]"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
               I confirm this campaign will send WhatsApp messages to{' '}
               <strong>{totalContacts.toLocaleString('en-IN')} contacts</strong> and I accept the Meta messaging charges.
             </span>
@@ -196,16 +196,16 @@ export default function WizardStep4Review({
       {/* RIGHT — sticky preview + cost */}
       <div className="col-span-2 space-y-4 sticky top-0">
         <div>
-          <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Message preview</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">Message preview</p>
           {selectedTemplate ? (
             <TemplatePreview template={selectedTemplate} variables={previewVars} />
           ) : (
-            <div className="bg-[#eae6df] rounded-2xl p-8 flex items-center justify-center text-gray-400 text-sm">
+            <div className="bg-[#eae6df] dark:bg-white/10 rounded-2xl p-8 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
               No template selected
             </div>
           )}
           {selectedTemplate && (
-            <p className="text-[10px] text-gray-400 text-center mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
               This is how your contact will see your message
             </p>
           )}
@@ -213,17 +213,17 @@ export default function WizardStep4Review({
 
         {/* cost estimate — INR */}
         {cost && (
-          <div className="bg-[#e8f5ee] border border-[#c8e6d4] rounded-2xl px-4 py-3">
+          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl px-4 py-3">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-gray-500">Estimated campaign cost</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Estimated campaign cost</span>
               <span className="text-lg font-black text-[#1a5c3a]">{cost.formatted}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">
                 {totalContacts.toLocaleString('en-IN')} contacts × {formatINR(cost.perConversation)} ({cost.category})
               </span>
             </div>
-            <p className="text-[10px] text-gray-400 mt-2 pt-2 border-t border-[#c8e6d4] leading-relaxed">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 pt-2 border-t border-[#c8e6d4] leading-relaxed">
               ⓘ Estimated based on Meta's India conversation rates. Actual charges billed directly by Meta to your WhatsApp Business account. Rates may vary.
             </p>
           </div>

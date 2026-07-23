@@ -12,8 +12,8 @@ export default function RelatedArticles({ articles }: Props) {
   if (!articles.length) return null
 
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 mt-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Related articles</p>
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 mt-4">
+      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Related articles</p>
       <div>
         {articles.map(a => (
           <div
@@ -23,9 +23,9 @@ export default function RelatedArticles({ articles }: Props) {
           >
             <ArrowRight
               size={12}
-              className="text-gray-300 group-hover:text-[#1a5c3a] flex-shrink-0 mt-0.5 transition-colors"
+              className="text-gray-300 dark:text-gray-600 group-hover:text-[#1a5c3a] flex-shrink-0 mt-0.5 transition-colors"
             />
-            <span className="text-xs text-gray-700 leading-snug group-hover:text-[#1a5c3a] transition-colors">
+            <span className="text-xs text-gray-700 dark:text-gray-300 leading-snug group-hover:text-[#1a5c3a] transition-colors">
               {a.title}
             </span>
           </div>

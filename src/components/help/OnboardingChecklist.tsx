@@ -22,7 +22,7 @@ export default function OnboardingChecklist() {
   const pct = Math.round((completed / total) * 100)
 
   return (
-    <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-6 py-4 flex items-center justify-between">
         <div>
@@ -55,7 +55,7 @@ export default function OnboardingChecklist() {
           key={step.id}
           onClick={() => step.active && step.href && (window.location.href = step.href)}
           className={`flex items-center gap-4 px-6 py-4 border-b border-[#f5f5f5] last:border-0 ${
-            step.active ? 'cursor-pointer hover:bg-[#fafffe]' : ''
+            step.active ? 'cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5' : ''
           }`}
         >
           {/* Status circle */}
@@ -65,20 +65,20 @@ export default function OnboardingChecklist() {
                 <Check size={14} className="text-white" strokeWidth={3} />
               </div>
             ) : step.active ? (
-              <div className="w-7 h-7 bg-white border-2 border-[#1a5c3a] rounded-full flex items-center justify-center">
+              <div className="w-7 h-7 bg-white dark:bg-[#0b1220] border-2 border-[#1a5c3a] rounded-full flex items-center justify-center">
                 <div className="w-2.5 h-2.5 bg-[#1a5c3a] rounded-full" />
               </div>
             ) : (
-              <div className="w-7 h-7 border-2 border-[#e8ebe8] rounded-full flex items-center justify-center">
-                <span className="text-xs text-gray-300 font-medium">{step.id}</span>
+              <div className="w-7 h-7 border-2 border-[#e8ebe8] dark:border-white/10 rounded-full flex items-center justify-center">
+                <span className="text-xs text-gray-300 dark:text-gray-600 font-medium">{step.id}</span>
               </div>
             )}
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900">{step.title}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{step.desc}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{step.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{step.desc}</p>
             {step.active && (
               <p className="text-xs text-[#1a5c3a] font-medium mt-1">Continue →</p>
             )}
@@ -86,7 +86,7 @@ export default function OnboardingChecklist() {
 
           {/* Done badge */}
           {step.done && (
-            <span className="bg-[#e8f5ee] text-[#1a5c3a] text-[0.625rem] rounded-full px-2 py-0.5 flex-shrink-0">
+            <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[0.625rem] rounded-full px-2 py-0.5 flex-shrink-0">
               Done
             </span>
           )}

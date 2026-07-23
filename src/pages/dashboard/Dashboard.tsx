@@ -14,6 +14,7 @@ import type {
 } from '@/types'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
+import MessageUsageCard from '@/components/analytics/MessageUsageCard'
 import {
   StatCardSkeleton, ChartSkeleton, ActivitySkeleton, ChecklistSkeleton,
 } from '@/components/ui/DashboardSkeletons'
@@ -66,12 +67,12 @@ function StatCard({ label, value, icon: Icon, trend, hero }: {
 }
 
 function AccountHealthBanner({ health }: { health: import('@/types').DashboardHealthData }) {
-  const configMap: Record<string, { label: string; desc: string; bg: string; border: string; dot: string; bar: string }> = {
-    GREEN:  { label: 'High quality',   desc: 'Your account is in good standing. No sending restrictions.',          bg: 'bg-green-50 dark:bg-green-950/30',  border: 'border-green-200 dark:border-green-800',  dot: 'bg-green-500',  bar: 'bg-green-500' },
-    YELLOW: { label: 'Medium quality', desc: 'Your account has some flagged messages. Review recent campaigns.',     bg: 'bg-amber-50 dark:bg-amber-950/30',  border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-500',  bar: 'bg-amber-500' },
-    RED:    { label: 'Low quality',    desc: 'Your account is at risk of restrictions. Pause marketing campaigns.',  bg: 'bg-red-50 dark:bg-red-950/30',      border: 'border-red-200 dark:border-red-800',      dot: 'bg-red-500',    bar: 'bg-red-500'   },
+  const configMap: Record<string, { label: string; desc: string; bg: string; border: string; dot: string }> = {
+    GREEN:  { label: 'High quality',   desc: 'Your account is in good standing. No sending restrictions.',          bg: 'bg-green-50 dark:bg-green-950/30',  border: 'border-green-200 dark:border-green-800',  dot: 'bg-green-500'  },
+    YELLOW: { label: 'Medium quality', desc: 'Your account has some flagged messages. Review recent campaigns.',     bg: 'bg-amber-50 dark:bg-amber-950/30',  border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-500'  },
+    RED:    { label: 'Low quality',    desc: 'Your account is at risk of restrictions. Pause marketing campaigns.',  bg: 'bg-red-50 dark:bg-red-950/30',      border: 'border-red-200 dark:border-red-800',      dot: 'bg-red-500'    },
   }
-  const config = configMap[health.qualityRating] ?? { label: 'Unknown', desc: 'Quality rating is unavailable.', bg: 'bg-gray-50 dark:bg-gray-900/30', border: 'border-gray-200 dark:border-gray-700', dot: 'bg-gray-400', bar: 'bg-gray-400' }
+  const config = configMap[health.qualityRating] ?? { label: 'Unknown', desc: 'Quality rating is unavailable.', bg: 'bg-gray-50 dark:bg-gray-900/30', border: 'border-gray-200 dark:border-gray-700', dot: 'bg-gray-400' }
 
   const tier = health.messagingTier?.replace('TIER_', '').replace('K', 'K').replace('UNLIMITED', '∞') ?? ''
 
@@ -82,18 +83,9 @@ function AccountHealthBanner({ health }: { health: import('@/types').DashboardHe
         <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{config.label} · </span>
         <span className="text-sm text-gray-600 dark:text-gray-400">{config.desc}</span>
       </div>
-      <div className="flex items-center gap-4 text-xs text-gray-500 shrink-0">
-        {tier && (
-          <span className="font-medium text-gray-700 dark:text-gray-300">Tier: {tier}</span>
-        )}
-        <div className="flex items-center gap-2">
-          <span>{health.messagesSentToday ?? 0} / {health.tierLimit ?? 0} this month</span>
-          <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div className={cn('h-full rounded-full', config.bar)} style={{ width: `${Math.min(health.usagePercent ?? 0, 100)}%` }} />
-          </div>
-          <span>{health.usagePercent ?? 0}%</span>
-        </div>
-      </div>
+      {tier && (
+        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 shrink-0">Tier: {tier}</span>
+      )}
     </div>
   )
 }
@@ -317,8 +309,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Recent Activity */}
-        <div>
+        {/* Recent Activity + Message usage */}
+        <div className="space-y-4">
           {recentLoading ? (
             <ActivitySkeleton />
           ) : recentError ? (
@@ -371,6 +363,8 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          <MessageUsageCard compact />
         </div>
       </div>
 

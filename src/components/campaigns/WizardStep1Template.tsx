@@ -75,23 +75,23 @@ export default function WizardStep1Template({
     <div className="space-y-5">
       {/* campaign name */}
       <div>
-        <label className="text-sm font-medium text-gray-700">Campaign name *</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Campaign name *</label>
         <input
           className="input mt-1.5"
           value={campaignName}
           onChange={e => onCampaignNameChange(e.target.value)}
           placeholder="e.g. Diwali Sale Announcement"
         />
-        <p className="text-xs text-gray-400 mt-1">Give your campaign a memorable name</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Give your campaign a memorable name</p>
       </div>
 
       {/* template selector */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-3">Select a message template *</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select a message template *</p>
 
         <div className="flex items-center gap-3 mb-3">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               className="input pl-8 h-9"
               value={search}
@@ -99,14 +99,14 @@ export default function WizardStep1Template({
               placeholder="Search templates..."
             />
           </div>
-          <div className="flex items-center gap-1 bg-[#f7f8f6] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1">
             {CATEGORY_TABS.map(tab => (
               <button
                 key={tab}
                 onClick={() => setCategoryTab(tab)}
                 className={cn(
                   'px-3 h-7 rounded-lg text-xs font-medium transition-all',
-                  categoryTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  categoryTab === tab ? 'bg-white dark:bg-[#0b1220] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
                 )}
               >
                 {tab}
@@ -119,19 +119,19 @@ export default function WizardStep1Template({
         {templatesLoading && (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-white/10 animate-pulse" />
             ))}
           </div>
         )}
 
         {/* Error */}
         {templatesError && !templatesLoading && (
-          <div className="border border-red-200 bg-red-50 rounded-2xl px-4 py-4">
+          <div className="border border-red-200 bg-red-50 dark:bg-red-950/30 rounded-2xl px-4 py-4">
             <div className="flex items-start gap-3">
               <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-red-700">Could not load templates</p>
-                <p className="text-xs text-red-500 mt-0.5">
+                <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not load templates</p>
+                <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
                   {(templatesRawErr as any)?.response?.data?.message
                     ?? 'We are currently facing an issue. Please try again.'}
                 </p>
@@ -139,7 +139,7 @@ export default function WizardStep1Template({
               <button
                 onClick={() => refetchTemplates()}
                 disabled={templatesFetching}
-                className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white dark:bg-[#0b1220] border border-red-200 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-all"
               >
                 <RefreshCw size={11} className={cn(templatesFetching && 'animate-spin')} />
                 {templatesFetching ? 'Retrying...' : 'Try again'}
@@ -150,17 +150,17 @@ export default function WizardStep1Template({
 
         {/* Empty — no approved templates at all */}
         {!templatesLoading && !templatesError && templates?.length === 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mt-3">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-2xl px-4 py-3 mt-3">
             <div className="flex items-start gap-2">
-              <AlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
+              <AlertCircle size={14} className="text-amber-500 dark:text-amber-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-amber-700">No approved templates available</p>
-                <p className="text-xs text-amber-600 mt-0.5">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">No approved templates available</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
                   You need at least one Meta-approved template to create a campaign.
                 </p>
                 <button
                   onClick={() => navigate('/campaigns/templates')}
-                  className="text-xs text-amber-700 font-semibold underline mt-1"
+                  className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-1"
                 >
                   Create a template →
                 </button>
@@ -182,38 +182,38 @@ export default function WizardStep1Template({
                   className={cn(
                     'border-2 rounded-2xl p-4 cursor-pointer transition-all',
                     isSelected
-                      ? 'border-[#1a5c3a] bg-[#e8f5ee]'
-                      : 'border-[#e8ebe8] hover:border-[#c8e6d4] hover:bg-[#fafffe]'
+                      ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30'
+                      : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4] hover:bg-[#fafffe] dark:hover:bg-white/5'
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{template.name}</p>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{template.name}</p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="bg-[#f7f8f6] text-gray-500 text-[10px] rounded-full px-2 py-0.5">{template.category}</span>
-                        <span className="bg-[#e8f5ee] text-[#1a5c3a] text-[10px] rounded-full px-2 py-0.5">APPROVED</span>
+                        <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-2 py-0.5">{template.category}</span>
+                        <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] rounded-full px-2 py-0.5">APPROVED</span>
                       </div>
                     </div>
                     <div className={cn(
                       'w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-all mt-0.5',
-                      isSelected ? 'bg-[#1a5c3a] border-[#1a5c3a]' : 'border-[#e8ebe8]'
+                      isSelected ? 'bg-[#1a5c3a] border-[#1a5c3a]' : 'border-[#e8ebe8] dark:border-white/10'
                     )}>
                       {isSelected && <Check size={10} className="text-white" />}
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2 leading-relaxed">
                     {(template.body ?? '').split(/({{[^}]+}})/g).map((part, i) =>
                       /^{{[^}]+}}$/.test(part)
-                        ? <span key={i} className="bg-[#e8f5ee] text-[#1a5c3a] text-[10px] rounded px-1 mx-0.5 font-mono">{part}</span>
+                        ? <span key={i} className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] rounded px-1 mx-0.5 font-mono">{part}</span>
                         : part
                     )}
                   </p>
 
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] text-gray-400">🇬🇧 {template.language.toUpperCase()}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">🇬🇧 {template.language.toUpperCase()}</span>
                     {vars.length > 0 && (
-                      <span className="bg-[#f7f8f6] text-gray-500 text-[10px] rounded-full px-1.5 py-0.5">
+                      <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-1.5 py-0.5">
                         {vars.length} variable{vars.length !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -222,7 +222,7 @@ export default function WizardStep1Template({
               )
             })}
             {filtered.length === 0 && (
-              <div className="col-span-2 text-center py-10 text-gray-400 text-sm">
+              <div className="col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">
                 <FileText size={24} className="mx-auto mb-2 opacity-40" />
                 No templates match your search
               </div>
@@ -233,9 +233,9 @@ export default function WizardStep1Template({
 
       {/* variable mapping */}
       {selectedTemplate && detectedVars.length > 0 && (
-        <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-2xl p-5">
-          <p className="text-sm font-semibold text-gray-800">Map template variables</p>
-          <p className="text-xs text-gray-500 mt-0.5">Tell us where to get each value from your contacts</p>
+        <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Map template variables</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tell us where to get each value from your contacts</p>
 
           <div className="space-y-3 mt-4">
             {detectedVars.map(variable => {
@@ -243,10 +243,10 @@ export default function WizardStep1Template({
               const isFixed = currentSource.startsWith('fixed:')
               return (
                 <div key={variable} className="flex items-center gap-3">
-                  <span className="bg-[#e8f5ee] text-[#1a5c3a] text-sm font-mono rounded-lg px-3 py-2 min-w-16 text-center">
+                  <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-sm font-mono rounded-lg px-3 py-2 min-w-16 text-center">
                     {variable}
                   </span>
-                  <span className="text-gray-400">→</span>
+                  <span className="text-gray-400 dark:text-gray-500">→</span>
                   <select
                     className="input flex-1 h-9"
                     value={isFixed ? 'fixed' : currentSource}
@@ -278,7 +278,7 @@ export default function WizardStep1Template({
 
           {/* live preview */}
           <div className="mt-5">
-            <p className="text-[10px] text-gray-400 mb-2 uppercase tracking-wider">Message preview</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">Message preview</p>
             <TemplatePreview template={selectedTemplate} variables={previewVars} compact />
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function WizardStep1Template({
       {/* Helper text — explain why Continue is blocked */}
       {!templatesLoading && !templatesError && (templates?.length ?? 0) > 0 &&
        (!campaignName.trim() || !selectedTemplate) && (
-        <p className="text-xs text-center mt-2 text-gray-400">
+        <p className="text-xs text-center mt-2 text-gray-400 dark:text-gray-500">
           {!campaignName.trim()
             ? 'Enter a campaign name to continue'
             : 'Select a template to continue'

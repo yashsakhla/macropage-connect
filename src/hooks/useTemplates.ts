@@ -51,7 +51,7 @@ export function useCreateTemplate() {
 export function useUpdateTemplate() {
   const qc = useQueryClient()
   return useMutation<unknown, Error, { id: string; data: Partial<CreateTemplatePayload> }>({
-    mutationFn: ({ id, data }) => api.put(`/templates/${id}`, data).then((r) => r.data),
+    mutationFn: ({ id, data }) => api.patch(`/templates/${id}`, data).then((r) => r.data),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
       qc.invalidateQueries({ queryKey: ['template', id] })
       qc.invalidateQueries({ queryKey: ['templates'] })

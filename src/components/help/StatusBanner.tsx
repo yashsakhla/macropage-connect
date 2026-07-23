@@ -7,7 +7,7 @@ export default function StatusBanner() {
 
   if (status.overall === 'operational') {
     return (
-      <div className="bg-[#e8f5ee] border-b border-[#c8e6d4] px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
+      <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border-b border-[#c8e6d4] px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
         <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0" />
         <span className="text-sm text-[#1a5c3a] font-medium">All systems operational</span>
         <a
@@ -24,14 +24,14 @@ export default function StatusBanner() {
 
   if (status.overall === 'degraded') {
     return (
-      <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
-        <AlertTriangle size={14} className="text-amber-600 flex-shrink-0" />
-        <span className="text-sm text-amber-800 font-medium">Some services are experiencing issues</span>
+      <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
+        <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+        <span className="text-sm text-amber-800 dark:text-amber-300 font-medium">Some services are experiencing issues</span>
         <a
           href="https://status.macropage.in"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-amber-700 underline ml-auto"
+          className="text-xs text-amber-700 dark:text-amber-400 underline ml-auto"
         >
           View details →
         </a>
@@ -40,16 +40,16 @@ export default function StatusBanner() {
   }
 
   return (
-    <div className="bg-red-50 border-b border-red-200 px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
-      <AlertOctagon size={14} className="text-red-600 flex-shrink-0" />
-      <span className="text-sm text-red-800 font-medium">
+    <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-200 px-6 py-2.5 flex items-center gap-3 sticky top-0 z-40">
+      <AlertOctagon size={14} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+      <span className="text-sm text-red-800 dark:text-red-300 font-medium">
         We're experiencing an outage · Our team is working on it
       </span>
       <a
         href="https://status.macropage.in"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-red-700 underline ml-auto"
+        className="text-xs text-red-700 dark:text-red-400 underline ml-auto"
       >
         See incident report →
       </a>

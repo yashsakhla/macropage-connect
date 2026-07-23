@@ -35,7 +35,7 @@ export default function PlanExpiredBanner() {
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => navigate('/plans')}
-          className="flex items-center gap-1.5 h-8 px-4 bg-white text-red-700 hover:bg-red-50
+          className="flex items-center gap-1.5 h-8 px-4 bg-white dark:bg-[#0b1220] text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30
             text-xs font-bold rounded-lg transition-colors"
         >
           Upgrade Now

@@ -59,17 +59,17 @@ export default function APISettings() {
   return (
     <SettingsSection title="API Keys" subtitle="Manage keys to integrate Macropage Connect with your applications">
       {/* Info banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex gap-3">
-        <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-blue-800">API keys authenticate requests to the Macropage Connect API. Keep them secure — treat them like passwords. <a href="#" className="underline">View API docs →</a></p>
+      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 rounded-xl p-4 mb-6 flex gap-3">
+        <Info size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-blue-800 dark:text-blue-300">API keys authenticate requests to the Macropage Connect API. Keep them secure — treat them like passwords. <a href="#" className="underline">View API docs →</a></p>
       </div>
 
       {/* New key success */}
       {newKeyValue && (
-        <div className="bg-[#e8f5ee] border border-[#1a5c3a] rounded-2xl p-5 mb-6">
+        <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#1a5c3a] rounded-2xl p-5 mb-6">
           <p className="text-sm font-semibold text-[#1a5c3a]">✓ API key created successfully</p>
-          <p className="text-xs text-gray-600 mt-1">This is the only time you'll see the full key. Copy it now.</p>
-          <code className="block font-mono text-sm bg-white rounded-xl px-4 py-3 mt-3 text-gray-800 break-all">{newKeyValue}</code>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">This is the only time you'll see the full key. Copy it now.</p>
+          <code className="block font-mono text-sm bg-white dark:bg-[#0b1220] rounded-xl px-4 py-3 mt-3 text-gray-800 dark:text-gray-200 break-all">{newKeyValue}</code>
           <button onClick={copyNewKey} className="btn-primary h-9 text-sm mt-3 flex items-center gap-1.5">
             {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
             {copied ? 'Copied!' : 'Copy key'}
@@ -78,23 +78,23 @@ export default function APISettings() {
       )}
 
       {/* Create form */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-6">
-        <p className="text-sm font-semibold text-gray-800 mb-5">Create new API key</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Create new API key</p>
         <div className="space-y-5 max-w-xl">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Key name</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Key name</label>
             <input className="input w-full h-9 text-sm" placeholder="e.g. Production app, CRM integration" value={keyName} onChange={e => setKeyName(e.target.value)} />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-2">Permissions</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Permissions</label>
             <div className="space-y-2">
               {PERMISSIONS.map(({ id, label, desc }) => (
                 <label key={id} className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" checked={selectedPerms.includes(id)} onChange={() => togglePerm(id)} className="accent-[#1a5c3a] mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-800">{label}</p>
-                    <p className="text-xs text-gray-400">{desc}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">{label}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{desc}</p>
                   </div>
                 </label>
               ))}
@@ -102,7 +102,7 @@ export default function APISettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Expiry</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expiry</label>
             <select className="input w-full h-9 text-sm max-w-xs" value={expiry} onChange={e => setExpiry(e.target.value)}>
               <option value="never">Never</option>
               <option value="30d">30 days</option>
@@ -119,9 +119,9 @@ export default function APISettings() {
       </div>
 
       {/* Existing keys */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden mt-6">
-        <div className="px-5 py-4 border-b border-[#e8ebe8]">
-          <p className="text-sm font-semibold text-gray-800">Your API keys ({keys.length})</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden mt-6">
+        <div className="px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Your API keys ({keys.length})</p>
         </div>
         {keys.map(key => <APIKeyItem key={key.id} apiKey={key} onRevoke={id => revokeKey.mutate(id)} />)}
       </div>

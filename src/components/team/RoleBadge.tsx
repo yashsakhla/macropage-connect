@@ -7,14 +7,14 @@ import type { Role } from '@/lib/permissions'
 type RoleStyleKey = string
 
 export const ROLE_STYLE: Record<RoleStyleKey, { bg: string; text: string; border: string; icon: React.ElementType; label: string }> = {
-  owner:   { bg: 'bg-gradient-to-r from-amber-50 to-orange-50', text: 'text-amber-700', border: 'border-amber-200', icon: Crown,      label: 'Owner'   },
-  admin:   { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', icon: Shield,     label: 'Admin'   },
-  manager: { bg: 'bg-blue-50',    text: 'text-blue-700',   border: 'border-blue-200',   icon: Users,      label: 'Manager' },
-  agent:   { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', border: 'border-[#c8e6d4]',  icon: Headphones, label: 'Agent'   },
-  OWNER:   { bg: 'bg-gradient-to-r from-amber-50 to-orange-50', text: 'text-amber-700', border: 'border-amber-200', icon: Crown,      label: 'Owner'   },
-  ADMIN:   { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', icon: Shield,     label: 'Admin'   },
-  MANAGER: { bg: 'bg-blue-50',    text: 'text-blue-700',   border: 'border-blue-200',   icon: Users,      label: 'Manager' },
-  AGENT:   { bg: 'bg-[#e8f5ee]',  text: 'text-[#1a5c3a]', border: 'border-[#c8e6d4]',  icon: Headphones, label: 'Agent'   },
+  owner:   { bg: 'bg-gradient-to-r from-amber-50 to-orange-50', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200', icon: Crown,      label: 'Owner'   },
+  admin:   { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200', icon: Shield,     label: 'Admin'   },
+  manager: { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-700 dark:text-blue-400',   border: 'border-blue-200',   icon: Users,      label: 'Manager' },
+  agent:   { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', border: 'border-[#c8e6d4]',  icon: Headphones, label: 'Agent'   },
+  OWNER:   { bg: 'bg-gradient-to-r from-amber-50 to-orange-50', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200', icon: Crown,      label: 'Owner'   },
+  ADMIN:   { bg: 'bg-purple-50 dark:bg-purple-950/30',  text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200', icon: Shield,     label: 'Admin'   },
+  MANAGER: { bg: 'bg-blue-50 dark:bg-blue-950/30',    text: 'text-blue-700 dark:text-blue-400',   border: 'border-blue-200',   icon: Users,      label: 'Manager' },
+  AGENT:   { bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',  text: 'text-[#1a5c3a]', border: 'border-[#c8e6d4]',  icon: Headphones, label: 'Agent'   },
 }
 
 interface RoleBadgeProps {
@@ -76,10 +76,10 @@ export default function RoleBadge({ role, size = 'md', onChangeRole, disabled, d
       {badge}
 
       {open && (
-        <div className="absolute left-0 top-8 z-50 bg-white border border-[#e8ebe8] rounded-xl shadow-lg p-2 w-48">
+        <div className="absolute left-0 top-8 z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg p-2 w-48">
           {confirm ? (
             <div className="px-2 py-1">
-              <p className="text-xs text-gray-600 mb-3">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                 Change role to <strong>{confirm}</strong>?
               </p>
               <div className="flex gap-2">
@@ -92,7 +92,7 @@ export default function RoleBadge({ role, size = 'md', onChangeRole, disabled, d
             </div>
           ) : (
             <>
-              <p className="text-[10px] text-gray-400 px-3 py-2 uppercase tracking-wider">Change role</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 px-3 py-2 uppercase tracking-wider">Change role</p>
               {ROLE_OPTIONS.map(opt => {
                 const OIcon = opt.icon
                 const isActive = opt.value === role
@@ -102,7 +102,7 @@ export default function RoleBadge({ role, size = 'md', onChangeRole, disabled, d
                     disabled={opt.disabled}
                     className={cn(
                       'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-left transition-colors',
-                      isActive ? 'bg-[#e8f5ee] text-[#1a5c3a] font-medium' : 'text-gray-700 hover:bg-[#f7f8f6]',
+                      isActive ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-[#f7f8f6] dark:hover:bg-white/5',
                       opt.disabled && 'opacity-40 cursor-not-allowed'
                     )}
                     title={opt.disabled ? 'Cannot assign Owner role' : undefined}

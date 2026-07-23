@@ -10,10 +10,10 @@ import { usePermissions } from '@/lib/permissions'
 type Section = string
 
 const PLAN_BADGE: Record<string, string> = {
-  trial: 'bg-amber-50 text-amber-700',
-  starter: 'bg-blue-50 text-blue-700',
-  growth: 'bg-[#e8f5ee] text-[#1a5c3a]',
-  enterprise: 'bg-purple-50 text-purple-700',
+  trial: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400',
+  starter: 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400',
+  growth: 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]',
+  enterprise: 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400',
 }
 
 interface NavItem { id: string; icon: React.ElementType; label: string; danger?: boolean }
@@ -111,15 +111,15 @@ export default function SettingsSidebar({ activeSection }: Props) {
   }).filter(group => group.items.length > 0)
 
   return (
-    <aside className="bg-white border-r border-[#e8ebe8] h-full flex flex-col overflow-y-auto">
+    <aside className="bg-white dark:bg-[#0b1220] border-r border-[#e8ebe8] dark:border-white/10 h-full flex flex-col overflow-y-auto">
       {/* Company identity */}
-      <div className="px-4 py-4 border-b border-[#e8ebe8]">
+      <div className="px-4 py-4 border-b border-[#e8ebe8] dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#1a3d2b] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.companyName ?? 'My Company'}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.companyName ?? 'My Company'}</p>
             <span className={cn('text-2xs font-medium rounded-full px-2 py-0.5 capitalize', PLAN_BADGE[plan] ?? PLAN_BADGE.trial)}>
               {plan}
             </span>
@@ -136,7 +136,7 @@ export default function SettingsSidebar({ activeSection }: Props) {
       <nav className="flex-1 p-3 space-y-1">
         {visibleNav.map(({ group, items }) => (
           <div key={group}>
-            <p className="text-2xs font-semibold text-gray-400 uppercase tracking-widest px-3 py-2 mt-3 first:mt-1">{group}</p>
+            <p className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-3 py-2 mt-3 first:mt-1">{group}</p>
             {items.map(({ id, icon: Icon, label, danger }) => {
               const isActive = activeSection === id
               return (
@@ -145,18 +145,18 @@ export default function SettingsSidebar({ activeSection }: Props) {
                   onClick={() => go(id)}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left',
-                    danger && !isActive && 'text-red-500 hover:bg-red-50',
-                    !danger && !isActive && 'text-gray-600 hover:bg-[#f7f8f6] hover:text-gray-900',
-                    isActive && !danger && 'bg-[#e8f5ee] text-[#1a5c3a] rounded-l-none border-l-4 border-[#1a5c3a]',
-                    isActive && danger && 'bg-red-50 text-red-600 rounded-l-none border-l-4 border-red-500',
+                    danger && !isActive && 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30',
+                    !danger && !isActive && 'text-gray-600 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white',
+                    isActive && !danger && 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] rounded-l-none border-l-4 border-[#1a5c3a]',
+                    isActive && danger && 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-l-none border-l-4 border-red-500',
                   )}
                 >
                   <div className={cn(
                     'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
                     isActive && !danger && 'bg-[#1a5c3a] text-white',
                     isActive && danger && 'bg-red-500 text-white',
-                    !isActive && danger && 'bg-red-50 text-red-400',
-                    !isActive && !danger && 'bg-[#f7f8f6] text-gray-500',
+                    !isActive && danger && 'bg-red-50 dark:bg-red-950/30 text-red-400',
+                    !isActive && !danger && 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400',
                   )}>
                     <Icon size={14} />
                   </div>
@@ -169,14 +169,14 @@ export default function SettingsSidebar({ activeSection }: Props) {
       </nav>
 
       {/* Bottom help */}
-      <div className="border-t border-[#e8ebe8] p-3 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-[#f7f8f6] hover:text-gray-700">
+      <div className="border-t border-[#e8ebe8] dark:border-white/10 p-3 space-y-1">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200">
           <HelpCircle size={14} /> Help & Support
         </button>
-        <a href="#" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-[#f7f8f6] hover:text-gray-700">
+        <a href="#" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200">
           <BookOpen size={14} /> Documentation
         </a>
-        <p className="text-2xs text-gray-300 px-3 pt-1">v1.0.0</p>
+        <p className="text-2xs text-gray-300 dark:text-gray-600 px-3 pt-1">v1.0.0</p>
       </div>
     </aside>
   )

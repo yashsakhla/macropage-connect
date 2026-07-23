@@ -15,13 +15,13 @@ import OnlineIndicator from './OnlineIndicator'
 function ResponseBar({ secs }: { secs: number }) {
   const mins = secs / 60
   const color = mins < 5 ? 'bg-[#1a5c3a]' : mins < 15 ? 'bg-amber-500' : 'bg-red-500'
-  const textColor = mins < 5 ? 'text-[#1a5c3a]' : mins < 15 ? 'text-amber-600' : 'text-red-500'
+  const textColor = mins < 5 ? 'text-[#1a5c3a]' : mins < 15 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'
   return (
     <div className="flex items-center gap-2">
       <div className={cn('text-sm font-semibold', textColor)}>
         {mins < 1 ? `${secs}s` : `${Math.floor(mins)}m ${secs % 60}s`}
       </div>
-      <div className="bg-gray-100 rounded-full h-1.5 w-20 overflow-hidden">
+      <div className="bg-gray-100 dark:bg-white/10 rounded-full h-1.5 w-20 overflow-hidden">
         <div className={cn('h-1.5 rounded-full', color)} style={{ width: `${Math.min((mins / 20) * 100, 100)}%` }} />
       </div>
     </div>
@@ -32,8 +32,8 @@ function ResolutionBar({ pct }: { pct: number }) {
   const color = pct >= 90 ? 'bg-[#1a5c3a]' : pct >= 75 ? 'bg-amber-500' : 'bg-red-500'
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm font-semibold text-gray-900">{pct}%</span>
-      <div className="bg-gray-100 rounded-full h-1.5 w-20 overflow-hidden">
+      <span className="text-sm font-semibold text-gray-900 dark:text-white">{pct}%</span>
+      <div className="bg-gray-100 dark:bg-white/10 rounded-full h-1.5 w-20 overflow-hidden">
         <div className={cn('h-1.5 rounded-full', color)} style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -51,8 +51,8 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
   return (
     <div className="space-y-6 px-5 py-6">
       <div className="flex items-center justify-between">
-        <p className="text-base font-semibold text-gray-900">Team Performance</p>
-        <select className="bg-white border border-[#e8ebe8] rounded-xl h-9 px-3 text-sm text-gray-600 focus:outline-none focus:border-[#1a5c3a]">
+        <p className="text-base font-semibold text-gray-900 dark:text-white">Team Performance</p>
+        <select className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:border-[#1a5c3a]">
           <option>This month</option>
           <option>Last month</option>
           <option>This week</option>
@@ -62,8 +62,8 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
 
       {/* charts row */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-          <p className="text-sm font-semibold text-gray-800 mb-4">Conversations handled</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Conversations handled</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={MOCK_PERF_DATA} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} />
@@ -74,8 +74,8 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-          <p className="text-sm font-semibold text-gray-800 mb-4">Avg response time (min)</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Avg response time (min)</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={MOCK_PERF_DATA} layout="vertical" margin={{ top: 0, right: 10, left: 20, bottom: 0 }}>
               <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} />
@@ -89,8 +89,8 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5">
-          <p className="text-sm font-semibold text-gray-800 mb-4">Agent comparison</p>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Agent comparison</p>
           <ResponsiveContainer width="100%" height={180}>
             <RadarChart data={MOCK_RADAR_DATA} cx="50%" cy="50%" outerRadius={60}>
               <PolarGrid stroke="#e8ebe8" />
@@ -104,15 +104,15 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
       </div>
 
       {/* leaderboard */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8]">
-          <p className="text-sm font-semibold text-gray-800">Agent Performance</p>
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Agent Performance</p>
           <button className="btn btn-outline h-8 text-xs flex items-center gap-1.5">
             <Download size={12} /> Export CSV
           </button>
         </div>
 
-        <div className="grid bg-[#f7f8f6] border-b border-[#e8ebe8] px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+        <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
           style={{ gridTemplateColumns: '40px 2fr 100px 130px 110px 110px 100px' }}>
           <span>#</span>
           <span>Agent</span>
@@ -127,22 +127,22 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
           const s = member.stats!
           const rs = ROLE_STYLE[member.role]
           return (
-            <div key={member.id} className="grid items-center px-5 py-4 border-b border-[#f5f5f5] hover:bg-[#fafffe] transition-colors"
+            <div key={member.id} className="grid items-center px-5 py-4 border-b border-[#f5f5f5] hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors"
               style={{ gridTemplateColumns: '40px 2fr 100px 130px 110px 110px 100px' }}>
-              <span className="text-lg">{MEDALS[idx] ?? <span className="text-sm text-gray-500">{idx + 1}</span>}</span>
+              <span className="text-lg">{MEDALS[idx] ?? <span className="text-sm text-gray-500 dark:text-gray-400">{idx + 1}</span>}</span>
 
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1a5c3a] to-teal-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                   {getInitials(member.name)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{member.name}</p>
                   <span className={cn('text-[10px] font-medium', rs.text)}>{rs.label}</span>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-bold text-gray-900">{s.conversationsThisMonth}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{s.conversationsThisMonth}</p>
                 <p className="text-[10px] text-[#1a5c3a]">↑ 12% vs last</p>
               </div>
 
@@ -153,12 +153,12 @@ export default function PerformanceStats({ members }: PerformanceStatsProps) {
               <div>
                 {s.csatScore && s.csatCount && s.csatCount >= 5 ? (
                   <>
-                    <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1">
                       <Star size={12} className="text-amber-400 fill-amber-400" /> {s.csatScore.toFixed(1)}
                     </p>
-                    <p className="text-[10px] text-gray-400">({s.csatCount} ratings)</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">({s.csatCount} ratings)</p>
                   </>
-                ) : <span className="text-sm text-gray-300">N/A</span>}
+                ) : <span className="text-sm text-gray-300 dark:text-gray-600">N/A</span>}
               </div>
 
               <OnlineIndicator status={member.onlineStatus} lastActiveAt={member.lastActiveAt} showLabel />

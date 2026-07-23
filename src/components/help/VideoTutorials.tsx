@@ -23,7 +23,7 @@ export default function VideoTutorials({ videos = [] }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-6 mb-10">
       <div className="flex items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Video tutorials</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Video tutorials</h2>
         <button className="text-sm text-[#1a5c3a] font-medium ml-auto hover:underline">
           View all videos →
         </button>
@@ -36,7 +36,7 @@ export default function VideoTutorials({ videos = [] }: Props) {
             href={v.videoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-shrink-0 w-64 bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer block"
+            className="flex-shrink-0 w-64 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer block"
           >
             {/* Thumbnail */}
             <div className={`h-36 bg-gradient-to-br ${GRADIENTS[v.category] ?? 'from-gray-700 to-gray-900'} relative flex items-center justify-center`}>
@@ -46,20 +46,20 @@ export default function VideoTutorials({ videos = [] }: Props) {
               <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[0.625rem] rounded-lg px-2 py-0.5 font-mono">
                 {v.duration}
               </span>
-              <span className="absolute top-2 left-2 bg-white/90 text-gray-700 text-[0.625rem] rounded-lg px-2 py-1 font-medium">
+              <span className="absolute top-2 left-2 bg-white/90 text-gray-700 dark:text-gray-300 text-[0.625rem] rounded-lg px-2 py-1 font-medium">
                 {v.category}
               </span>
             </div>
 
             {/* Body */}
             <div className="p-4">
-              <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{v.title}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">{v.title}</p>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-[0.625rem] text-gray-400 flex items-center gap-1">
+                <span className="text-[0.625rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
                   <Eye size={11} />
                   {formatViews(v.views)} views
                 </span>
-                <span className="text-[0.625rem] text-gray-400">
+                <span className="text-[0.625rem] text-gray-400 dark:text-gray-500">
                   {new Date(v.publishedAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
                 </span>
               </div>

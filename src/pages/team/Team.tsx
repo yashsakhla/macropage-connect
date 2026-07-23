@@ -49,13 +49,13 @@ export default function Team() {
   })
 
   const statCards = [
-    { label: 'Total members', value: counts.all, icon: Users, bg: 'bg-blue-50', color: 'text-blue-600' },
-    { label: 'Active now', value: members.filter(m => m.onlineStatus === 'online').length, icon: Zap, bg: 'bg-[#e8f5ee]', color: 'text-[#1a5c3a]' },
-    { label: 'Pending invites', value: counts.pending, icon: Clock, bg: 'bg-amber-50', color: 'text-amber-600' },
+    { label: 'Total members', value: counts.all, icon: Users, bg: 'bg-blue-50 dark:bg-blue-950/30', color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Active now', value: members.filter(m => m.onlineStatus === 'online').length, icon: Zap, bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', color: 'text-[#1a5c3a]' },
+    { label: 'Pending invites', value: counts.pending, icon: Clock, bg: 'bg-amber-50 dark:bg-amber-950/30', color: 'text-amber-600 dark:text-amber-400' },
   ]
 
   return (
-    <div className="p-6 bg-[#f7f8f6] min-h-screen">
+    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
       <div className="page-header">
         <div>
@@ -68,7 +68,7 @@ export default function Team() {
       </div>
 
       {/* stats */}
-      <div className="bg-white border border-[#e8ebe8] rounded-2xl p-5 flex items-center mb-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center mb-6">
         {statCards.map((s, i) => {
           const Icon = s.icon
           return (
@@ -78,21 +78,21 @@ export default function Team() {
                   <Icon size={18} className={s.color} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
                 </div>
               </div>
-              {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] mx-4" />}
+              {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
             </div>
           )
         })}
       </div>
 
       {/* tab navigation */}
-      <div className="flex items-center gap-1 bg-white border border-[#e8ebe8] rounded-xl p-1 w-fit mb-5">
+      <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 w-fit mb-5">
         {([['members', 'Members'], ['performance', 'Performance'], ['permissions', 'Permissions']] as const).map(([v, l]) => (
           <button key={v} onClick={() => setActiveTab(v)}
-            className={cn('px-4 h-8 rounded-lg text-sm font-medium transition-all', activeTab === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 hover:text-gray-700')}>
+            className={cn('px-4 h-8 rounded-lg text-sm font-medium transition-all', activeTab === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
             {l}
           </button>
         ))}
@@ -111,18 +111,18 @@ export default function Team() {
             ] as const).map(([v, l]) => (
               <button key={v} onClick={() => setRoleFilter(v)}
                 className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-all',
-                  roleFilter === v ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-[#e8ebe8] text-gray-500 hover:border-[#c8e6d4]')}>
+                  roleFilter === v ? 'bg-[#1a5c3a] text-white' : 'bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-[#c8e6d4]')}>
                 {l}
-                <span className={cn('text-[10px] rounded-full px-1.5', roleFilter === v ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] text-gray-400')}>
+                <span className={cn('text-[10px] rounded-full px-1.5', roleFilter === v ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
                   {counts[v]}
                 </span>
               </button>
             ))}
           </div>
 
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
             {/* table header */}
-            <div className="grid bg-[#f7f8f6] border-b border-[#e8ebe8] px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
               style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr 80px' }}>
               <span>Member</span>
               <span>Role</span>
@@ -141,7 +141,7 @@ export default function Team() {
             ))}
 
             {filtered.length === 0 && (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-gray-400 dark:text-gray-500">
                 <Users size={28} className="mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No members found</p>
               </div>
@@ -151,7 +151,7 @@ export default function Team() {
             {roleFilter === 'all' && counts.pending > 0 && (
               <>
                 <div className="bg-amber-50/30 border-y border-amber-100 px-4 py-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pending invitations</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending invitations</p>
                 </div>
                 {members.filter(m => m.status === 'pending').map(member => (
                   <TeamMemberCard key={member.id} member={member} isCurrentUser={false} />

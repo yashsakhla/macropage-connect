@@ -269,9 +269,9 @@ export default function FlowPreview({ onClose }: Props) {
   }
 
   return (
-    <div className="absolute right-0 top-0 h-full w-[360px] bg-white border-l border-[#e8ebe8] z-10 flex flex-col shadow-xl">
+    <div className="absolute right-0 top-0 h-full w-[360px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-10 flex flex-col shadow-xl">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8ebe8] flex-shrink-0 bg-[#1a5c3a]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0 bg-[#1a5c3a]">
         <div>
           <p className="text-sm font-semibold text-white">Test flow</p>
           <p className="text-xs text-white/70">Simulated conversation</p>
@@ -287,16 +287,16 @@ export default function FlowPreview({ onClose }: Props) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 bg-[#f7f8f6] space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 bg-[#f7f8f6] dark:bg-[#0f1724] space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[85%] rounded-xl px-3 py-2 ${
                 msg.from === 'user'
-                  ? 'bg-white border border-[#e8ebe8]'
+                  ? 'bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10'
                   : msg.isSystem
-                  ? 'bg-amber-50 border border-amber-100'
-                  : 'bg-[#e8f5ee]'
+                  ? 'bg-amber-50 dark:bg-amber-950/30 border border-amber-100'
+                  : 'bg-[#e8f5ee] dark:bg-emerald-950/30'
               }`}
             >
               {msg.mediaUrl && (
@@ -309,14 +309,14 @@ export default function FlowPreview({ onClose }: Props) {
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-white capitalize">
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-[#0b1220] capitalize">
                       📎 {msg.mediaType || 'media'} attached
                     </div>
                   )}
                 </div>
               )}
               {msg.text && (
-                <p className={`text-xs leading-relaxed ${msg.isSystem ? 'text-amber-700 italic' : 'text-gray-700'}`}>
+                <p className={`text-xs leading-relaxed ${msg.isSystem ? 'text-amber-700 dark:text-amber-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>
                   {msg.text}
                 </p>
               )}
@@ -327,7 +327,7 @@ export default function FlowPreview({ onClose }: Props) {
                       key={bi}
                       onClick={() => send(btn)}
                       disabled={done || isTyping}
-                      className="w-full text-center bg-white text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full text-center bg-white dark:bg-[#0b1220] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] dark:hover:bg-emerald-950/30 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {btn}
                     </button>
@@ -336,13 +336,13 @@ export default function FlowPreview({ onClose }: Props) {
               )}
               {msg.listOptions && msg.listOptions.length > 0 && (
                 <div className="mt-2 space-y-1.5 border-t border-[#d0e8d8] pt-2">
-                  <p className="text-2xs text-gray-500 mb-1">{msg.listButtonText}</p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400 mb-1">{msg.listButtonText}</p>
                   {msg.listOptions.map((opt, oi) => (
                     <button
                       key={oi}
                       onClick={() => send(opt)}
                       disabled={done || isTyping}
-                      className="w-full text-left bg-white text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full text-left bg-white dark:bg-[#0b1220] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] dark:hover:bg-emerald-950/30 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {opt}
                     </button>
@@ -355,7 +355,7 @@ export default function FlowPreview({ onClose }: Props) {
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-[#e8f5ee] rounded-xl px-4 py-2.5 flex items-center gap-1">
+            <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-xl px-4 py-2.5 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1a5c3a] animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-1.5 h-1.5 rounded-full bg-[#1a5c3a] animate-bounce" style={{ animationDelay: '150ms' }} />
               <span className="w-1.5 h-1.5 rounded-full bg-[#1a5c3a] animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -375,7 +375,7 @@ export default function FlowPreview({ onClose }: Props) {
       </div>
 
       {/* Input */}
-      <div className="flex items-center gap-2 p-3 border-t border-[#e8ebe8] flex-shrink-0">
+      <div className="flex items-center gap-2 p-3 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
         <input
           className="input flex-1 h-9 text-sm"
           placeholder={done ? 'Flow ended — click Restart' : 'Type a message…'}

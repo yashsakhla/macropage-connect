@@ -30,8 +30,8 @@ function removeRecent(q: string) {
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   article: <FileText size={14} className="text-[#1a5c3a]" />,
-  faq: <HelpCircle size={14} className="text-blue-500" />,
-  video: <Play size={14} className="text-purple-500" />,
+  faq: <HelpCircle size={14} className="text-blue-500 dark:text-blue-400" />,
+  video: <Play size={14} className="text-purple-500 dark:text-purple-400" />,
 }
 
 export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
@@ -109,11 +109,11 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
     <div ref={wrapperRef} className="relative max-w-2xl mx-auto mt-8">
       {/* Input row */}
       <div
-        className={`bg-white rounded-2xl shadow-2xl flex items-center px-4 gap-3 border-2 transition-all ${
+        className={`bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl flex items-center px-4 gap-3 border-2 transition-all ${
           open ? 'border-[#1a5c3a]' : 'border-transparent'
         }`}
       >
-        <Search size={18} className="text-gray-400 flex-shrink-0" />
+        <Search size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
         <input
           ref={inputRef}
           value={query}
@@ -121,17 +121,17 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
           onFocus={() => setOpen(true)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           placeholder="Search for help... e.g. 'send campaign', 'connect WhatsApp'"
-          className="flex-1 h-12 text-base text-gray-800 border-none outline-none bg-transparent placeholder:text-gray-400"
+          className="flex-1 h-12 text-base text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent placeholder:text-gray-400 dark:text-gray-500"
         />
         {!query && (
-          <span className="bg-[#f7f8f6] text-gray-400 text-xs rounded-xl px-2.5 py-1.5 flex-shrink-0 font-mono">
+          <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500 text-xs rounded-xl px-2.5 py-1.5 flex-shrink-0 font-mono">
             ⌘K
           </span>
         )}
         {query && (
           <button
             onClick={() => { setQuery(''); setOpen(false) }}
-            className="text-gray-400 hover:text-gray-600 rounded-xl p-1 mr-1"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 rounded-xl p-1 mr-1"
           >
             <X size={16} />
           </button>
@@ -147,30 +147,30 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
 
       {/* Live suggestions dropdown — only while typing */}
       {open && query.length > 2 && results.length > 0 && (
-        <div className="absolute top-full mt-2 left-0 right-0 z-50 bg-white rounded-2xl border border-[#e8ebe8] shadow-xl overflow-hidden">
+        <div className="absolute top-full mt-2 left-0 right-0 z-50 bg-white dark:bg-[#0b1220] rounded-2xl border border-[#e8ebe8] dark:border-white/10 shadow-xl overflow-hidden">
           {(['article', 'faq', 'video'] as const).map(type => {
             const group = results.filter((r: SearchResult) => r.type === type)
             if (!group.length) return null
             const label = type === 'article' ? 'Articles' : type === 'faq' ? 'FAQs' : 'Videos'
             return (
               <div key={type}>
-                <p className="text-[0.625rem] text-gray-400 px-4 py-2 uppercase tracking-wide">{label}</p>
+                <p className="text-[0.625rem] text-gray-400 dark:text-gray-500 px-4 py-2 uppercase tracking-wide">{label}</p>
                 {group.slice(0, 3).map((r: SearchResult) => (
                   <div
                     key={r.id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#f7f8f6] cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#f7f8f6] dark:hover:bg-white/5 cursor-pointer"
                     onClick={() => handleResultClick(r)}
                   >
                     {TYPE_ICONS[r.type]}
-                    <span className="text-sm text-gray-800 flex-1">{r.title}</span>
-                    <span className="text-[0.625rem] text-gray-400">{r.category}</span>
+                    <span className="text-sm text-gray-800 dark:text-gray-200 flex-1">{r.title}</span>
+                    <span className="text-[0.625rem] text-gray-400 dark:text-gray-500">{r.category}</span>
                   </div>
                 ))}
               </div>
             )
           })}
           <div className="border-t border-[#f5f5f5] px-4 py-3">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               Press Enter to search all results for '{query}'
             </span>
           </div>

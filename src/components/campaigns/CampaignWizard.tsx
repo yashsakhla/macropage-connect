@@ -137,14 +137,14 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
       <div
-        className="bg-white rounded-2xl flex flex-col overflow-hidden"
+        className="bg-white dark:bg-[#0b1220] rounded-2xl flex flex-col overflow-hidden"
         style={{ width: 'min(840px, calc(100vw - 48px))', maxHeight: 'calc(100vh - 48px)' }}
       >
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">New Campaign</h2>
-            <span className="text-sm text-gray-400">Step {step + 1} of {STEPS.length}</span>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Campaign</h2>
+            <span className="text-sm text-gray-400 dark:text-gray-500">Step {step + 1} of {STEPS.length}</span>
           </div>
 
           {/* progress steps */}
@@ -156,22 +156,22 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative',
                     i < step ? 'bg-[#1a5c3a] text-white'
                     : i === step ? 'bg-[#1a5c3a] text-white ring-4 ring-[#c8e6d4]'
-                    : 'bg-white border-2 border-[#e8ebe8] text-gray-400'
+                    : 'bg-white dark:bg-[#0b1220] border-2 border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500'
                   )}>
                     {i < step ? <Check size={14} /> : i + 1}
                   </div>
-                  <span className={cn('text-[10px] mt-1 font-medium', i <= step ? 'text-[#1a5c3a]' : 'text-gray-400')}>
+                  <span className={cn('text-[10px] mt-1 font-medium', i <= step ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>
                     {s.label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={cn('h-px w-10 mx-1 mb-4 transition-colors', i < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8]')} />
+                  <div className={cn('h-px w-10 mx-1 mb-4 transition-colors', i < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8] dark:bg-white/10')} />
                 )}
               </div>
             ))}
           </div>
 
-          <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-[#f7f8f6] transition-colors" onClick={onClose}><X size={18} /></button>
+          <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
         </div>
 
         {/* body */}
@@ -202,19 +202,19 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
               {!audienceCountLoading && audienceType !== 'csv' && (() => {
                 if (audienceType === 'tag' && selectedTags.length === 0) {
                   return (
-                    <p className="text-xs text-center mt-2 text-gray-400">
+                    <p className="text-xs text-center mt-2 text-gray-400 dark:text-gray-500">
                       Select at least one tag to continue
                     </p>
                   )
                 }
                 if (!audienceCountError && (audienceData?.total ?? 0) === 0) {
                   return (
-                    <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mt-3">
+                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-2xl px-4 py-3 mt-3">
                       <div className="flex items-start gap-2">
                         <AlertCircle size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-xs font-semibold text-red-700">No contacts found</p>
-                          <p className="text-xs text-red-500 mt-0.5">
+                          <p className="text-xs font-semibold text-red-700 dark:text-red-400">No contacts found</p>
+                          <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
                             {audienceType === 'tag'
                               ? 'No contacts have the selected tags. Choose different tags or add contacts first.'
                               : 'You have no contacts yet. Import contacts before creating a campaign.'
@@ -222,7 +222,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
                           </p>
                           <button
                             onClick={() => navigate('/contacts')}
-                            className="text-xs text-red-600 font-semibold underline mt-1"
+                            className="text-xs text-red-600 dark:text-red-400 font-semibold underline mt-1"
                           >
                             {audienceType === 'tag' ? 'Manage contacts →' : 'Import contacts →'}
                           </button>
@@ -258,12 +258,12 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
             <>
               {/* Create campaign error */}
               {createIsError && !creating && (
-                <div className="border border-red-200 bg-red-50 rounded-2xl px-4 py-4 mb-4">
+                <div className="border border-red-200 bg-red-50 dark:bg-red-950/30 rounded-2xl px-4 py-4 mb-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-red-700">Could not create campaign</p>
-                      <p className="text-xs text-red-500 mt-0.5">
+                      <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not create campaign</p>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
                         {(createErr as any)?.response?.data?.message
                           ?? 'We are currently facing an issue. Please try again.'}
                       </p>
@@ -274,12 +274,12 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
 
               {/* Launch campaign error */}
               {launchIsError && !launching && (
-                <div className="border border-red-200 bg-red-50 rounded-2xl px-4 py-4 mb-4">
+                <div className="border border-red-200 bg-red-50 dark:bg-red-950/30 rounded-2xl px-4 py-4 mb-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-red-700">Could not launch campaign</p>
-                      <p className="text-xs text-red-500 mt-0.5">
+                      <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not launch campaign</p>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
                         {(launchErr as any)?.response?.data?.message
                           ?? 'We are currently facing an issue. Please try again.'}
                       </p>
@@ -287,7 +287,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
                     <button
                       onClick={handleLaunch}
                       disabled={isPending}
-                      className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white dark:bg-[#0b1220] border border-red-200 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
                     >
                       <RefreshCw size={11} className={cn(isPending && 'animate-spin')} />
                       {isPending ? 'Retrying...' : 'Try again'}
@@ -318,7 +318,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
         </div>
 
         {/* footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8ebe8] flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
           <div>
             {step > 0 && (
               <button className="btn-ghost h-9 px-4 gap-1" onClick={handleBack}>
@@ -330,7 +330,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
           {/* dots */}
           <div className="flex items-center gap-2">
             {STEPS.map((_, i) => (
-              <div key={i} className={cn('rounded-full transition-all', i === step ? 'w-4 h-2 bg-[#1a5c3a]' : 'w-2 h-2 bg-[#e8ebe8]')} />
+              <div key={i} className={cn('rounded-full transition-all', i === step ? 'w-4 h-2 bg-[#1a5c3a]' : 'w-2 h-2 bg-[#e8ebe8] dark:bg-white/10')} />
             ))}
           </div>
 
@@ -348,7 +348,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
               <button
                 className={cn(
                   'h-12 px-8 rounded-2xl text-base font-semibold flex items-center gap-3 transition-all',
-                  (!confirmed || isPending) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white active:scale-95'
+                  (!confirmed || isPending) ? 'bg-gray-300 text-gray-500 dark:text-gray-400 cursor-not-allowed' : 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white active:scale-95'
                 )}
                 onClick={handleLaunch}
                 disabled={!confirmed || isPending}
@@ -360,9 +360,9 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
                 )}
               </button>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-2">
-                <Lock size={14} className="text-amber-500 flex-shrink-0" />
-                <p className="text-xs text-amber-700">
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-2">
+                <Lock size={14} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-400">
                   Only Managers and Admins can launch campaigns.
                 </p>
               </div>
