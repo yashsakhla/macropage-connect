@@ -14,6 +14,10 @@ interface UIState {
   // global full-page loader
   fullLoader: boolean
 
+  // set right before navigating to /dashboard after a successful login/signup —
+  // lets the dashboard show a one-time post-login promo banner, then gets cleared
+  justLoggedIn: boolean
+
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
   toggleTheme: () => void
@@ -26,6 +30,7 @@ interface UIState {
   setPaymentIssueModalOpen: (v: boolean) => void
   setHelpWidgetOpen: (v: boolean) => void
   openHelpChat: () => void
+  setJustLoggedIn: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -40,6 +45,7 @@ export const useUIStore = create<UIState>()(
       paymentIssueReferenceId: null,
       helpWidgetOpen: false,
       fullLoader: false,
+      justLoggedIn: false,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -59,6 +65,7 @@ export const useUIStore = create<UIState>()(
       setPaymentIssueModalOpen: (v) => set({ paymentIssueModalOpen: v }),
       setHelpWidgetOpen: (v) => set({ helpWidgetOpen: v }),
       openHelpChat: () => set({ helpWidgetOpen: true }),
+      setJustLoggedIn: (v) => set({ justLoggedIn: v }),
     }),
     {
       name: 'macropage-ui',

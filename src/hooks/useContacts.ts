@@ -5,12 +5,12 @@ import type { Contact, ContactFilters, ContactSegment, CreateContactPayload, Imp
 
 function normalizeSegment(raw: any): ContactSegment {
   return {
-    id: raw._id ?? raw.id,
+    id: raw.id ?? raw._id,
     name: raw.name,
-    color: raw.color,
+    color: raw.color ?? '#1a5c3a',
     filters: raw.filters ?? {},
-    contactCount: raw.contactCount ?? 0,
-    isBuiltIn: raw.isBuiltIn ?? false,
+    contactCount: raw.count ?? raw.contactCount ?? 0,
+    isBuiltIn: raw.type ? raw.type !== 'custom' : (raw.isBuiltIn ?? false),
     createdAt: raw.createdAt,
   }
 }
@@ -159,10 +159,26 @@ export function useSegments() {
     queryKey: ['segments'],
     queryFn: () =>
       api.get('/contacts/segments').then((r) => {
-        const raw = r.data?.data ?? r.data
-        const list: any[] = Array.isArray(raw) ? raw : []
-        return list.map(normalizeSegment)
+        const body = r.data?.data ?? r.data
+        const list: any[] = Array.isArray(body) ? body : (body?.segments ?? [])
+        // The API also returns "predefined" (all/subscribed/unsubscribed) and "tag"
+        // segments — those duplicate what the built-in segment list and the tags
+        // cloud already show, so only user-created ("custom") segments are kept here.
+        return list.filter((s) => s.type === 'custom').map(normalizeSegment)
       }),
+  })
+}
+
+export function useAddContactsToSegment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ segmentId, contactIds }: { segmentId: string; contactIds: string[] }) =>
+      api.patch(`/contacts/segments/${segmentId}`, { contactIds }).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['segments'] })
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message ?? 'Failed to add contacts to segment'),
   })
 }
 

@@ -411,7 +411,7 @@ export default function ChatThread({ mobileBack }: Props) {
     }))
     .filter((m: any) => {
       const type = (m.type ?? 'text').toLowerCase()
-      if (['image', 'document', 'audio', 'video', 'location', 'template'].includes(type)) return true
+      if (['image', 'document', 'audio', 'video', 'sticker', 'location', 'template'].includes(type)) return true
       return !!(m.content && (m.content as string).trim())
     })
     .sort((a: any, b: any) =>

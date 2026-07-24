@@ -3,11 +3,12 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { X, Plus, Trash2, Bold, Italic, Strikethrough, Code2, Tag, Globe, Megaphone, ShieldCheck, Wrench, Lock } from 'lucide-react'
+import { X, Plus, Trash2, Bold, Italic, Strikethrough, Code2, Tag, Globe, Megaphone, ShieldCheck, Wrench, Lock, Loader2, FileText, UploadCloud } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CreateTemplatePayload, TemplateCategory, TemplateStatus } from '@/types'
 import TemplatePreview from './TemplatePreview'
 import { useCreateTemplate, useUpdateTemplate, useSaveDraft, useUpdateDraft } from '@/hooks/useTemplates'
+import { useUploadImage, useUploadDocument, useDeleteFile, UPLOAD_LIMITS } from '@/hooks/useUpload'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 
 const LANGUAGES = [
@@ -75,7 +76,19 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   const { requireConnected } = useRequireWhatsApp()
   const saveDraft = useSaveDraft()
   const updateDraft = useUpdateDraft()
+  const uploadImage = useUploadImage()
+  const uploadDocument = useUploadDocument()
+  const deleteFile = useDeleteFile()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const headerFileRef = useRef<HTMLInputElement>(null)
+  const [headerMedia, setHeaderMedia] = useState<{ url: string; key?: string; name: string } | undefined>(
+    initialData?.header?.mediaUrl ? { url: initialData.header.mediaUrl, name: 'Uploaded file' } : undefined
+  )
+
+  const removeHeaderMedia = () => {
+    if (headerMedia?.key) deleteFile.mutate(headerMedia.key)
+    setHeaderMedia(undefined)
+  }
 
   const { register, watch, setValue, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -135,13 +148,29 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
     setValue('body', newVal)
   }, [setValue])
 
+  const headerUploading = uploadImage.isPending || uploadDocument.isPending
+
+  const handleHeaderFile = (file: File) => {
+    const kind = values.headerType === 'IMAGE' ? 'image' : 'document'
+    const limit = UPLOAD_LIMITS[kind]
+    if (file.size > limit.maxBytes) {
+      toast.error(`${kind === 'image' ? 'Image' : 'Document'} is too large — ${limit.label}`)
+      return
+    }
+    const upload = kind === 'image' ? uploadImage : uploadDocument
+    upload.mutate(file, {
+      onSuccess: ({ url, key }) => setHeaderMedia({ url, key, name: file.name }),
+      onError: () => toast.error(`Failed to upload ${kind}`),
+    })
+  }
+
   const detectedVars = Array.from(new Set((values.body || '').match(/{{(\d+)}}/g) ?? []))
   const missingVarKeys = detectedVars
     .map(v => v.replace(/\{\{(\d+)\}\}/, '$1'))
     .filter(key => varTypes[key] && !(sampleVars[key] ?? '').trim())
 
   const previewTemplate = {
-    header: values.hasHeader && values.headerType && (values.headerType === 'TEXT' ? { type: 'TEXT' as const, text: values.headerText } : { type: values.headerType as 'IMAGE' | 'DOCUMENT' }) || undefined,
+    header: values.hasHeader && values.headerType && (values.headerType === 'TEXT' ? { type: 'TEXT' as const, text: values.headerText } : { type: values.headerType as 'IMAGE' | 'DOCUMENT', mediaUrl: headerMedia?.url }) || undefined,
     body: values.body || 'Your message preview will appear here...',
     footer: values.hasFooter ? (values.footerText || undefined) : undefined,
     buttons: values.hasButtons
@@ -173,7 +202,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
       header: data.hasHeader && data.headerType
         ? data.headerType === 'TEXT'
           ? { format: 'TEXT', text: data.headerText }
-          : { format: data.headerType }
+          : { format: data.headerType, mediaUrl: headerMedia?.url }
         : undefined,
       footer: data.hasFooter ? data.footerText : undefined,
       buttons: rawButtons && rawButtons.length > 0 ? { buttons: rawButtons } : undefined,
@@ -183,6 +212,10 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   const onSubmit = (data: FormValues) => {
     if (isLocked) return
     if (!requireConnected()) return
+    if (data.hasHeader && (data.headerType === 'IMAGE' || data.headerType === 'DOCUMENT') && !headerMedia) {
+      toast.error(`Upload a header ${data.headerType.toLowerCase()} before submitting`)
+      return
+    }
     if (missingVarKeys.length > 0) {
       setShowVarErrors(true)
       toast.error('Enter a sample value for every selected variable')
@@ -297,7 +330,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                   <div className="mt-3 space-y-3">
                     <div className="flex gap-2">
                       {(['TEXT', 'IMAGE', 'DOCUMENT'] as const).map(t => (
-                        <button key={t} type="button" onClick={() => setValue('headerType', t)}
+                        <button key={t} type="button" onClick={() => { setValue('headerType', t); setHeaderMedia(undefined) }}
                           className={cn('flex-1 border rounded-xl py-2 text-xs font-medium transition-all', values.headerType === t ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'border-[#e8ebe8] dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-[#c8e6d4]')}>
                           {t}
                         </button>
@@ -310,8 +343,45 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                       </div>
                     )}
                     {(values.headerType === 'IMAGE' || values.headerType === 'DOCUMENT') && (
-                      <div className="border-2 border-dashed border-[#e8ebe8] dark:border-white/10 rounded-xl p-6 text-center text-sm text-gray-400 dark:text-gray-500">
-                        Click to upload {values.headerType.toLowerCase()}
+                      <div>
+                        <input
+                          ref={headerFileRef}
+                          type="file"
+                          accept={values.headerType === 'IMAGE' ? 'image/*' : 'application/pdf'}
+                          className="hidden"
+                          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleHeaderFile(f) }}
+                        />
+                        {headerUploading ? (
+                          <div className="border-2 border-dashed border-[#e8ebe8] dark:border-white/10 rounded-xl p-6 text-center text-sm text-gray-400 dark:text-gray-500 flex items-center justify-center gap-2">
+                            <Loader2 size={14} className="animate-spin" /> Uploading...
+                          </div>
+                        ) : headerMedia ? (
+                          <div className="border border-[#e8ebe8] dark:border-white/10 rounded-xl p-3 flex items-center gap-3">
+                            {values.headerType === 'IMAGE' ? (
+                              <img src={headerMedia.url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center flex-shrink-0">
+                                <FileText size={16} className="text-[#1a5c3a]" />
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1">{headerMedia.name}</p>
+                            <button type="button" onClick={removeHeaderMedia} className="text-gray-400 hover:text-red-500 flex-shrink-0">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => headerFileRef.current?.click()}
+                            className="w-full border-2 border-dashed border-[#e8ebe8] dark:border-white/10 rounded-xl p-6 text-center text-sm text-gray-400 dark:text-gray-500 hover:border-[#1a5c3a] hover:text-[#1a5c3a] transition-colors flex flex-col items-center gap-1.5"
+                          >
+                            <UploadCloud size={20} />
+                            Click to upload {values.headerType.toLowerCase()}
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                              {values.headerType === 'IMAGE' ? UPLOAD_LIMITS.image.label : UPLOAD_LIMITS.document.label}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

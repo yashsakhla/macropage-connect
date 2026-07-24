@@ -3,7 +3,7 @@ import { X, UploadCloud, FileDown, Check, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, downloadContactSampleTemplate } from '@/lib/utils'
 import { useImportContacts } from '@/hooks/useContacts'
-import { useUploadDocument } from '@/hooks/useUpload'
+import { useUploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
 import type { Contact } from '@/types'
 import ContactImportMapper from './ContactImportMapper'
 import ContactImportProgress from './ContactImportProgress'
@@ -56,6 +56,10 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   )
 
   const handleFile = (file: File) => {
+    if (file.size > UPLOAD_LIMITS.document.maxBytes) {
+      toast.error(`File is too large — ${UPLOAD_LIMITS.document.label}`)
+      return
+    }
     const reader = new FileReader()
     reader.onload = e => {
       const text = e.target?.result as string
@@ -154,7 +158,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
                     <span key={f} className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-xs rounded-lg px-3 py-1.5">{f}</span>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Up to 100,000 contacts · Max 10MB</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Up to 100,000 contacts · {UPLOAD_LIMITS.document.label}</p>
               </div>
 
               <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-xl p-4 flex items-center gap-4">

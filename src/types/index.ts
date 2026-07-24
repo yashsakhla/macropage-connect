@@ -325,6 +325,8 @@ export interface Template {
 export interface CreateTemplateHeader {
   format: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
   text?: string
+  /** Set for IMAGE/DOCUMENT headers — the URL returned by POST /upload/image or /upload/document. */
+  mediaUrl?: string
 }
 
 export interface CreateTemplatePayload {
@@ -461,6 +463,45 @@ export interface MessageUsageRates {
 
 export interface MessageUsageData {
   currentMonth: MessageUsageMonth
+  metaRates: MessageUsageRates
+}
+
+export interface AllTimeUsageData {
+  messages: {
+    totalOutbound: number
+    totalInbound: number
+    byCategory: {
+      marketing: number
+      utility: number
+      authentication: number
+      service: number
+      /** Category breakdown only covers messages sent since usage tracking was enabled — unlike totalOutbound/totalInbound, which cover full history. */
+      note?: string
+    }
+    campaignMessages: number
+    inboxMessages: number
+    estimatedCostPaise: number
+    estimatedCostRupees: number
+    estimatedCostFormatted: string
+  }
+  contacts: {
+    total: number
+  }
+  conversations: {
+    total: number
+  }
+  campaigns: {
+    total: number
+    totalSent: number
+    totalDelivered: number
+    totalRead: number
+    totalFailed: number
+  }
+  automation: {
+    totalRules: number
+    activeRules: number
+    automatedConversations: number
+  }
   metaRates: MessageUsageRates
 }
 

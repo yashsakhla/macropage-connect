@@ -2,15 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { RefreshCw, Plus, Search, X, CheckCircle, Clock, XCircle, PauseCircle, Layers, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Template, TemplateStatus, TemplateCategory } from '@/types'
+import type { Template, TemplateStatus, TemplateCategory, CreateTemplateHeader } from '@/types'
 import { useTemplates, useSyncTemplates, useDeleteTemplate, useCreateTemplate } from '@/hooks/useTemplates'
+import { useSampleTemplates, type SampleTemplate } from '@/hooks/useSampleTemplates'
 import { usePermissions } from '@/lib/permissions'
 import TemplateCard from '@/components/templates/TemplateCard'
 import TemplateForm from '@/components/templates/TemplateForm'
 import TemplatePreview from '@/components/templates/TemplatePreview'
 import SampleTemplateCard from '@/components/templates/SampleTemplateCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
-import { STARTER_TEMPLATES, type StarterTemplate } from '@/lib/starterTemplates'
 import { format } from 'date-fns'
 
 const STATUS_TABS: { value: TemplateStatus | 'all'; label: string }[] = [
@@ -27,6 +27,12 @@ const CATEGORY_TABS: { value: TemplateCategory | 'all'; label: string }[] = [
   { value: 'UTILITY',        label: 'Utility' },
   { value: 'AUTHENTICATION', label: 'Authentication' },
 ]
+
+// Template['header'] (read shape: type/mediaUrl) → CreateTemplateHeader (write shape: format/mediaUrl)
+function toCreateHeader(header: Template['header']): CreateTemplateHeader | undefined {
+  if (!header) return undefined
+  return { format: header.type, text: header.text, mediaUrl: header.mediaUrl }
+}
 
 function DetailSidebar({ template, onClose, onEdit, onUseInCampaign, onDelete, canCreateTemplate, canDeleteTemplate }: {
   template: Template
@@ -145,8 +151,25 @@ export default function Templates() {
 
   const deleteTemplate = useDeleteTemplate()
   const createTemplate = useCreateTemplate()
+  const { data: sampleTemplates = [], isLoading: samplesLoading } = useSampleTemplates(
+    categoryFilter === 'all' ? undefined : categoryFilter
+  )
 
-  const handleUseStarter = (starter: StarterTemplate) => {
+  // Pull the latest approval/rejection statuses from Meta as soon as the user
+  // opens the templates page — but only when there's something Meta could still
+  // change (a template stuck PENDING). Already-approved/rejected templates have
+  // a final status, so syncing then would just be a wasted call.
+  const hasAutoSyncedRef = useRef(false)
+  useEffect(() => {
+    if (hasAutoSyncedRef.current || isLoading) return
+    hasAutoSyncedRef.current = true
+    if (templates.some(t => t.status === 'PENDING')) {
+      syncTemplates.refetch()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, templates])
+
+  const handleUseStarter = (starter: SampleTemplate) => {
     setSubmittingStarterId(starter.id)
     createTemplate.mutate(starter.payload, {
       onSettled: () => setSubmittingStarterId(null),
@@ -286,22 +309,54 @@ export default function Templates() {
 
       {view === 'samples' ? (
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Ready-made templates you can submit for Meta review in one click — a starting point instead of building from scratch.
           </p>
-          <div className="grid grid-cols-3 gap-4">
-            {STARTER_TEMPLATES.map(starter => (
-              <SampleTemplateCard
-                key={starter.id}
-                starter={starter}
-                existing={templates.find(t => t.name === starter.payload.name)}
-                canUse={canCreateTemplate}
-                isSubmitting={submittingStarterId === starter.id}
-                onUse={handleUseStarter}
-                onUseInCampaign={openWizard}
-              />
+
+          {/* category filter */}
+          <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 mb-5 w-fit">
+            {CATEGORY_TABS.map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => setCategoryFilter(tab.value)}
+                className={cn(
+                  'px-3 h-7 rounded-lg text-xs font-medium transition-all',
+                  categoryFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                )}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
+
+          {samplesLoading ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl h-48 animate-pulse" />
+              ))}
+            </div>
+          ) : sampleTemplates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Sparkles size={32} className="text-gray-200 dark:text-gray-700 mb-3" />
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {categoryFilter === 'all' ? 'No sample templates available' : 'No sample templates in this category'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {sampleTemplates.map(starter => (
+                <SampleTemplateCard
+                  key={starter.id}
+                  starter={starter}
+                  existing={templates.find(t => t.name === starter.payload.name)}
+                  canUse={canCreateTemplate}
+                  isSubmitting={submittingStarterId === starter.id}
+                  onUse={handleUseStarter}
+                  onUseInCampaign={openWizard}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
       <>
@@ -493,6 +548,7 @@ export default function Templates() {
             name: editTemplate.name,
             category: editTemplate.category,
             language: editTemplate.language,
+            header: toCreateHeader(editTemplate.header),
             body: editTemplate.body,
             footer: editTemplate.footer,
             buttons: editTemplate.buttons ? { buttons: editTemplate.buttons } : undefined,
@@ -501,6 +557,7 @@ export default function Templates() {
             name: `${duplicateTemplate.name}_copy`,
             category: duplicateTemplate.category,
             language: duplicateTemplate.language,
+            header: toCreateHeader(duplicateTemplate.header),
             body: duplicateTemplate.body,
             footer: duplicateTemplate.footer,
             buttons: duplicateTemplate.buttons ? { buttons: duplicateTemplate.buttons } : undefined,

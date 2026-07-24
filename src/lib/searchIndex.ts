@@ -5,7 +5,6 @@ import {
   Upload, UserPlus, KeyRound, Building2, User, BarChart2, Key, Webhook,
   Puzzle, Bell, Shield,
 } from 'lucide-react'
-import { STARTER_TEMPLATES } from '@/lib/starterTemplates'
 import { PERMISSIONS } from '@/lib/permissions'
 
 export type SearchGroup = 'Pages' | 'Quick Actions' | 'Sample Templates' | 'Settings' | 'Help'
@@ -68,17 +67,4 @@ export const STATIC_SEARCH_ITEMS: SearchItem[] = [
 
   // ── Help ─────────────────────────────────────────────────────────────
   { id: 'help-center', title: 'Help Center', subtitle: 'Browse articles & guides', group: 'Help', icon: HelpCircle, to: '/help', keywords: ['docs', 'faq', 'support'] },
-
-  // ── Sample Templates (from starterTemplates.ts) ─────────────────────
-  ...STARTER_TEMPLATES.map((starter): SearchItem => ({
-    id: `sample-${starter.id}`,
-    title: starter.title,
-    subtitle: starter.description,
-    group: 'Sample Templates',
-    icon: Sparkles,
-    to: '/templates',
-    navState: { openSamples: true },
-    keywords: [starter.category.toLowerCase(), 'sample', 'starter template', 'ready-made'],
-    permission: PERMISSIONS.VIEW_TEMPLATES,
-  })),
 ]

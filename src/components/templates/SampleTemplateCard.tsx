@@ -1,7 +1,7 @@
 import { Check, Clock, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Template } from '@/types'
-import type { StarterTemplate } from '@/lib/starterTemplates'
+import type { SampleTemplate } from '@/hooks/useSampleTemplates'
 
 const CATEGORY_GRADIENT: Record<string, string> = {
   MARKETING: 'from-purple-500 to-pink-500',
@@ -19,11 +19,11 @@ function renderBodyWithPills(body: string) {
 }
 
 interface Props {
-  starter: StarterTemplate
+  starter: SampleTemplate
   existing?: Template
   canUse: boolean
   isSubmitting: boolean
-  onUse: (starter: StarterTemplate) => void
+  onUse: (starter: SampleTemplate) => void
   onUseInCampaign: (template: Template) => void
 }
 

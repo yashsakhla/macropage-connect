@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react'
 import { X, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useAddKnowledgeItem } from '@/hooks/useAIBot'
+import { uploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
 
 interface UploadFile {
   file: File
   status: 'pending' | 'uploading' | 'done' | 'error'
   progress: number
+  error?: string
 }
 
 interface Props {
@@ -19,7 +22,11 @@ export default function KnowledgeDocUpload({ onClose }: Props) {
   const addItem = useAddKnowledgeItem()
 
   function addFiles(newFiles: File[]) {
-    const valid = newFiles.filter((f) => f.size <= 20 * 1024 * 1024 && /\.(pdf|docx?|txt|md)$/i.test(f.name))
+    const tooBig = newFiles.filter((f) => f.size > UPLOAD_LIMITS.document.maxBytes)
+    if (tooBig.length > 0) {
+      toast.error(`${tooBig.length > 1 ? 'Some files are' : 'That file is'} too large — ${UPLOAD_LIMITS.document.label}`)
+    }
+    const valid = newFiles.filter((f) => f.size <= UPLOAD_LIMITS.document.maxBytes && /\.(pdf|docx?|txt|md)$/i.test(f.name))
     setFiles((p) => [...p, ...valid.map((file) => ({ file, status: 'pending' as const, progress: 0 }))])
   }
 
@@ -33,28 +40,31 @@ export default function KnowledgeDocUpload({ onClose }: Props) {
     setFiles((p) => p.filter((_, idx) => idx !== i))
   }
 
-  function simulateUpload() {
-    files.forEach((_, i) => {
-      setFiles((p) => p.map((f, idx) => idx === i ? { ...f, status: 'uploading' } : f))
-      const interval = setInterval(() => {
-        setFiles((p) => {
-          const updated: UploadFile[] = p.map((f, idx) => {
-            if (idx !== i) return f
-            if (f.progress >= 100) { clearInterval(interval); return { ...f, status: 'done' as const, progress: 100 } }
-            return { ...f, status: 'uploading' as const, progress: f.progress + 20 }
-          })
-          return updated
-        })
-      }, 300)
-    })
-
-    setTimeout(() => {
-      files.forEach((f) => {
-        addItem.mutate({ type: 'document', title: f.file.name, content: '' })
-      })
-      setTimeout(onClose, 1500)
-    }, files.length * 300 + 500)
+  function updateFile(i: number, patch: Partial<UploadFile>) {
+    setFiles((p) => p.map((f, idx) => idx === i ? { ...f, ...patch } : f))
   }
+
+  async function handleUpload() {
+    const pendingIndexes = files.map((f, i) => f.status === 'pending' ? i : -1).filter((i) => i !== -1)
+
+    await Promise.all(pendingIndexes.map(async (i) => {
+      const f = files[i]
+      updateFile(i, { status: 'uploading', progress: 0 })
+      try {
+        const { url } = await uploadDocument(f.file, (percent) => updateFile(i, { progress: percent }))
+        await addItem.mutateAsync({ type: 'document', title: f.file.name, fileUrl: url })
+        updateFile(i, { status: 'done', progress: 100 })
+      } catch {
+        updateFile(i, { status: 'error', error: 'Upload failed' })
+      }
+    }))
+
+    const stillFailing = files.some((f) => f.status === 'error')
+    if (!stillFailing) setTimeout(onClose, 1000)
+  }
+
+  const isUploading = files.some((f) => f.status === 'uploading')
+  const hasPending = files.some((f) => f.status === 'pending')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
@@ -74,8 +84,8 @@ export default function KnowledgeDocUpload({ onClose }: Props) {
           >
             <Upload size={28} className="text-gray-300 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-700">Drop files here or click to browse</p>
-            <p className="text-xs text-gray-400 mt-1">PDF, DOCX, TXT, MD · Max 20MB per file</p>
-            <input ref={inputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md" className="hidden" onChange={(e) => addFiles(Array.from(e.target.files ?? []))} />
+            <p className="text-xs text-gray-400 mt-1">PDF, DOCX, TXT, MD · {UPLOAD_LIMITS.document.label} per file</p>
+            <input ref={inputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md" className="hidden" onChange={(e) => { addFiles(Array.from(e.target.files ?? [])); e.target.value = '' }} />
           </div>
 
           {files.length > 0 && (
@@ -87,7 +97,10 @@ export default function KnowledgeDocUpload({ onClose }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-700 truncate">{f.file.name}</p>
-                    <p className="text-2xs text-gray-400">{(f.file.size / 1024).toFixed(0)} KB</p>
+                    <p className="text-2xs text-gray-400">
+                      {(f.file.size / 1024).toFixed(0)} KB
+                      {f.status === 'error' && <span className="text-red-500"> · {f.error}</span>}
+                    </p>
                     {f.status === 'uploading' && (
                       <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
                         <div className="bg-[#1a5c3a] h-1 rounded-full transition-all" style={{ width: `${f.progress}%` }} />
@@ -106,11 +119,11 @@ export default function KnowledgeDocUpload({ onClose }: Props) {
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8ebe8]">
           <button onClick={onClose} className="btn-ghost h-9 text-sm">Cancel</button>
           <button
-            onClick={simulateUpload}
+            onClick={handleUpload}
             className="btn-primary h-9 text-sm"
-            disabled={files.length === 0 || files.some((f) => f.status !== 'pending')}
+            disabled={files.length === 0 || !hasPending || isUploading}
           >
-            Upload {files.length > 0 ? `(${files.length})` : ''}
+            {isUploading ? 'Uploading...' : `Upload ${files.length > 0 ? `(${files.length})` : ''}`}
           </button>
         </div>
       </div>

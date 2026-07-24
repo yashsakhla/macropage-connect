@@ -3,14 +3,15 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Download, Upload, Plus, Search, SlidersHorizontal, FileDown,
   LayoutList, LayoutGrid, Users, Activity, UserMinus, UserPlus,
-  X, Trash2, Tag,
+  X, Trash2, Tag, Layers,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, downloadCSV, downloadContactSampleTemplate } from '@/lib/utils'
 import type { Contact, ContactFilters } from '@/types'
 import {
   useContacts, useDeleteContactTag,
-  useBulkDeleteContacts, useBulkTagContacts, useCreateSegment, useSegments, useUpdateContact,
+  useBulkDeleteContacts, useBulkTagContacts, useCreateSegment, useSegments,
+  useAddContactsToSegment, useUpdateContact,
 } from '@/hooks/useContacts'
 import ContactsTable from '@/components/contacts/ContactsTable'
 import ContactCard from '@/components/contacts/ContactCard'
@@ -133,6 +134,8 @@ export default function Contacts() {
   const [showCreateSegment, setShowCreateSegment] = useState(false)
   const [segmentName, setSegmentName] = useState('')
   const [segmentColor, setSegmentColor] = useState('#1a5c3a')
+  const [showAddToSegment, setShowAddToSegment] = useState(false)
+  const [segmentsToApply, setSegmentsToApply] = useState<string[]>([])
 
   // Opened via a deep link (e.g. global search quick actions), which pass
   // this through router state — mirrors the pattern used on the Templates page.
@@ -163,6 +166,7 @@ export default function Contacts() {
   const bulkTag = useBulkTagContacts()
   const deleteTag = useDeleteContactTag()
   const createSegment = useCreateSegment()
+  const addToSegment = useAddContactsToSegment()
   const updateContact = useUpdateContact()
   const { data: customSegments = [] } = useSegments()
 
@@ -173,14 +177,6 @@ export default function Contacts() {
     customSegments.forEach(seg => { map[seg.id] = seg.filters })
     return map
   }, [customSegments])
-
-  const customSegmentsWithCount = useMemo(
-    () => customSegments.map(seg => ({
-      ...seg,
-      contactCount: applyClientFilters(allContacts, seg.filters, []).length,
-    })),
-    [customSegments, allContacts]
-  )
 
   // derive unique sorted tags from all loaded contacts
   const allTags = useMemo(() => {
@@ -268,6 +264,18 @@ export default function Contacts() {
     setSelectedIds(new Set())
   }
 
+  const closeAddToSegment = () => { setShowAddToSegment(false); setSegmentsToApply([]) }
+
+  const handleAddToSegment = () => {
+    if (!segmentsToApply.length) return
+    const contactIds = Array.from(selectedIds)
+    segmentsToApply.forEach(segmentId => {
+      addToSegment.mutate({ segmentId, contactIds })
+    })
+    closeAddToSegment()
+    setSelectedIds(new Set())
+  }
+
   const handleTagInputAdd = () => {
     const val = tagInput.trim()
     if (!val) return
@@ -330,7 +338,7 @@ export default function Contacts() {
             onManageTags={() => setShowManageTags(true)}
             onCreateSegment={() => { setSegmentName(''); setSegmentColor('#1a5c3a'); setShowCreateSegment(true) }}
             stats={stats}
-            customSegments={customSegmentsWithCount}
+            customSegments={customSegments}
           />
         </div>
 
@@ -418,6 +426,7 @@ export default function Contacts() {
             onRemoveTag={() => setTagAction('remove')}
             onExport={handleBulkExport}
             onCampaign={() => toast('Campaign wizard coming soon', { icon: '📣' })}
+            onAddToSegment={() => { setSegmentsToApply([]); setShowAddToSegment(true) }}
             onOptOut={handleBulkOptOut}
             onRemoveOptOut={handleBulkRemoveOptOut}
             allOptedOut={selectedAllOptedOut}
@@ -625,6 +634,67 @@ export default function Contacts() {
                   : tagAction === 'add'
                     ? `Add ${tagsToApply.length} tag${tagsToApply.length !== 1 ? 's' : ''}`
                     : `Remove ${tagsToApply.length} tag${tagsToApply.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add to segment modal ── */}
+      {showAddToSegment && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 rounded-full bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center mx-auto mb-4">
+              <Layers size={20} className="text-[#1a5c3a]" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center">Add to segment</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-5">
+              Add {selectedIds.size} selected contact{selectedIds.size !== 1 ? 's' : ''} to:
+            </p>
+
+            {customSegments.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
+                No custom segments yet — create one first
+              </p>
+            ) : (
+              <div className="space-y-2 mb-5 max-h-64 overflow-y-auto">
+                {customSegments.map(seg => {
+                  const checked = segmentsToApply.includes(seg.id)
+                  return (
+                    <label
+                      key={seg.id}
+                      className={cn(
+                        'flex items-center gap-3 border-2 rounded-xl px-3 py-2.5 cursor-pointer transition-all',
+                        checked ? 'border-[#1a5c3a] bg-[#fafffe] dark:bg-white/5' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]'
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => setSegmentsToApply(prev => checked ? prev.filter(id => id !== seg.id) : [...prev, seg.id])}
+                        className="accent-[#1a5c3a] w-4 h-4"
+                      />
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate">{seg.name}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{seg.contactCount.toLocaleString()}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-2">
+              <button className="btn-outline flex-1 h-10" onClick={closeAddToSegment} disabled={addToSegment.isPending}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary flex-1 h-10"
+                onClick={handleAddToSegment}
+                disabled={addToSegment.isPending || segmentsToApply.length === 0}
+              >
+                {addToSegment.isPending
+                  ? 'Adding…'
+                  : `Add to ${segmentsToApply.length || ''} segment${segmentsToApply.length !== 1 ? 's' : ''}`}
               </button>
             </div>
           </div>

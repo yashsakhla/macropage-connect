@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { Camera } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import { UPLOAD_LIMITS } from '@/hooks/useUpload'
 import avatarMen from '@assets/avatar-men.webp'
 import avatarWomen from '@assets/avatar-women.png'
 
@@ -21,7 +23,13 @@ export default function AvatarUpload({ name, avatarUrl, gender, size = 'md', onU
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (file) onUpload(file)
+    e.target.value = ''
+    if (!file) return
+    if (file.size > UPLOAD_LIMITS.image.maxBytes) {
+      toast.error(`Image is too large — ${UPLOAD_LIMITS.image.label}`)
+      return
+    }
+    onUpload(file)
   }
 
   return (
@@ -47,7 +55,7 @@ export default function AvatarUpload({ name, avatarUrl, gender, size = 'md', onU
         {avatarUrl && onRemove && (
           <button onClick={onRemove} className="btn-ghost text-sm text-red-500 ml-2 h-9">Remove</button>
         )}
-        <p className="text-xs text-gray-400 mt-1.5">Recommended: 400×400px PNG or JPG · Max 2MB</p>
+        <p className="text-xs text-gray-400 mt-1.5">Recommended: 400×400px PNG or JPG · {UPLOAD_LIMITS.image.label}</p>
       </div>
     </div>
   )
