@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react'
-import { Users, Tag, UploadCloud, FileText, AlertTriangle, ShieldCheck, CheckCircle, XCircle, X, AlertCircle, RefreshCw } from 'lucide-react'
-import { cn, formatINR, calculateEstimatedCost } from '@/lib/utils'
+import { Users, Tag, UploadCloud, FileText, AlertTriangle, ShieldCheck, CheckCircle, XCircle, X, AlertCircle, RefreshCw, UserCheck } from 'lucide-react'
+import { cn, formatINR, calculateEstimatedCost, getInitials } from '@/lib/utils'
 import { useCampaignTags, useContactsCount } from '@/hooks/useCampaigns'
-import type { Template } from '@/types'
+import type { Contact, Template } from '@/types'
 
-export type AudienceType = 'all' | 'tag' | 'csv'
+export type AudienceType = 'all' | 'tag' | 'csv' | 'selected'
 
 interface CsvRow { [key: string]: string }
 
@@ -18,6 +18,8 @@ interface WizardStep2Props {
   csvMapping: Record<string, string>
   onCsvMappingChange: (mapping: Record<string, string>) => void
   selectedTemplate?: Template | null
+  selectedContacts?: Contact[]
+  onRemoveSelectedContact?: (id: string) => void
 }
 
 const FIELD_OPTIONS = [
@@ -47,6 +49,8 @@ export default function WizardStep2Audience({
   csvFile, onCsvFileChange,
   csvMapping, onCsvMappingChange,
   selectedTemplate,
+  selectedContacts = [],
+  onRemoveSelectedContact,
 }: WizardStep2Props) {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [csvPreviewRows, setCsvPreviewRows] = useState<CsvRow[]>([])
@@ -98,18 +102,26 @@ export default function WizardStep2Audience({
     else onTagsChange([...selectedTags, tag])
   }
 
-  const totalContacts = audienceData?.total ?? 0
+  const totalContacts = audienceType === 'selected' ? selectedContacts.length : (audienceData?.total ?? 0)
 
   const validCount = csvRowCount > 0 ? Math.floor(csvRowCount * 0.975) : 0
   const dupCount = csvRowCount > 0 ? Math.floor(csvRowCount * 0.008) : 0
   const invalidCount = csvRowCount > 0 ? csvRowCount - validCount - dupCount : 0
 
   const sourceTabs = [
+    ...(selectedContacts.length > 0
+      ? [{
+          id: 'selected' as AudienceType,
+          icon: UserCheck,
+          title: 'Selected contacts',
+          subtitle: `${selectedContacts.length.toLocaleString('en-IN')} contact${selectedContacts.length === 1 ? '' : 's'} selected`,
+        }]
+      : []),
     {
       id: 'all' as AudienceType,
       icon: Users,
       title: 'All contacts',
-      subtitle: audienceLoading ? 'Loading...' : `${totalContacts.toLocaleString('en-IN')} contacts`,
+      subtitle: audienceLoading ? 'Loading...' : `${(audienceData?.total ?? 0).toLocaleString('en-IN')} contacts`,
     },
     { id: 'tag' as AudienceType, icon: Tag, title: 'Filter by tag', subtitle: 'Target a segment' },
     { id: 'csv' as AudienceType, icon: UploadCloud, title: 'Upload CSV', subtitle: 'Import a fresh list' },
@@ -118,7 +130,7 @@ export default function WizardStep2Audience({
   return (
     <div className="space-y-5">
       {/* source selection */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className={cn('grid gap-3', selectedContacts.length > 0 ? 'grid-cols-4' : 'grid-cols-3')}>
         {sourceTabs.map(s => {
           const Icon = s.icon
           const isSelected = audienceType === s.id
@@ -142,7 +154,7 @@ export default function WizardStep2Audience({
       </div>
 
       {/* Audience count error */}
-      {audienceError && !audienceLoading && (
+      {audienceType !== 'selected' && audienceError && !audienceLoading && (
         <div className="border border-amber-200 bg-amber-50 dark:bg-amber-950/30 rounded-2xl px-4 py-3">
           <div className="flex items-center gap-3">
             <AlertCircle size={15} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
@@ -156,6 +168,46 @@ export default function WizardStep2Audience({
               Retry
             </button>
           </div>
+        </div>
+      )}
+
+      {/* selected contacts */}
+      {audienceType === 'selected' && (
+        <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {selectedContacts.length.toLocaleString('en-IN')} contact{selectedContacts.length === 1 ? '' : 's'} selected
+            </p>
+          </div>
+
+          {selectedContacts.length === 0 ? (
+            <p className="text-xs text-gray-400 dark:text-gray-500">No contacts selected.</p>
+          ) : (
+            <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
+              {selectedContacts.map(c => (
+                <div key={c.id} className="flex items-center gap-3 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl px-3 py-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1a5c3a] to-teal-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    {getInitials(c.name || c.phone)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{c.name || 'Unknown'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{c.phone}</p>
+                  </div>
+                  {c.isOptedOut && (
+                    <span className="text-[10px] text-red-500 dark:text-red-400 flex-shrink-0">Opted out</span>
+                  )}
+                  {onRemoveSelectedContact && (
+                    <button
+                      onClick={() => onRemoveSelectedContact(c.id)}
+                      className="btn-ghost w-6 h-6 flex-shrink-0 text-gray-400 dark:text-gray-500"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -337,7 +389,7 @@ export default function WizardStep2Audience({
       )}
 
       {/* Audience count + estimated cost */}
-      {!audienceLoading && !audienceError && audienceData && selectedTemplate && audienceType !== 'csv' && (
+      {(audienceType === 'selected' || (!audienceLoading && !audienceError && audienceData)) && selectedTemplate && audienceType !== 'csv' && (
         <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">Recipients</span>

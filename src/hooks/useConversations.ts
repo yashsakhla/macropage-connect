@@ -94,6 +94,9 @@ export function useSendMessage() {
         templateId?: string
         templateName?: string
         variables?: Record<string, string>
+        header?: { type: string; text?: string; mediaUrl?: string }
+        footer?: string
+        buttons?: { type: string; text: string; url?: string; phone_number?: string }[]
         mediaUrl?: string
         mediaName?: string
         mediaSize?: number
@@ -121,6 +124,15 @@ export function useSendMessage() {
         mimeType: data.mimeType,
         caption: data.caption,
         templateName: data.templateName,
+        templateData: data.templateId
+          ? {
+              name: data.templateName ?? '',
+              header: data.header?.text,
+              body: data.content,
+              footer: data.footer,
+              buttons: data.buttons?.map((b) => ({ text: b.text })),
+            }
+          : undefined,
         agentId: user?.id,
         agentName: user?.name,
         createdAt: new Date().toISOString(),
@@ -129,7 +141,7 @@ export function useSendMessage() {
         if (!old) return old
         return { ...old, data: [...(old.data ?? []), optimisticMsg] }
       })
-      return { tempId }
+      return { tempId, templateData: optimisticMsg.templateData }
     },
     onSuccess: (realMsg: Message, { conversationId }, context: any) => {
       if (!realMsg) {
@@ -137,6 +149,12 @@ export function useSendMessage() {
         qc.invalidateQueries({ queryKey: ['conversations'] })
         qc.invalidateQueries({ queryKey: ['message-usage'] })
         return
+      }
+      // The backend doesn't always echo the template's header/footer/buttons back —
+      // fall back to what we already know locally so the sent bubble keeps rendering
+      // as a full template instead of dropping to the plain-text fallback.
+      if (!realMsg.templateData && context?.templateData) {
+        realMsg = { ...realMsg, templateData: context.templateData }
       }
       qc.setQueryData(['messages', conversationId, 1], (old: any) => {
         if (!old) return old
@@ -153,9 +171,16 @@ export function useSendMessage() {
       qc.invalidateQueries({ queryKey: ['message-usage'] })
     },
     onError: (_err, { conversationId }, context: any) => {
+      // Keep the bubble visible marked as failed (with its template design intact)
+      // instead of silently discarding it — the agent needs to see the send failed.
       qc.setQueryData(['messages', conversationId, 1], (old: any) => {
         if (!old) return old
-        return { ...old, data: (old.data ?? []).filter((m: Message) => m.id !== context?.tempId) }
+        return {
+          ...old,
+          data: (old.data ?? []).map((m: Message) =>
+            m.id === context?.tempId ? { ...m, status: 'FAILED' as const } : m
+          ),
+        }
       })
       toast.error('Failed to send message')
     },
@@ -272,7 +297,7 @@ export function useAssignConversation() {
       conversationId,
       userId,
     }: { conversationId: string; userId: string }) =>
-      api.put(`/conversations/${conversationId}/assign`, {
+      api.patch(`/conversations/${conversationId}/assign`, {
         assignToUserId: userId,
       }).then(r => r.data?.data ?? r.data),
     onSuccess: (data) => {

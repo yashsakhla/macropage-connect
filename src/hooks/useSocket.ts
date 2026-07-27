@@ -103,7 +103,10 @@ export function useSocket() {
               : -1
             if (sendingIdx !== -1) {
               const updated = [...data]
-              updated[sendingIdx] = msg
+              // The server's own push doesn't always carry the template's
+              // header/footer/buttons back — keep the locally-known ones so the
+              // bubble stays a full template instead of collapsing to plain text.
+              updated[sendingIdx] = { ...msg, templateData: msg.templateData ?? data[sendingIdx].templateData }
               return { ...base, data: updated }
             }
             return { ...base, data: [...data, msg], total: (base.total ?? 0) + 1 }

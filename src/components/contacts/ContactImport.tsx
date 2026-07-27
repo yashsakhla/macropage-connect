@@ -3,7 +3,7 @@ import { X, UploadCloud, FileDown, Check, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, downloadContactSampleTemplate } from '@/lib/utils'
 import { useImportContacts } from '@/hooks/useContacts'
-import { UPLOAD_LIMITS } from '@/hooks/useUpload'
+import { useUploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
 import type { Contact } from '@/types'
 import ContactImportMapper from './ContactImportMapper'
 import ContactImportProgress from './ContactImportProgress'
@@ -46,8 +46,9 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   const [isDragging, setIsDragging] = useState(false)
   const [jobId, setJobId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const uploadDocument = useUploadDocument()
   const importContacts = useImportContacts()
-  const isSubmitting = importContacts.isPending
+  const isSubmitting = uploadDocument.isPending || importContacts.isPending
 
   const existingPhones = useMemo(
     () => new Set(existingContacts.map(c => normalizePhone(c.phone))),
@@ -84,15 +85,26 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
 
   const handleStartImport = () => {
     if (!parsed || !hasPhoneMapped || isSubmitting) return
-    importContacts.mutate(
-      { file: parsed.file, columnMapping: mapping, duplicateHandling: dupHandling },
-      {
-        onSuccess: (res: any) => {
-          setJobId(res?.jobId ?? null)
-          setStep(3)
-        },
-      }
-    )
+    // The import endpoint takes a hosted file URL, not the raw file — upload it
+    // first via the shared upload API, then hand the resulting URL to /import.
+    uploadDocument.mutate(parsed.file, {
+      onSuccess: ({ url }) => {
+        if (!url) {
+          toast.error('Upload failed — no file URL returned')
+          return
+        }
+        importContacts.mutate(
+          { fileUrl: url, columnMapping: mapping, duplicateHandling: dupHandling },
+          {
+            onSuccess: (res: any) => {
+              setJobId(res?.jobId ?? null)
+              setStep(3)
+            },
+          }
+        )
+      },
+      onError: () => toast.error('Failed to upload file'),
+    })
   }
 
   const STEPS = ['Upload', 'Map columns', 'Import']
@@ -212,7 +224,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
               onClick={() => { if (step === 1) setStep(2); else if (step === 2) handleStartImport() }}
             >
               {isSubmitting ? (
-                <><Loader2 size={14} className="animate-spin" /> Starting import...</>
+                <><Loader2 size={14} className="animate-spin" /> {uploadDocument.isPending ? 'Uploading...' : 'Starting import...'}</>
               ) : step === 2 ? 'Start import →' : 'Continue →'}
             </button>
           </div>

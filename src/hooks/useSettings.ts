@@ -165,7 +165,7 @@ export function useUpdateNotifications() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: Partial<NotificationPreferences>) =>
-      api.put('/notifications/preferences', data).then((r) => r.data),
+      api.patch('/notifications/preferences', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notification-preferences'] })
       toast.success('Preferences saved')

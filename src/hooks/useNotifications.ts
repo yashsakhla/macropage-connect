@@ -30,7 +30,7 @@ export function useMarkAsRead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.put(`/notifications/${id}/read`).then(r => r.data),
+      api.patch(`/notifications/${id}/read`).then(r => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notifications-unread'] })
@@ -42,7 +42,7 @@ export function useMarkAllAsRead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () =>
-      api.put('/notifications/read-all').then(r => r.data),
+      api.patch('/notifications/read-all').then(r => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notifications-unread'] })

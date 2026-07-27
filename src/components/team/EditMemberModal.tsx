@@ -41,7 +41,7 @@ export default function EditMemberModal({ member, onClose }: EditMemberModalProp
   const isActive = watch('isActive')
 
   const onSubmit = (_data: FormValues) => {
-    // In a real app: api.put(`/team/${member.id}`, data)
+    // In a real app: api.patch(`/team/${member.id}`, data)
     onClose()
   }
 

@@ -40,7 +40,7 @@ export function useSaveFlow() {
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: FlowPayload }) =>
       id
-        ? api.put(`/automation/flows/${id}`, data).then((r) => r.data)
+        ? api.patch(`/automation/flows/${id}`, data).then((r) => r.data)
         : api.post('/automation/flows', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['flows'] })

@@ -43,6 +43,7 @@ export function useHelpCategories() {
   return useQuery<HelpCategory[]>({
     queryKey: ['help-categories'],
     queryFn: () => api.get('/help/categories').then(r => r.data.data),
+    staleTime: 10 * 60 * 1000,
   })
 }
 

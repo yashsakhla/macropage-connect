@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { X, Check, Loader2, AlertCircle, RefreshCw, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePermissions } from '@/lib/permissions'
-import type { Template } from '@/types'
+import type { Contact, Template } from '@/types'
 import type { AudienceType } from './WizardStep2Audience'
 import type { SendSpeed } from './WizardStep3Schedule'
 import { useCreateCampaign, useLaunchCampaign, useContactsCount } from '@/hooks/useCampaigns'
@@ -24,9 +24,10 @@ interface CampaignWizardProps {
   onClose: () => void
   onSuccess?: (campaignId: string) => void
   initialTemplate?: Template
+  initialContacts?: Contact[]
 }
 
-export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: CampaignWizardProps) {
+export default function CampaignWizard({ onClose, onSuccess, initialTemplate, initialContacts }: CampaignWizardProps) {
   const navigate = useNavigate()
   const { canLaunchCampaign } = usePermissions()
   const { requireConnected } = useRequireWhatsApp()
@@ -38,17 +39,18 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
   const [variableMapping, setVariableMapping] = useState<Record<string, string>>({})
 
   // Step 2
-  const [audienceType, setAudienceType] = useState<AudienceType>('all')
+  const [audienceType, setAudienceType] = useState<AudienceType>(initialContacts?.length ? 'selected' : 'all')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvMapping, setCsvMapping] = useState<Record<string, string>>({})
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>(initialContacts ?? [])
 
   const {
     data: audienceData,
     isLoading: audienceCountLoading,
     isError: audienceCountError,
   } = useContactsCount(audienceType === 'tag' ? { tags: selectedTags } : {})
-  const totalContacts = audienceData?.total ?? 0
+  const totalContacts = audienceType === 'selected' ? selectedContacts.length : (audienceData?.total ?? 0)
 
   // Step 3
   const [sendImmediately, setSendImmediately] = useState(true)
@@ -84,6 +86,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
     if (step === 0) return !!campaignName.trim() && !!selectedTemplate
     if (step === 1) {
       if (audienceType === 'csv') return !!csvFile
+      if (audienceType === 'selected') return selectedContacts.length > 0
       if (audienceType === 'tag' && selectedTags.length === 0) return false
       if (audienceCountLoading || audienceCountError) return false
       return (audienceData?.total ?? 0) > 0
@@ -114,6 +117,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
         templateId: selectedTemplate.id,
         audienceType,
         audienceTags: audienceType === 'tag' ? selectedTags : undefined,
+        contactIds: audienceType === 'selected' ? selectedContacts.map(c => c.id) : undefined,
         variableMapping,
         scheduledAt,
         sendSpeed,
@@ -198,8 +202,10 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate }: 
                 csvMapping={csvMapping}
                 onCsvMappingChange={setCsvMapping}
                 selectedTemplate={selectedTemplate}
+                selectedContacts={selectedContacts}
+                onRemoveSelectedContact={(id) => setSelectedContacts(cs => cs.filter(c => c.id !== id))}
               />
-              {!audienceCountLoading && audienceType !== 'csv' && (() => {
+              {!audienceCountLoading && audienceType !== 'csv' && audienceType !== 'selected' && (() => {
                 if (audienceType === 'tag' && selectedTags.length === 0) {
                   return (
                     <p className="text-xs text-center mt-2 text-gray-400 dark:text-gray-500">

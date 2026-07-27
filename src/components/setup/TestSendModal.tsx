@@ -98,6 +98,9 @@ export default function TestSendModal({ onClose }: Props) {
           templateId: selectedTemplate.id,
           templateName: selectedTemplate.name,
           variables: variableValues,
+          header: selectedTemplate.header,
+          footer: selectedTemplate.footer,
+          buttons: selectedTemplate.buttons,
         },
       })
 

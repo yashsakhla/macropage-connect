@@ -14,7 +14,7 @@ export function useSaveAIConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: AIConfigPayload) =>
-      api.put('/automation/ai/config', data).then((r) => r.data),
+      api.patch('/automation/ai/config', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ai-config'] })
       toast.success('AI configuration saved')

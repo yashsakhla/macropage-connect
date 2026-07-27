@@ -20,6 +20,7 @@ import ContactFiltersPanel, { useFilterCount } from '@/components/contacts/Conta
 import ContactImport from '@/components/contacts/ContactImport'
 import ContactSegments from '@/components/contacts/ContactSegments'
 import BulkActionsBar from '@/components/contacts/BulkActionsBar'
+import CampaignWizard from '@/components/campaigns/CampaignWizard'
 
 type View = 'list' | 'grid'
 
@@ -136,6 +137,7 @@ export default function Contacts() {
   const [segmentColor, setSegmentColor] = useState('#1a5c3a')
   const [showAddToSegment, setShowAddToSegment] = useState(false)
   const [segmentsToApply, setSegmentsToApply] = useState<string[]>([])
+  const [showCampaignWizard, setShowCampaignWizard] = useState(false)
 
   // Opened via a deep link (e.g. global search quick actions), which pass
   // this through router state — mirrors the pattern used on the Templates page.
@@ -425,7 +427,7 @@ export default function Contacts() {
             onAddTag={() => setTagAction('add')}
             onRemoveTag={() => setTagAction('remove')}
             onExport={handleBulkExport}
-            onCampaign={() => toast('Campaign wizard coming soon', { icon: '📣' })}
+            onCampaign={() => setShowCampaignWizard(true)}
             onAddToSegment={() => { setSegmentsToApply([]); setShowAddToSegment(true) }}
             onOptOut={handleBulkOptOut}
             onRemoveOptOut={handleBulkRemoveOptOut}
@@ -782,6 +784,17 @@ export default function Contacts() {
           contact={editContact ?? undefined}
           mode={editContact ? 'edit' : 'add'}
           onClose={() => { setShowForm(false); setEditContact(null) }}
+        />
+      )}
+      {showCampaignWizard && (
+        <CampaignWizard
+          initialContacts={contacts.filter(c => selectedIds.has(c.id))}
+          onClose={() => setShowCampaignWizard(false)}
+          onSuccess={(id: string) => {
+            setShowCampaignWizard(false)
+            setSelectedIds(new Set())
+            navigate(`/campaigns/${id}`)
+          }}
         />
       )}
     </div>
