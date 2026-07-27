@@ -42,6 +42,7 @@ export default function MemberProfile() {
   const { data: member, isLoading } = useTeamMember(memberId)
   const [showEdit, setShowEdit] = useState(false)
   const [showAllPerms, setShowAllPerms] = useState(false)
+  const { data: activityData } = useTeamActivity({ memberId })
 
   if (isLoading || !member) {
     return (
@@ -55,7 +56,6 @@ export default function MemberProfile() {
   const grad = avatarGradient(member.name || member.email)
   const role = member.role as Role
   const perms = ROLE_PERMISSIONS[role]
-  const { data: activityData } = useTeamActivity({ memberId: member.id })
   const memberActivity = ((activityData as any)?.data ?? []).slice(0, 10)
 
   const KEY_PERMS = [

@@ -2,30 +2,23 @@ import { MessageSquare, Ticket, Phone, Calendar } from 'lucide-react'
 
 interface Props {
   onTicketClick: () => void
-  onChatClick: () => void
 }
 
-export default function QuickActions({ onTicketClick, onChatClick }: Props) {
+export default function QuickActions({ onTicketClick }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">Quick actions</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Live chat */}
-        <button
-          onClick={onChatClick}
-          className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-[#c8e6d4] hover:shadow-sm cursor-pointer transition-all group text-left"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-[#e8f5ee] dark:bg-emerald-950/30 group-hover:bg-[#1a5c3a] flex items-center justify-center transition-colors">
-            <MessageSquare size={20} className="text-[#1a5c3a] group-hover:text-white transition-colors" />
+        <div className="relative bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 opacity-60 cursor-not-allowed text-left">
+          <span className="absolute top-3 right-3 bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 text-[10px] font-semibold rounded-full px-2 py-0.5">Coming soon</span>
+          <div className="w-12 h-12 rounded-2xl bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center">
+            <MessageSquare size={20} className="text-[#1a5c3a]" />
           </div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white mt-3">Live chat</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Chat with our support team</p>
-          <div className="flex items-center gap-1.5 mt-3">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-[#1a5c3a] font-medium">Available now</span>
-          </div>
-        </button>
+        </div>
 
         {/* Submit ticket */}
         <button
@@ -43,18 +36,18 @@ export default function QuickActions({ onTicketClick, onChatClick }: Props) {
           </div>
         </button>
 
-        {/* Schedule call */}
-        <button className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-purple-200 hover:shadow-sm cursor-pointer transition-all group text-left">
+        {/* Call us direct */}
+        <a
+          href="tel:+919238417169"
+          className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-purple-200 hover:shadow-sm cursor-pointer transition-all group text-left block"
+        >
           <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/30 group-hover:bg-purple-600 flex items-center justify-center transition-colors">
             <Phone size={20} className="text-purple-600 dark:text-purple-400 group-hover:text-white transition-colors" />
           </div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white mt-3">Schedule a call</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Book a 30-min support call</p>
-          <div className="flex items-center gap-1 mt-3">
-            <Calendar size={11} className="text-gray-400 dark:text-gray-500" />
-            <span className="text-xs text-gray-400 dark:text-gray-500">Next available: Today 3 PM</span>
-          </div>
-        </button>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mt-3">Call us Direct</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Speak to our support team now</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400 mt-3 font-medium">+91 92384 17169</p>
+        </a>
 
         {/* WhatsApp */}
         <a

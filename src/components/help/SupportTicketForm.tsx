@@ -2,9 +2,11 @@ import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Paperclip, CheckCircle, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { X, Paperclip, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useSubmitTicket } from '@/hooks/useHelp'
+import { useUploadImage, useUploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
 
 const schema = z.object({
   subject: z.string().min(10, 'Min 10 characters').max(100, 'Max 100 characters'),
@@ -36,10 +38,18 @@ interface Props {
   onClose: () => void
 }
 
+interface AttachmentFile {
+  file: File
+  status: 'uploading' | 'done' | 'error'
+  url?: string
+}
+
 export default function SupportTicketForm({ onClose }: Props) {
   const { user } = useAuthStore()
   const { mutateAsync, isPending } = useSubmitTicket()
-  const [files, setFiles] = useState<File[]>([])
+  const uploadImage = useUploadImage()
+  const uploadDocument = useUploadDocument()
+  const [files, setFiles] = useState<AttachmentFile[]>([])
   const [submitted, setSubmitted] = useState<{ ticketNumber: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -56,10 +66,12 @@ export default function SupportTicketForm({ onClose }: Props) {
 
   const priority = watch('priority')
   const description = watch('description') ?? ''
+  const filesUploading = files.some(f => f.status === 'uploading')
 
   async function onSubmit(data: FormData) {
     try {
-      const result = await mutateAsync({ ...data, attachments: files })
+      const attachments = files.filter(f => f.status === 'done' && f.url).map(f => f.url!)
+      const result = await mutateAsync({ ...data, attachments })
       const ticketNumber = result?.data?.ticketNumber ?? 'MP-' + Math.floor(1000 + Math.random() * 9000)
       setSubmitted({ ticketNumber })
     } catch {
@@ -69,11 +81,33 @@ export default function SupportTicketForm({ onClose }: Props) {
 
   function addFiles(newFiles: FileList | null) {
     if (!newFiles) return
-    const valid = Array.from(newFiles).filter(f => {
-      if (f.size > 5 * 1024 * 1024) return false
-      return true
+    const remainingSlots = 3 - files.length
+    const toAdd = Array.from(newFiles).slice(0, Math.max(0, remainingSlots))
+
+    toAdd.forEach(file => {
+      const isImage = file.type.startsWith('image/')
+      const limit = isImage ? UPLOAD_LIMITS.image : UPLOAD_LIMITS.document
+      if (file.size > limit.maxBytes) {
+        toast.error(`${file.name} is too large — ${limit.label}`)
+        return
+      }
+
+      setFiles(prev => [...prev, { file, status: 'uploading' }])
+      const upload = isImage ? uploadImage : uploadDocument
+      upload.mutate(file, {
+        onSuccess: ({ url }) => {
+          setFiles(prev => prev.map(f => f.file === file ? { ...f, status: 'done', url } : f))
+        },
+        onError: () => {
+          setFiles(prev => prev.map(f => f.file === file ? { ...f, status: 'error' } : f))
+          toast.error(`Failed to upload ${file.name}`)
+        },
+      })
     })
-    setFiles(prev => [...prev, ...valid].slice(0, 3))
+  }
+
+  function removeFile(file: File) {
+    setFiles(prev => prev.filter(f => f.file !== file))
   }
 
   if (submitted) {
@@ -157,7 +191,7 @@ export default function SupportTicketForm({ onClose }: Props) {
           <textarea
             {...register('description')}
             rows={5}
-            className="input w-full resize-none"
+            className="input w-full h-auto min-h-32 py-2 resize-none"
             placeholder={`Please describe your issue in detail. Include:\n• What you were trying to do\n• What happened instead\n• Any error messages you saw`}
           />
           <div className="flex justify-between mt-1">
@@ -177,7 +211,9 @@ export default function SupportTicketForm({ onClose }: Props) {
           >
             <Paperclip size={20} className="text-gray-300 dark:text-gray-600 mx-auto mb-2" />
             <p className="text-xs text-gray-400 dark:text-gray-500">Attach screenshots or files</p>
-            <p className="text-[0.625rem] text-gray-400 dark:text-gray-500 mt-0.5">PNG, JPG, PDF up to 5MB</p>
+            <p className="text-[0.625rem] text-gray-400 dark:text-gray-500 mt-0.5">
+              Images up to {UPLOAD_LIMITS.image.label.replace('Max ', '')} · PDF up to {UPLOAD_LIMITS.document.label.replace('Max ', '')}
+            </p>
             <button
               type="button"
               className="btn-outline text-xs h-8 mt-3"
@@ -198,9 +234,12 @@ export default function SupportTicketForm({ onClose }: Props) {
             <div className="space-y-2 mt-2">
               {files.map((f, i) => (
                 <div key={i} className="flex items-center gap-2 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-lg px-3 py-2">
-                  <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{f.name}</span>
-                  <span className="text-[0.625rem] text-gray-400 dark:text-gray-500">{(f.size / 1024).toFixed(0)}KB</span>
-                  <button type="button" onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
+                  <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{f.file.name}</span>
+                  <span className="text-[0.625rem] text-gray-400 dark:text-gray-500">{(f.file.size / 1024).toFixed(0)}KB</span>
+                  {f.status === 'uploading' && <Loader2 size={12} className="animate-spin text-gray-400 dark:text-gray-500" />}
+                  {f.status === 'done' && <CheckCircle size={12} className="text-[#1a5c3a]" />}
+                  {f.status === 'error' && <AlertCircle size={12} className="text-red-500 dark:text-red-400" />}
+                  <button type="button" onClick={() => removeFile(f.file)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
                     <X size={12} />
                   </button>
                 </div>
@@ -217,11 +256,13 @@ export default function SupportTicketForm({ onClose }: Props) {
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || filesUploading}
           className="btn-primary w-full h-11 flex items-center justify-center gap-2"
         >
           {isPending ? (
             <><Loader2 size={16} className="animate-spin" /> Submitting...</>
+          ) : filesUploading ? (
+            <><Loader2 size={16} className="animate-spin" /> Uploading attachments...</>
           ) : 'Submit ticket'}
         </button>
       </form>

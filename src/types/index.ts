@@ -164,7 +164,7 @@ export interface CreateContactPayload {
 }
 
 export interface ImportPayload {
-  fileUrl: string
+  file: File
   columnMapping: Record<string, string>
   duplicateHandling: 'skip' | 'update' | 'create'
 }
@@ -763,7 +763,8 @@ export interface TicketPayload {
   category: string
   priority: 'low' | 'medium' | 'high'
   description: string
-  attachments?: File[]
+  /** URLs returned by POST /upload/image or /upload/document — not raw files. */
+  attachments?: string[]
 }
 
 export interface SearchResult {

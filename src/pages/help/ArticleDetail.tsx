@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronRight, Clock, MessageSquare, Headphones } from 'lucide-react'
-import { useArticle } from '@/hooks/useHelp'
+import { useHelpDocs } from '@/hooks/useHelp'
 import ArticleFeedback from '@/components/help/ArticleFeedback'
 import RelatedArticles from '@/components/help/RelatedArticles'
 import SupportTicketForm from '@/components/help/SupportTicketForm'
-import type { HelpArticle } from '@/types'
 import { cn, fromNow, getCategoryColor, getCategoryLabel, estimateReadTime } from '@/lib/utils'
 import { renderMarkdown } from '@/lib/markdown'
 
 export default function ArticleDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { data: article } = useArticle(slug ?? '')
+  const { data: docs = [] } = useHelpDocs()
+  const article = docs.find(a => a.slug === slug)
   const [activeSection, setActiveSection] = useState('')
   const [ticketOpen, setTicketOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -21,7 +21,9 @@ export default function ArticleDetail() {
     () => article ? renderMarkdown(article.content) : { html: '', toc: [] },
     [article]
   )
-  const related: HelpArticle[] = []
+  const related = docs
+    .filter(a => a.slug !== slug)
+    .sort((a, b) => (a.category === article?.category ? -1 : 0) - (b.category === article?.category ? -1 : 0))
 
   // Track active ToC item via IntersectionObserver
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function ArticleDetail() {
               </div>
             )}
 
-            {/* Related articles */}
+            {/* Read more */}
             <RelatedArticles articles={related} />
 
             {/* Get help box */}

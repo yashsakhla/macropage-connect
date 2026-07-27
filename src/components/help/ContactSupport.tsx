@@ -2,10 +2,9 @@ import { MessageSquare, Mail, Phone } from 'lucide-react'
 
 interface Props {
   onTicketClick: () => void
-  onChatClick: () => void
 }
 
-export default function ContactSupport({ onTicketClick, onChatClick }: Props) {
+export default function ContactSupport({ onTicketClick }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-6 mb-10">
       <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
@@ -16,9 +15,9 @@ export default function ContactSupport({ onTicketClick, onChatClick }: Props) {
 
           <div className="flex flex-wrap gap-3 mt-4">
             {[
-              { icon: '⚡', label: 'Live chat: < 2 min' },
+              { icon: '🚧', label: 'Live chat: coming soon' },
               { icon: '📧', label: 'Email: < 2 hours' },
-              { icon: '📅', label: 'Call: Same day' },
+              { icon: '📞', label: 'Call: Instant' },
             ].map(chip => (
               <span
                 key={chip.label}
@@ -33,23 +32,16 @@ export default function ContactSupport({ onTicketClick, onChatClick }: Props) {
         {/* Options */}
         <div className="grid grid-cols-1 md:grid-cols-3">
           {/* Live chat */}
-          <div className="px-8 py-6 border-r border-[#e8ebe8] dark:border-white/10 text-center">
+          <div className="relative px-8 py-6 border-r border-[#e8ebe8] dark:border-white/10 text-center opacity-60">
+            <span className="absolute top-3 right-3 bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 text-[10px] font-semibold rounded-full px-2 py-0.5">Coming soon</span>
             <div className="w-12 h-12 rounded-2xl mx-auto mb-4 bg-[#e8f5ee] dark:bg-emerald-950/30 flex items-center justify-center">
               <MessageSquare size={20} className="text-[#1a5c3a]" />
             </div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">Live chat</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Chat with our team in real time</p>
-            <button
-              onClick={onChatClick}
-              className="btn-primary mt-4 w-full"
-            >
-              Start chat
+            <button disabled className="btn-primary mt-4 w-full cursor-not-allowed opacity-60">
+              Coming soon
             </button>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Available Mon-Fri 9AM-6PM IST</p>
-            <div className="flex items-center justify-center gap-1.5 mt-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs text-[#1a5c3a]">2 agents online</span>
-            </div>
           </div>
 
           {/* Email / Ticket */}
@@ -68,15 +60,15 @@ export default function ContactSupport({ onTicketClick, onChatClick }: Props) {
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Usually responds within 2 hours</p>
           </div>
 
-          {/* Schedule call */}
+          {/* Call us direct */}
           <div className="px-8 py-6 text-center">
             <div className="w-12 h-12 rounded-2xl mx-auto mb-4 bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center">
               <Phone size={20} className="text-purple-600 dark:text-purple-400" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Schedule a call</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Book a screen-share support session</p>
-            <button className="btn-outline mt-4 w-full">Book call</button>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">30-minute sessions available</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Call us Direct</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Speak to our support team right away</p>
+            <a href="tel:+919238417169" className="btn-outline mt-4 w-full inline-block">Call +91 92384 17169</a>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Mon-Fri 9AM-6PM IST</p>
           </div>
         </div>
       </div>

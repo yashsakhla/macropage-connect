@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { Eye, EyeOff, CheckCircle, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
-import TwoFactorSetup from '@/components/settings/TwoFactorSetup'
 import SessionsTable from '@/components/settings/SessionsTable'
 import { useChangePassword, useActiveSessions, useRevokeSession, useRevokeAllSessions } from '@/hooks/useProfile'
 import type { ActiveSession } from '@/types'
@@ -29,7 +28,6 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 
 export default function SecuritySettings() {
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false })
-  const [twoFaEnabled, setTwoFaEnabled] = useState(false)
 
   const changePassword = useChangePassword()
   const { data: sessionsData } = useActiveSessions()
@@ -98,12 +96,6 @@ export default function SecuritySettings() {
             {changePassword.isPending ? 'Updating…' : 'Update password'}
           </button>
         </form>
-      </div>
-
-      {/* 2FA */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
-        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Two-factor authentication</p>
-        <TwoFactorSetup isEnabled={twoFaEnabled} onEnable={() => setTwoFaEnabled(true)} onDisable={() => setTwoFaEnabled(false)} />
       </div>
 
       {/* Sessions */}
