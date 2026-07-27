@@ -78,7 +78,9 @@ export default function WizardStep4Review({
     ? 'All contacts'
     : audienceType === 'tag'
       ? `Tags: ${selectedTags.join(', ')}`
-      : 'CSV upload'
+      : audienceType === 'selected'
+        ? 'Selected contacts'
+        : 'CSV upload'
 
   return (
     <div className="grid grid-cols-5 gap-5">

@@ -20,8 +20,20 @@ function normalizeTemplateId(raw: any): string {
   return (typeof rawId === 'object' && rawId?.$oid) ? rawId.$oid : rawId
 }
 
-function normalizeTemplate(raw: any): Template {
-  return { ...raw, id: normalizeTemplateId(raw) } as Template
+// The API returns the WhatsApp-wire shape (header.format, buttons wrapped in
+// { buttons: [...] }) — the rest of the app reads the flatter Template shape
+// (header.type, buttons as a plain array), so without this every template
+// with a header or buttons silently rendered as body-text-only.
+export function normalizeTemplate(raw: any): Template {
+  const header = raw.header
+    ? { type: raw.header.type ?? raw.header.format, text: raw.header.text, mediaUrl: raw.header.mediaUrl }
+    : undefined
+  const buttons = Array.isArray(raw.buttons)
+    ? raw.buttons
+    : Array.isArray(raw.buttons?.buttons)
+    ? raw.buttons.buttons
+    : undefined
+  return { ...raw, id: normalizeTemplateId(raw), header, buttons } as Template
 }
 
 export function useTemplates(filters?: { status?: string }) {

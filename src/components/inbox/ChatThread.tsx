@@ -602,12 +602,21 @@ export default function ChatThread({ mobileBack }: Props) {
     endRef.current?.scrollIntoView({ behavior: 'instant' })
   }
 
-  function handleSendTemplate(tpl: Template) {
+  function handleSendTemplate(tpl: Template, content: string, variables: Record<string, string>) {
     if (!selectedConversationId) return
     if (!requireConnected()) return
     sendMessage.mutate({
       conversationId: selectedConversationId,
-      data: { content: tpl.body, type: 'TEMPLATE', templateId: tpl.id, templateName: tpl.name },
+      data: {
+        content,
+        type: 'TEMPLATE',
+        templateId: tpl.id,
+        templateName: tpl.name,
+        variables,
+        header: tpl.header,
+        footer: tpl.footer,
+        buttons: tpl.buttons,
+      },
     })
     shouldAutoScroll.current = true
     endRef.current?.scrollIntoView({ behavior: 'instant' })
@@ -829,6 +838,7 @@ export default function ChatThread({ mobileBack }: Props) {
         setMode={setInputMode}
         disabled={false}
         templateRequired={templateRequired}
+        contact={selectedConv.contact}
       />
 
       {showAssignModal && selectedConversationId && (

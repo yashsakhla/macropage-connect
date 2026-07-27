@@ -13,6 +13,20 @@ export function useTeamActivity(filters?: ActivityFilters) {
             actionType: filters?.actionType,
           },
         })
-        .then((r) => r.data),
+        .then((r) => {
+          const body = r.data
+          const list = Array.isArray(body)
+            ? body
+            : Array.isArray(body?.data)
+              ? body.data
+              : Array.isArray(body?.data?.data)
+                ? body.data.data
+                : Array.isArray(body?.data?.activities)
+                  ? body.data.activities
+                  : Array.isArray(body?.data?.items)
+                    ? body.data.items
+                    : []
+          return { ...body, data: list }
+        }),
   })
 }

@@ -41,7 +41,7 @@ export function useUpdateQuickReply() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: { title?: string; content?: string; tags?: string[] } }) =>
-      api.put(`/quick-replies/${id}`, data).then((r) => r.data?.data ?? r.data),
+      api.patch(`/quick-replies/${id}`, data).then((r) => r.data?.data ?? r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['quick-replies'] })
       toast.success('Quick reply updated')

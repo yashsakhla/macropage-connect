@@ -164,7 +164,7 @@ export interface CreateContactPayload {
 }
 
 export interface ImportPayload {
-  file: File
+  fileUrl: string
   columnMapping: Record<string, string>
   duplicateHandling: 'skip' | 'update' | 'create'
 }
@@ -314,6 +314,7 @@ export interface Template {
   footer?: string
   buttons?: TemplateButton[]
   variables: string[]
+  sampleVariables?: Record<string, string>
   rejectionReason?: string
   namespace?: string
   usedInCampaigns: number
@@ -350,7 +351,7 @@ export interface Campaign {
   status: CampaignStatus
   templateId: string
   templateName: string
-  audienceType: 'all' | 'tag' | 'csv'
+  audienceType: 'all' | 'tag' | 'csv' | 'selected'
   audienceTags?: string[]
   totalContacts: number
   validContacts: number
@@ -384,8 +385,9 @@ export interface CampaignRecipient {
 export interface CreateCampaignPayload {
   name: string
   templateId: string
-  audienceType: 'all' | 'tag' | 'csv'
+  audienceType: 'all' | 'tag' | 'csv' | 'selected'
   audienceTags?: string[]
+  contactIds?: string[]
   csvUploadId?: string
   variableMapping: Record<string, string>
   scheduledAt?: string

@@ -19,7 +19,7 @@ export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: UpdateProfilePayload) =>
-      api.put('/users/me', data).then((r) => r.data),
+      api.patch('/users/me', data).then((r) => r.data),
     onSuccess: ({ data }) => {
       if (data?.user) setUser(data.user)
       qc.invalidateQueries({ queryKey: ['profile'] })
@@ -36,7 +36,7 @@ export function useUpdateAvatar() {
   return useMutation({
     mutationFn: async (file: File) => {
       const { url } = await uploadImage(file)
-      return api.put('/me', { avatarUrl: url }).then((r) => r.data)
+      return api.patch('/me', { avatarUrl: url }).then((r) => r.data)
     },
     onSuccess: ({ data }) => {
       if (data?.user) setUser(data.user)

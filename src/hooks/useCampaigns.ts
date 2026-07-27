@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { Campaign, CampaignRecipient, CreateCampaignPayload, Template } from '@/types'
+import { normalizeTemplate } from '@/hooks/useTemplates'
 
 function normalizeCampaign(c: any): Campaign {
   return {
@@ -139,7 +140,7 @@ export function useApprovedTemplates() {
       api.get('/templates', { params: { status: 'APPROVED' } })
         .then(r => {
           const list: any[] = r.data?.data ?? r.data ?? []
-          return list.map(t => ({ ...t, id: t.id ?? t._id })) as Template[]
+          return list.map(normalizeTemplate)
         }),
     staleTime: 5 * 60 * 1000,
   })
@@ -163,10 +164,24 @@ export function useContactsCount(filters?: { tags?: string[] }) {
 }
 
 export function useCampaignTags() {
-  return useQuery<any[]>({
+  return useQuery<{ name: string; count: number }[]>({
     queryKey: ['contact-tags'],
     queryFn: () =>
-      api.get('/contacts/tags').then(r => r.data?.data ?? r.data ?? []),
+      api.get('/contacts/tags').then(r => {
+        const body = r.data
+        const list: any[] = Array.isArray(body?.data?.tags)
+          ? body.data.tags
+          : Array.isArray(body?.data)
+            ? body.data
+            : Array.isArray(body)
+              ? body
+              : []
+        return list.map(t =>
+          typeof t === 'string'
+            ? { name: t, count: 0 }
+            : { name: t.name ?? t.tag ?? t._id ?? String(t), count: t.count ?? 0 }
+        )
+      }),
     staleTime: 5 * 60 * 1000,
   })
 }

@@ -4,10 +4,11 @@ import toast from 'react-hot-toast'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
 import { useUploadImage, useUploadDocument, useUploadAudio, UPLOAD_LIMITS } from '@/hooks/useUpload'
-import type { Template, QuickReply } from '@/types'
+import type { Contact, Template, QuickReply } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSocket } from '@/lib/socket'
 import { useInboxStore } from '@/store/inboxStore'
+import SendTemplateModal from './SendTemplateModal'
 
 export interface SentMedia {
   url: string
@@ -47,16 +48,18 @@ function formatFileSize(bytes: number) {
 
 interface Props {
   onSend: (text: string) => void
-  onSendTemplate?: (tpl: Template) => void
+  onSendTemplate?: (tpl: Template, content: string, variables: Record<string, string>) => void
   onSendMedia?: (media: SentMedia) => void
   mode: 'reply' | 'note'
   setMode: (m: 'reply' | 'note') => void
   disabled?: boolean
   /** True when the customer has never messaged, or hasn't replied within Meta's 24h window — free-form text is blocked and only an approved template may be sent. */
   templateRequired?: boolean
+  /** The conversation's contact — offered as quick-fill options for template variables. */
+  contact?: Contact
 }
 
-export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode, setMode, disabled, templateRequired }: Props) {
+export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode, setMode, disabled, templateRequired, contact }: Props) {
   const [text, setText] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showTpl, setShowTpl] = useState(false)
@@ -64,6 +67,8 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
   const [quickReplySearch, setQuickReplySearch] = useState('')
   const [slashTriggerPos, setSlashTriggerPos] = useState<number | null>(null)
   const [pendingMedia, setPendingMedia] = useState<PendingMedia | null>(null)
+  const [templateToSend, setTemplateToSend] = useState<Template | null>(null)
+  const [sendingTemplate, setSendingTemplate] = useState(false)
 
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -256,16 +261,29 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
   }
 
   function handleTemplateSelect(tpl: Template) {
-    // Outside the 24h window a template must be sent as-is (an actual WhatsApp
-    // template message), not copied into the free-text box and sent as TEXT.
-    if (templateRequired && mode !== 'note' && onSendTemplate) {
-      onSendTemplate(tpl)
+    // A template is a distinct WhatsApp message type — header/footer/buttons and
+    // variables only render correctly when it's reviewed and sent as-is via the
+    // modal, not copied into the free-text box and sent as a plain TEXT message.
+    if (mode !== 'note' && onSendTemplate) {
+      setTemplateToSend(tpl)
       setShowTpl(false)
       return
     }
+    // In note mode there's no real send — just drop the body text in as a reference.
     setText(tpl.body)
     setShowTpl(false)
     taRef.current?.focus()
+  }
+
+  function handleTemplateModalSend(payload: { content: string; variables: Record<string, string> }) {
+    if (!templateToSend || !onSendTemplate) return
+    setSendingTemplate(true)
+    try {
+      onSendTemplate(templateToSend, payload.content, payload.variables)
+    } finally {
+      setSendingTemplate(false)
+      setTemplateToSend(null)
+    }
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -629,6 +647,16 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
           )}
         </div>
       </div>
+
+      {templateToSend && (
+        <SendTemplateModal
+          template={templateToSend}
+          contact={contact}
+          onClose={() => setTemplateToSend(null)}
+          onSend={handleTemplateModalSend}
+          sending={sendingTemplate}
+        />
+      )}
     </div>
   )
 }

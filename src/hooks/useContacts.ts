@@ -198,15 +198,8 @@ export function useCreateSegment() {
 
 export function useImportContacts() {
   return useMutation({
-    mutationFn: (payload: ImportPayload) => {
-      const form = new FormData()
-      form.append('file', payload.file)
-      form.append('columnMapping', JSON.stringify(payload.columnMapping))
-      form.append('duplicateHandling', payload.duplicateHandling)
-      return api
-        .post('/contacts/import', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-        .then((r) => r.data?.data ?? r.data)
-    },
+    mutationFn: (payload: ImportPayload) =>
+      api.post('/contacts/import', payload).then((r) => r.data?.data ?? r.data),
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Import failed'),
   })
