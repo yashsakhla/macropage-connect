@@ -3,7 +3,7 @@ import { X, UploadCloud, FileDown, Check, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, downloadContactSampleTemplate } from '@/lib/utils'
 import { useImportContacts } from '@/hooks/useContacts'
-import { useUploadDocument } from '@/hooks/useUpload'
+import { UPLOAD_LIMITS } from '@/hooks/useUpload'
 import type { Contact } from '@/types'
 import ContactImportMapper from './ContactImportMapper'
 import ContactImportProgress from './ContactImportProgress'
@@ -46,9 +46,8 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   const [isDragging, setIsDragging] = useState(false)
   const [jobId, setJobId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  const uploadDocument = useUploadDocument()
   const importContacts = useImportContacts()
-  const isSubmitting = uploadDocument.isPending || importContacts.isPending
+  const isSubmitting = importContacts.isPending
 
   const existingPhones = useMemo(
     () => new Set(existingContacts.map(c => normalizePhone(c.phone))),
@@ -56,6 +55,10 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   )
 
   const handleFile = (file: File) => {
+    if (file.size > UPLOAD_LIMITS.document.maxBytes) {
+      toast.error(`File is too large — ${UPLOAD_LIMITS.document.label}`)
+      return
+    }
     const reader = new FileReader()
     reader.onload = e => {
       const text = e.target?.result as string
@@ -81,26 +84,15 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
 
   const handleStartImport = () => {
     if (!parsed || !hasPhoneMapped || isSubmitting) return
-    // The import endpoint takes a hosted file URL, not the raw file — upload it
-    // first via the shared upload API, then hand the resulting URL to /import.
-    uploadDocument.mutate(parsed.file, {
-      onSuccess: ({ url }) => {
-        if (!url) {
-          toast.error('Upload failed — no file URL returned')
-          return
-        }
-        importContacts.mutate(
-          { fileUrl: url, columnMapping: mapping, duplicateHandling: dupHandling },
-          {
-            onSuccess: (res: any) => {
-              setJobId(res?.jobId ?? null)
-              setStep(3)
-            },
-          }
-        )
-      },
-      onError: () => toast.error('Failed to upload file'),
-    })
+    importContacts.mutate(
+      { file: parsed.file, columnMapping: mapping, duplicateHandling: dupHandling },
+      {
+        onSuccess: (res: any) => {
+          setJobId(res?.jobId ?? null)
+          setStep(3)
+        },
+      }
+    )
   }
 
   const STEPS = ['Upload', 'Map columns', 'Import']
@@ -154,7 +146,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
                     <span key={f} className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-xs rounded-lg px-3 py-1.5">{f}</span>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Up to 100,000 contacts · Max 10MB</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Up to 100,000 contacts · {UPLOAD_LIMITS.document.label}</p>
               </div>
 
               <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-xl p-4 flex items-center gap-4">
@@ -220,7 +212,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
               onClick={() => { if (step === 1) setStep(2); else if (step === 2) handleStartImport() }}
             >
               {isSubmitting ? (
-                <><Loader2 size={14} className="animate-spin" /> {uploadDocument.isPending ? 'Uploading...' : 'Starting import...'}</>
+                <><Loader2 size={14} className="animate-spin" /> Starting import...</>
               ) : step === 2 ? 'Start import →' : 'Continue →'}
             </button>
           </div>

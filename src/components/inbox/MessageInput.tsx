@@ -3,7 +3,7 @@ import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriang
 import toast from 'react-hot-toast'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
-import { useUploadImage, useUploadDocument, useUploadAudio } from '@/hooks/useUpload'
+import { useUploadImage, useUploadDocument, useUploadAudio, UPLOAD_LIMITS } from '@/hooks/useUpload'
 import type { Template, QuickReply } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSocket } from '@/lib/socket'
@@ -276,6 +276,12 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
     const isImage = file.type.startsWith('image/')
     const isAudio = file.type.startsWith('audio/')
     const type: SentMedia['type'] = isImage ? 'image' : isAudio ? 'audio' : 'document'
+
+    const limit = UPLOAD_LIMITS[type]
+    if (file.size > limit.maxBytes) {
+      toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} is too large — ${limit.label}`)
+      return
+    }
 
     if (pendingMedia) URL.revokeObjectURL(pendingMedia.previewUrl)
     setPendingMedia({ file, previewUrl: URL.createObjectURL(file), type })
@@ -563,7 +569,7 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
                     onClick={() => fileRef.current?.click()}
                     disabled={uploadingMedia}
                     className={cn(iconBtnCls, uploadingMedia && 'opacity-50 cursor-not-allowed')}
-                    title="Attach file"
+                    title={`Attach file — Image ${UPLOAD_LIMITS.image.label}, Document ${UPLOAD_LIMITS.document.label}, Audio ${UPLOAD_LIMITS.audio.label}`}
                   >
                     {uploadingMedia ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                   </button>

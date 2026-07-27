@@ -2,10 +2,8 @@ import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { CheckCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
 import SettingsSection from '@/components/settings/SettingsSection'
-import { useAccountSettings, useUpdateAccountSettings } from '@/hooks/useSettings'
-import { useUploadImage } from '@/hooks/useUpload'
+import { useAccountSettings, useUpdateAccountSettings, useUploadAccountLogo } from '@/hooks/useSettings'
 import type { AccountSettings } from '@/types'
 
 const INDUSTRIES = ['Technology', 'Retail & E-commerce', 'Healthcare', 'Education', 'Finance & Banking', 'Real Estate', 'Food & Beverage', 'Travel & Hospitality', 'Media & Entertainment', 'Manufacturing', 'Other']
@@ -14,7 +12,7 @@ export default function AccountSettingsPage() {
   const navigate = useNavigate()
   const { data: settings } = useAccountSettings()
   const update = useUpdateAccountSettings()
-  const uploadLogo = useUploadImage()
+  const uploadLogo = useUploadAccountLogo()
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const { register, handleSubmit, watch, setValue, formState: { isDirty, isSubmitting } } = useForm<AccountSettings>({
@@ -31,8 +29,7 @@ export default function AccountSettingsPage() {
     e.target.value = ''
     if (!file) return
     uploadLogo.mutate(file, {
-      onSuccess: ({ url }) => setValue('companyLogoUrl', url, { shouldDirty: true }),
-      onError: () => toast.error('Failed to upload logo'),
+      onSuccess: (logoUrl) => setValue('companyLogoUrl', logoUrl),
     })
   }
 

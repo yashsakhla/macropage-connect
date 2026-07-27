@@ -11,6 +11,7 @@ import WebhookSettings from './sections/WebhookSettings'
 import IntegrationSettings from './sections/IntegrationSettings'
 import DangerZone from '@/components/settings/DangerZone'
 import SettingsSection from '@/components/settings/SettingsSection'
+import AllTimeUsageCard from '@/components/analytics/AllTimeUsageCard'
 import Profile from './Profile'
 
 const SECTIONS: Record<string, React.ComponentType> = {
@@ -29,10 +30,8 @@ const SECTIONS: Record<string, React.ComponentType> = {
 
 function UsageSettings() {
   return (
-    <SettingsSection title="Usage" subtitle="Monitor your current resource usage">
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Detailed usage analytics coming soon.</p>
-      </div>
+    <SettingsSection title="Usage" subtitle="Monitor your lifetime resource usage">
+      <AllTimeUsageCard />
     </SettingsSection>
   )
 }

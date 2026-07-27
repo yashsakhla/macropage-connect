@@ -12,13 +12,25 @@ function apiError(err: any, fallback: string): string {
   )
 }
 
+// `_id` is sometimes plain string, sometimes MongoDB extended JSON (`{ $oid: "..." }`)
+// depending on how the backend serialized it — normalize both to a plain string so
+// every PATCH/DELETE `/templates/:id` call built from `template.id` actually resolves.
+function normalizeTemplateId(raw: any): string {
+  const rawId = raw._id ?? raw.id
+  return (typeof rawId === 'object' && rawId?.$oid) ? rawId.$oid : rawId
+}
+
+function normalizeTemplate(raw: any): Template {
+  return { ...raw, id: normalizeTemplateId(raw) } as Template
+}
+
 export function useTemplates(filters?: { status?: string }) {
   return useQuery({
     queryKey: ['templates', filters],
     queryFn: () =>
       api.get('/templates', { params: filters }).then((r) => {
         const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
-        return items.map((t) => ({ ...t, id: t._id ?? t.id })) as Template[]
+        return items.map(normalizeTemplate)
       }),
   })
 }
@@ -26,7 +38,7 @@ export function useTemplates(filters?: { status?: string }) {
 export function useTemplate(id: string) {
   return useQuery<Template>({
     queryKey: ['template', id],
-    queryFn: () => api.get(`/templates/${id}`).then((r) => r.data.data),
+    queryFn: () => api.get(`/templates/${id}`).then((r) => normalizeTemplate(r.data?.data ?? r.data)),
     enabled: !!id,
   })
 }
@@ -51,7 +63,10 @@ export function useCreateTemplate() {
 export function useUpdateTemplate() {
   const qc = useQueryClient()
   return useMutation<unknown, Error, { id: string; data: Partial<CreateTemplatePayload> }>({
-    mutationFn: ({ id, data }) => api.patch(`/templates/${id}`, data).then((r) => r.data),
+    mutationFn: ({ id, data }) => {
+      if (!id) return Promise.reject(new Error('Missing template id — cannot update'))
+      return api.patch(`/templates/${id}`, data).then((r) => r.data)
+    },
     onSuccess: (_data: unknown, { id }: { id: string }) => {
       qc.invalidateQueries({ queryKey: ['template', id] })
       qc.invalidateQueries({ queryKey: ['templates'] })
@@ -65,8 +80,10 @@ export function useUpdateTemplate() {
 export function useDeleteTemplate() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) =>
-      api.delete(`/templates/${id}`).then((r) => r.data),
+    mutationFn: (id: string) => {
+      if (!id) return Promise.reject(new Error('Missing template id — cannot delete'))
+      return api.delete(`/templates/${id}`).then((r) => r.data)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Template deleted')

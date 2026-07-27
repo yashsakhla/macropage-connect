@@ -36,6 +36,7 @@ export function useLogin() {
       }
       setAuth(user, token, refreshToken)
       connectSocket(token)
+      useUIStore.getState().setJustLoggedIn(true)
 
       if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
         navigate('/setup/whatsapp')
@@ -76,6 +77,7 @@ export function useGoogleAuth() {
       }
       setAuth(user, token, refreshToken)
       connectSocket(token)
+      useUIStore.getState().setJustLoggedIn(true)
 
       if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
         navigate('/setup/whatsapp')

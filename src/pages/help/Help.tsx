@@ -19,8 +19,9 @@ export default function Help() {
   const [ticketOpen, setTicketOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<HelpCategory | null>(null)
   const { data: status } = useSystemStatus()
-  const { data: docs = [], isLoading: docsLoading } = useHelpDocs(activeCategory?.slug)
+  const { data: allDocs = [], isLoading: docsLoading } = useHelpDocs()
   const { data: faqs = [] } = useHelpFAQs()
+  const docs = activeCategory ? allDocs.filter(d => d.category === activeCategory.slug) : allDocs
 
   return (
     <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724]">
@@ -41,7 +42,6 @@ export default function Help() {
           {/* Quick actions */}
           <QuickActions
             onTicketClick={() => setTicketOpen(true)}
-            onChatClick={() => {/* open chat widget */}}
           />
 
           {/* Onboarding checklist */}
@@ -90,7 +90,6 @@ export default function Help() {
           {/* Contact support */}
           <ContactSupport
             onTicketClick={() => setTicketOpen(true)}
-            onChatClick={() => {/* open chat */}}
           />
 
           {/* Status page */}

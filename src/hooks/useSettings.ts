@@ -1,7 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { AccountSettings, NotificationPreferences } from '@/types'
+import type { AccountSettings, NotificationPreferences, Webhook } from '@/types'
+
+function normalizeWebhook(raw: any): Webhook {
+  return {
+    id: raw._id ?? raw.id,
+    url: raw.url,
+    description: raw.description,
+    events: raw.events ?? [],
+    isEnabled: raw.isEnabled ?? raw.enabled ?? true,
+    createdAt: raw.createdAt,
+    // A freshly created webhook has no delivery history yet — the backend
+    // omits `stats`/`recentDeliveries` entirely rather than sending zeros.
+    stats: raw.stats ?? { totalDeliveries: 0, successRate: 0 },
+    recentDeliveries: raw.recentDeliveries ?? [],
+  }
+}
 
 export function useAccountSettings() {
   return useQuery({
@@ -9,8 +24,33 @@ export function useAccountSettings() {
     queryFn: () =>
       api.get('/settings/account').then((r) => {
         const d = r.data.data
-        return { ...d, companyName: d.companyName ?? d.company } as AccountSettings
+        return {
+          ...d,
+          companyName: d.companyName ?? d.company,
+          companyLogoUrl: d.companyLogoUrl ?? d.logoUrl,
+        } as AccountSettings
       }),
+  })
+}
+
+export function useUploadAccountLogo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      return api
+        .post('/settings/account/logo', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+        .then((r) => r.data.data.logoUrl as string)
+    },
+    onSuccess: (logoUrl) => {
+      qc.setQueryData(['settings', 'account'], (prev: AccountSettings | undefined) =>
+        prev ? { ...prev, companyLogoUrl: logoUrl } : prev
+      )
+      toast.success('Logo updated')
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message ?? 'Failed to upload logo'),
   })
 }
 
@@ -66,7 +106,12 @@ export function useRevokeAPIKey() {
 export function useWebhooks() {
   return useQuery({
     queryKey: ['webhooks'],
-    queryFn: () => api.get('/settings/webhooks').then((r) => r.data),
+    queryFn: () =>
+      api.get('/settings/webhooks').then((r) => {
+        const body = r.data?.data ?? r.data
+        const list: any[] = Array.isArray(body) ? body : (body?.webhooks ?? [])
+        return list.map(normalizeWebhook)
+      }),
   })
 }
 

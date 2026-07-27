@@ -14,6 +14,7 @@ import type {
 } from '@/types'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
+import PromoBanner from '@/components/dashboard/PromoBanner'
 import MessageUsageCard from '@/components/analytics/MessageUsageCard'
 import {
   StatCardSkeleton, ChartSkeleton, ActivitySkeleton, ChecklistSkeleton,
@@ -185,6 +186,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PromoBanner />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

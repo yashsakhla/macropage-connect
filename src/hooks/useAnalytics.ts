@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { MessageUsageData } from '@/types'
+import type { AllTimeUsageData, MessageUsageData } from '@/types'
 
 export function useDashboardStats(from?: string, to?: string) {
   return useQuery({
@@ -84,5 +84,16 @@ export function useMessageUsage(months = 6) {
       api.get('/analytics/usage', { params: { months } })
         .then(r => r.data?.data ?? r.data),
     staleTime: 2 * 60 * 1000,
+  })
+}
+
+/** Lifetime usage summary — separate from the month-scoped /analytics/usage above. */
+export function useAllTimeUsage() {
+  return useQuery<AllTimeUsageData>({
+    queryKey: ['all-time-usage'],
+    queryFn: () =>
+      api.get('/analytics/usage/all-time')
+        .then(r => r.data?.data ?? r.data),
+    staleTime: 5 * 60 * 1000,
   })
 }

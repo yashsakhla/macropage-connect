@@ -3,12 +3,11 @@ import { toast } from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { TicketPayload, SearchResult, HelpArticle, HelpCategory, FAQ, SystemStatus } from '@/types'
 
-export function useHelpDocs(category?: string) {
+export function useHelpDocs() {
   return useQuery<HelpArticle[]>({
-    queryKey: ['help-docs', category ?? 'all'],
-    queryFn: () =>
-      api.get('/help/docs', { params: category ? { category } : undefined })
-        .then(r => r.data),
+    queryKey: ['help-docs'],
+    queryFn: () => api.get('/help/docs').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -33,12 +32,11 @@ export function useHelpSearch(query: string) {
   })
 }
 
+// Article content already comes back with the full docs list, so viewing a
+// single article reuses that cached list instead of hitting a per-article endpoint.
 export function useArticle(slug: string) {
-  return useQuery<HelpArticle>({
-    queryKey: ['help-article', slug],
-    queryFn: () => api.get(`/help/articles/${slug}`).then(r => r.data.data),
-    enabled: !!slug,
-  })
+  const { data: docs, isLoading } = useHelpDocs()
+  return { data: docs?.find(a => a.slug === slug), isLoading }
 }
 
 export function useHelpCategories() {

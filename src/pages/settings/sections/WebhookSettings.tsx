@@ -3,7 +3,6 @@ import { Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import SettingsSection from '@/components/settings/SettingsSection'
 import WebhookItem from '@/components/settings/WebhookItem'
 import { useWebhooks, useCreateWebhook, useDeleteWebhook } from '@/hooks/useSettings'
-import type { Webhook } from '@/types'
 
 const EVENT_GROUPS = [
   { group: 'Messages', events: ['message.received', 'message.sent', 'message.delivered', 'message.read', 'message.failed'] },
@@ -16,11 +15,9 @@ const EVENT_GROUPS = [
 const DEFAULT_EVENTS = ['message.received', 'message.sent', 'message.delivered', 'message.read', 'conversation.created', 'conversation.resolved']
 
 export default function WebhookSettings() {
-  const { data: whData } = useWebhooks()
+  const { data: webhooks = [] } = useWebhooks()
   const createWebhook = useCreateWebhook()
   const deleteWebhook = useDeleteWebhook()
-
-  const webhooks = ((whData as any)?.data ?? whData ?? []) as Webhook[]
   const [url, setUrl] = useState('')
   const [desc, setDesc] = useState('')
   const [selectedEvents, setSelectedEvents] = useState<string[]>(DEFAULT_EVENTS)

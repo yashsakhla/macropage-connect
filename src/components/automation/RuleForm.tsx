@@ -32,7 +32,7 @@ export default function RuleForm({ rule, onClose, onSave }: Props) {
 
   const firstMsg = (actions[0]?.config?.message as string) ?? ''
   const previewMessages: PreviewMessage[] = [
-    { from: 'customer', text: (triggerConfig.keywords as string[])?.[0] ? `What is the ${(triggerConfig.keywords as string[])[0]}?` : 'Test message...' },
+    { from: 'customer', text: (triggerConfig.keywords as string[])?.[0] ? (triggerConfig.keywords as string[])[0] : 'Test message...' },
     ...(firstMsg ? [{ from: 'bot' as const, text: firstMsg, buttons: actions[0]?.config?.buttons as string[] | undefined }] : []),
   ]
 

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWhatsAppSetupStatus } from '@/hooks/useWhatsApp'
 import { useTemplates, useCreateTemplate } from '@/hooks/useTemplates'
+import { useSampleTemplates, type SampleTemplate } from '@/hooks/useSampleTemplates'
 import { usePermissions } from '@/lib/permissions'
-import { STARTER_TEMPLATES, type StarterTemplate } from '@/lib/starterTemplates'
 import type { TemplateStatus } from '@/types'
 import {
   CheckCircle, Clock, ArrowRight,
@@ -52,12 +52,13 @@ export default function WhatsAppCompletionStep({
   } = useWhatsAppSetupStatus()
 
   const { data: templates = [] } = useTemplates()
+  const { data: sampleTemplates = [] } = useSampleTemplates()
   const createTemplate = useCreateTemplate()
   const { canCreateTemplate } = usePermissions()
   const [submittingId, setSubmittingId] = useState<string | null>(null)
   const [showTestSend, setShowTestSend] = useState(false)
 
-  const handleUseStarter = (starter: StarterTemplate) => {
+  const handleUseStarter = (starter: SampleTemplate) => {
     setSubmittingId(starter.id)
     createTemplate.mutate(starter.payload, {
       onSettled: () => {
@@ -332,10 +333,11 @@ export default function WhatsAppCompletionStep({
                           </div>
                         )}
 
+                        {sampleTemplates.length > 0 && (
                         <div>
                           <p className="text-2xs font-semibold text-gray-500 mb-2">Or start from a ready-made template</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {STARTER_TEMPLATES.map(starter => {
+                            {sampleTemplates.map(starter => {
                               const existing = templates.find(t => t.name === starter.payload.name)
                               const isSubmitting = submittingId === starter.id
 
@@ -376,6 +378,7 @@ export default function WhatsAppCompletionStep({
                             })}
                           </div>
                         </div>
+                        )}
                       </div>
                     )}
 

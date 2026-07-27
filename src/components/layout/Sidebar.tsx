@@ -139,8 +139,8 @@ export default function Sidebar() {
                 to={to}
                 title={collapsed ? label : undefined}
                 className={cn(
-                  'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
-                  active && 'active border-l-4 border-l-[#2d7a4f] font-semibold',
+                  'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4 border-transparent',
+                  active && 'active border-l-[#2d7a4f] font-semibold',
                   collapsed && 'justify-center px-2'
                 )}
               >
@@ -158,12 +158,12 @@ export default function Sidebar() {
         <div className="space-y-0.5 px-1">
           <NavLink
             to="/settings"
-            className={({ isActive }) =>
-              cn(
-                'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive && 'active border-l-4 border-l-[#2d7a4f] font-semibold'
-              )
-            }
+            // Billing gets its own dedicated (golden) nav entry below, so the
+            // gear icon should light up for every /settings/* sub-page except that one.
+            className={cn(
+              'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4 border-transparent',
+              location.pathname.startsWith('/settings') && !location.pathname.startsWith('/settings/billing') && 'active border-l-[#2d7a4f] font-semibold'
+            )}
           >
             <Settings size={18} className="shrink-0" />
             {!collapsed && <span>Settings</span>}
@@ -175,10 +175,10 @@ export default function Sidebar() {
             title={collapsed ? 'Billing' : undefined}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4',
                 isActive
-                  ? 'bg-amber-50 text-amber-700 border-l-4 border-l-amber-500 font-semibold'
-                  : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                  ? 'bg-amber-50 text-amber-700 border-l-amber-500 font-semibold'
+                  : 'border-transparent text-amber-600 hover:bg-amber-50 hover:text-amber-700'
               )
             }
           >

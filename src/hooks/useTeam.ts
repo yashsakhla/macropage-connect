@@ -42,7 +42,8 @@ export function useTeamMembers(filters?: TeamFilters) {
 export function useTeamMember(id: string) {
   return useQuery<TeamMember>({
     queryKey: ['team-member', id],
-    queryFn: () => api.get(`/team/${id}`).then((r) => r.data.data),
+    queryFn: () =>
+      api.get(`/team/${id}`).then((r) => normalizeMember(r.data?.data ?? r.data)),
     enabled: !!id,
   })
 }

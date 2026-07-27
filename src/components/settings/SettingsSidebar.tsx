@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, MessageSquare, User, CreditCard, BarChart2, Key, Webhook,
-  Puzzle, Bell, Shield, AlertTriangle, HelpCircle, BookOpen, Zap,
+  Puzzle, Bell, Shield, AlertTriangle, Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
@@ -168,14 +168,8 @@ export default function SettingsSidebar({ activeSection }: Props) {
         ))}
       </nav>
 
-      {/* Bottom help */}
-      <div className="border-t border-[#e8ebe8] dark:border-white/10 p-3 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200">
-          <HelpCircle size={14} /> Help & Support
-        </button>
-        <a href="#" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200">
-          <BookOpen size={14} /> Documentation
-        </a>
+      {/* Bottom */}
+      <div className="border-t border-[#e8ebe8] dark:border-white/10 p-3">
         <p className="text-2xs text-gray-300 dark:text-gray-600 px-3 pt-1">v1.0.0</p>
       </div>
     </aside>
