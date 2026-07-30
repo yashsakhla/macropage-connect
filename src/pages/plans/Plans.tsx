@@ -8,21 +8,25 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { BillingCycle, BillingPlan } from '@/types'
 import {
-  CheckCircle, Zap, ArrowLeft, Crown,
-  MessageSquare, Globe, Headphones,
-  Sparkles, Check, X, Loader2, Info
+  CheckCircle, Zap, ArrowLeft,
+  Headphones,
+  Sparkles, Check, X, Loader2, Info, Clock
 } from 'lucide-react'
+import starterIllustration from '@/assets/plans/3.svg'
+import growthIllustration from '@/assets/plans/4.svg'
+import scaleIllustration from '@/assets/plans/2.svg'
+import enterpriseIllustration from '@/assets/plans/1.svg'
 
-// ─── Presentation metadata only — icon/colour per plan id.                    ──
+// ─── Presentation metadata only — illustration/accent colour per plan id.     ──
 // ─── Price, features, badges and highlight always come from the API.         ──
 
-const PLAN_META: Record<string, { icon: React.ElementType; iconBg: string; iconColor: string }> = {
-  STARTER:    { icon: MessageSquare, iconBg: 'bg-blue-50 dark:bg-blue-950/30',   iconColor: 'text-blue-600 dark:text-blue-400' },
-  GROWTH:     { icon: Zap,           iconBg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', iconColor: 'text-[#1a5c3a]' },
-  BUSINESS:   { icon: Crown,         iconBg: 'bg-purple-50 dark:bg-purple-950/30', iconColor: 'text-purple-600 dark:text-purple-400' },
-  ENTERPRISE: { icon: Globe,         iconBg: 'bg-gray-50 dark:bg-white/5',   iconColor: 'text-gray-600 dark:text-gray-400' },
+const PLAN_META: Record<string, { image: string; accent: string }> = {
+  STARTER:    { image: starterIllustration,    accent: '#2563eb' },
+  GROWTH:     { image: growthIllustration,     accent: '#1a5c3a' },
+  BUSINESS:   { image: scaleIllustration,      accent: '#7c3aed' },
+  ENTERPRISE: { image: enterpriseIllustration, accent: '#d97706' },
 }
-const DEFAULT_META = { icon: MessageSquare, iconBg: 'bg-gray-50 dark:bg-white/5', iconColor: 'text-gray-600 dark:text-gray-400' }
+const DEFAULT_META = { image: starterIllustration, accent: '#6b7280' }
 
 function metaFor(plan: BillingPlan) {
   return PLAN_META[plan.id] ?? DEFAULT_META
@@ -263,8 +267,6 @@ export default function Plans() {
               const isPopular     = plan.highlight
               const isProcessing  = processing === plan.id
               const isHighlighted = highlightPlan === plan.id
-              const ribbon        = isCurrent ? '✓ Current plan' : plan.badge
-
               return (
                 <div
                   key={plan.id}
@@ -277,26 +279,30 @@ export default function Plans() {
                       : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4] hover:shadow-md'
                   )}
                 >
-                  {ribbon && (
+                  {/* "Current plan" straddles the top border; a plain badge (e.g. "14-Day Trial") sits inline instead */}
+                  {isCurrent ? (
                     <div className="absolute -top-3.5 left-0 right-0 flex justify-center">
-                      <span className={cn(
-                        'text-xs font-bold px-4 py-1 rounded-full',
-                        isCurrent ? 'bg-[#1a5c3a] text-white' : 'bg-amber-400 text-amber-900'
-                      )}>
-                        {isCurrent ? ribbon : `⭐ ${ribbon}`}
+                      <span className="text-xs font-bold px-4 py-1 rounded-full bg-[#1a5c3a] text-white flex items-center gap-1">
+                        <Check size={12} /> Current plan
+                      </span>
+                    </div>
+                  ) : plan.badge && (
+                    <div className="absolute top-3 left-3">
+                      <span className="text-2xs font-bold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                        <Clock size={11} /> {plan.badge}
                       </span>
                     </div>
                   )}
 
+                  {/* Illustration banner — full-bleed, ~40% of the card's height, with breathing room above it */}
+                  <div className="h-48 mt-4 overflow-hidden bg-[#f7f8f6] dark:bg-white/5 flex-shrink-0">
+                    <img src={meta.image} alt="" className="w-full h-full object-contain" />
+                  </div>
+
                   <div className="p-5 flex flex-col flex-1">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', meta.iconBg)}>
-                        <meta.icon size={18} className={meta.iconColor} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-gray-900 dark:text-white">{plan.name}</h3>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{plan.desc}</p>
-                      </div>
+                    <div className="mb-4">
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{plan.desc}</p>
                     </div>
 
                     <div className="mb-5">
@@ -325,14 +331,19 @@ export default function Plans() {
                     </div>
 
                     {isCurrent ? (
-                      // Same footprint as the CTA button below (w-full h-11) so this
-                      // card doesn't grow taller than its siblings in the grid.
-                      <div className="w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mb-5 bg-gradient-to-r from-[#123c28] to-[#1a5c3a] text-white">
-                        <Check size={15} />
-                        <span>
+                      // Same min-height as the CTA button below (h-11) so this card
+                      // doesn't shrink shorter than its siblings — but free to grow
+                      // when the "days left" subline needs its own row.
+                      <div className="w-full min-h-11 rounded-xl font-semibold text-sm flex flex-col items-center justify-center gap-0.5 py-2 mb-5 bg-gradient-to-r from-[#123c28] to-[#1a5c3a] text-white text-center">
+                        <span className="flex items-center gap-1.5">
+                          <Check size={15} />
                           This plan is active
-                          {activeDaysLeft !== null && ` · ${activeDaysLeft} day${activeDaysLeft === 1 ? '' : 's'} left`}
                         </span>
+                        {activeDaysLeft !== null && (
+                          <span className="text-xs font-normal text-white/70">
+                            {activeDaysLeft} day{activeDaysLeft === 1 ? '' : 's'} left
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <button
@@ -342,9 +353,14 @@ export default function Plans() {
                           'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2',
                           'transition-all active:scale-[0.98] mb-5 disabled:opacity-50',
                           isPopular || plan.custom
-                            ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white'
-                            : 'border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#e8f5ee] dark:hover:bg-emerald-950/30'
+                            ? 'text-white hover:opacity-90'
+                            : 'border-2 bg-transparent hover:bg-[#f7f8f6] dark:hover:bg-white/5'
                         )}
+                        style={
+                          isPopular || plan.custom
+                            ? { backgroundColor: meta.accent }
+                            : { borderColor: meta.accent, color: meta.accent }
+                        }
                       >
                         {isProcessing ? (
                           <><Loader2 size={15} className="animate-spin" /> Processing...</>
@@ -365,7 +381,7 @@ export default function Plans() {
                     <ul className="space-y-2.5 flex-1">
                       {plan.features.map(f => (
                         <li key={f} className="flex items-start gap-2 text-xs">
-                          <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0 mt-0.5" />
+                          <CheckCircle size={14} style={{ color: meta.accent }} className="flex-shrink-0 mt-0.5" />
                           <span className="leading-relaxed text-gray-600 dark:text-gray-400">{f}</span>
                         </li>
                       ))}

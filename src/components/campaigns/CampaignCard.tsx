@@ -4,6 +4,21 @@ import { cn } from '@/lib/utils'
 import type { Campaign } from '@/types'
 import { format } from 'date-fns'
 import { usePermissions } from '@/lib/permissions'
+import messageIcon from '@/assets/campaigns/message.svg'
+import goalIcon from '@/assets/campaigns/goal.svg'
+import peoplesIcon from '@/assets/contacts/peoples-icon.png'
+import peoplePlusIcon from '@/assets/contacts/people-plus.png'
+
+export const LIST_GRID_COLS = '2fr 100px 70px 80px 70px 60px 60px 60px 118px 90px'
+
+// Audience-type thumbnail per row — reuses illustrations already shipped for
+// campaigns/contacts elsewhere in the app instead of a generic lucide icon.
+const AUDIENCE_IMAGE: Record<Campaign['audienceType'], { image: string; bg: string }> = {
+  all:      { image: messageIcon,     bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30' },
+  tag:      { image: goalIcon,        bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  selected: { image: peoplesIcon,     bg: 'bg-purple-50 dark:bg-purple-950/30' },
+  csv:      { image: peoplePlusIcon,  bg: 'bg-blue-50 dark:bg-blue-950/30' },
+}
 
 const STATUS_CONFIG = {
   draft:     { label: 'Draft',     bg: 'bg-gray-200 dark:bg-white/10',      text: 'text-gray-600 dark:text-gray-400',   dot: 'bg-gray-400',   pulse: false, rowBg: 'bg-gray-100 dark:bg-white/10',       rowBorder: 'border-gray-300 dark:border-gray-700',   rowHover: 'hover:border-gray-400'   },
@@ -58,8 +73,12 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
 
   const s        = STATUS_CONFIG[campaign.status]
   const delivPct = campaign.sent > 0 ? Math.round((campaign.delivered / campaign.sent) * 100) : 0
+  const openPct  = campaign.sent > 0 ? Math.round((campaign.read / campaign.sent) * 100) : 0
   const sentPct  = campaign.totalContacts > 0 ? Math.round((campaign.sent / campaign.totalContacts) * 100) : 0
   const isRunning = campaign.status === 'running'
+  const audience  = AUDIENCE_IMAGE[campaign.audienceType]
+  const hasResults = campaign.sent > 0
+  const lastUpdated = campaign.completedAt ?? campaign.scheduledAt ?? campaign.startedAt ?? campaign.createdAt
 
   if (view === 'grid') {
     return (
@@ -153,8 +172,7 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
   return (
     <div
       className={cn(
-        'relative border rounded-2xl overflow-hidden transition-all cursor-pointer',
-        s.rowBg, s.rowBorder, s.rowHover,
+        'relative border-b border-[#eef0ee] dark:border-white/10 last:border-b-0 transition-colors cursor-pointer hover:bg-[#f7f8f6] dark:hover:bg-white/5',
         isRunning && 'campaign-row-running border-l-4 border-l-[#1a5c3a]'
       )}
       onClick={() => onClick(campaign)}
@@ -196,18 +214,18 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
         </div>
       )}
 
-      <div className="grid items-center gap-4 px-5 py-4"
-        style={{ gridTemplateColumns: '2fr 108px 68px 64px 60px 60px 60px 116px 96px' }}>
+      <div className="grid items-center gap-3 px-5 py-4"
+        style={{ gridTemplateColumns: LIST_GRID_COLS }}>
         {/* col 1: info */}
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{campaign.name}</p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1">
-              <FileText size={9} /> {campaign.templateName}
-            </span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+        <div className="min-w-0 flex items-center gap-3">
+          <div className={cn('w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0', audience.bg)}>
+            <img src={audience.image} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{campaign.name}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
               {format(new Date(campaign.createdAt), 'dd MMM yyyy')}
-            </span>
+            </p>
           </div>
         </div>
 
@@ -217,62 +235,40 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           {s.label}
         </span>
 
-        {/* col 3: audience */}
-        <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{campaign.totalContacts.toLocaleString()}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">contacts</p>
+        {/* col 3: contacts */}
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{campaign.totalContacts.toLocaleString()}</p>
+
+        {/* col 4: delivered */}
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+          {hasResults ? campaign.delivered.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
+        </p>
+
+        {/* col 5: open rate */}
+        <div className="flex justify-start">
+          {hasResults ? <DeliveryRing pct={openPct} size="sm" /> : <span className="text-sm text-gray-300 dark:text-gray-600">—</span>}
         </div>
 
-        {/* col 4: delivery */}
-        <div className="flex flex-col items-center gap-1">
-          <DeliveryRing pct={delivPct} size="sm" />
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">Delivered</p>
+        {/* col 6-8: sent / read / failed */}
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+          {hasResults ? campaign.sent.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
+        </p>
+        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+          {hasResults ? campaign.read.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
+        </p>
+        <p className={cn('text-sm font-medium', hasResults && campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-300 dark:text-gray-600')}>
+          {hasResults ? campaign.failed.toLocaleString() : '—'}
+        </p>
+
+        {/* col 9: last updated */}
+        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          {campaign.status === 'scheduled'
+            ? <Calendar size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+            : <CheckCircle2 size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          }
+          {format(new Date(lastUpdated), 'dd MMM, h:mm a')}
         </div>
 
-        {/* col 5-7: stat cells — same typographic treatment as "contacts" above, no icons/emoji needed */}
-        <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{campaign.sent.toLocaleString()}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">sent</p>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{campaign.read.toLocaleString()}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">read</p>
-        </div>
-        <div>
-          <p className={cn('text-sm font-semibold', campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-300 dark:text-gray-600')}>
-            {campaign.failed.toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">failed</p>
-        </div>
-
-        {/* col 8: schedule/progress */}
-        <div>
-          {campaign.status === 'scheduled' && campaign.scheduledAt && (
-            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
-              <Calendar size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-              {format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a')}
-            </div>
-          )}
-          {campaign.status === 'completed' && campaign.completedAt && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <CheckCircle2 size={11} className="text-purple-400 flex-shrink-0" />
-              {format(new Date(campaign.completedAt), 'dd MMM, h:mm a')}
-            </div>
-          )}
-          {isRunning && (
-            <div>
-              <div className="bg-[#1a5c3a]/15 rounded-full h-1.5 w-24 overflow-hidden">
-                <div className="bg-[#1a5c3a] h-1.5 rounded-full transition-all" style={{ width: `${sentPct}%` }} />
-              </div>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{sentPct}% sent</p>
-            </div>
-          )}
-          {(campaign.status === 'draft' || campaign.status === 'failed') && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
-          )}
-        </div>
-
-        {/* col 9: actions */}
+        {/* col 10: actions */}
         <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
           {campaign.status === 'running' && canLaunchCampaign && (
             <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>

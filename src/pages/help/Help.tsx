@@ -5,7 +5,6 @@ import HelpHeader from '@/components/help/HelpHeader'
 import QuickActions from '@/components/help/QuickActions'
 import OnboardingChecklist from '@/components/help/OnboardingChecklist'
 import CategoryGrid from '@/components/help/CategoryGrid'
-import ArticleCard from '@/components/help/ArticleCard'
 import VideoTutorials from '@/components/help/VideoTutorials'
 import FAQAccordion from '@/components/help/FAQAccordion'
 import ContactSupport from '@/components/help/ContactSupport'
@@ -49,37 +48,14 @@ export default function Help() {
             <OnboardingChecklist />
           </div>
 
-          {/* Category grid */}
-          <CategoryGrid onCategoryClick={cat => setActiveCategory(cat)} />
-
-          {/* Doc articles — all, or filtered by the clicked category */}
-          <div className="max-w-5xl mx-auto px-6 mb-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {activeCategory ? `${activeCategory.name} articles` : 'All articles'}
-              </h2>
-              {activeCategory && (
-                <button
-                  onClick={() => setActiveCategory(null)}
-                  className="text-xs text-[#1a5c3a] font-medium hover:underline"
-                >
-                  ← Show all
-                </button>
-              )}
-            </div>
-
-            {docsLoading ? (
-              <div className="text-center py-12 text-gray-400 dark:text-gray-500">Loading articles…</div>
-            ) : docs.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 dark:text-gray-500">No articles in this category yet</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {docs.map(article => (
-                  <ArticleCard key={article._id} article={article} />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Category grid + articles — all live inside one "Browse documentation" section */}
+          <CategoryGrid
+            docs={docs}
+            docsLoading={docsLoading}
+            activeCategory={activeCategory}
+            onCategoryClick={cat => setActiveCategory(cat)}
+            onClearCategory={() => setActiveCategory(null)}
+          />
 
           {/* Video tutorials */}
           <VideoTutorials />

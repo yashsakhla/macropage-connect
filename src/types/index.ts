@@ -360,6 +360,7 @@ export interface Campaign {
   read: number
   replied: number
   failed: number
+  clicked?: number
   scheduledAt?: string
   startedAt?: string
   completedAt?: string
@@ -414,6 +415,9 @@ export interface ChartDataPoint {
   inbound: number
   outbound: number
   total: number
+  delivered?: number
+  read?: number
+  failed?: number
 }
 
 export interface DashboardStatMetric {

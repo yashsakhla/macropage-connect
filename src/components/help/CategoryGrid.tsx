@@ -4,7 +4,8 @@ import {
 } from 'lucide-react'
 import { useHelpCategories } from '@/hooks/useHelp'
 import { hexToTranslucent } from '@/lib/utils'
-import type { HelpCategory } from '@/types'
+import ArticleCard from './ArticleCard'
+import type { HelpArticle, HelpCategory } from '@/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   PlayCircle: <PlayCircle size={20} />,
@@ -21,36 +22,65 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 }
 
 interface Props {
+  docs: HelpArticle[]
+  docsLoading: boolean
+  activeCategory: HelpCategory | null
   onCategoryClick?: (cat: HelpCategory) => void
+  onClearCategory: () => void
 }
 
-export default function CategoryGrid({ onCategoryClick }: Props) {
+export default function CategoryGrid({ docs, docsLoading, activeCategory, onCategoryClick, onClearCategory }: Props) {
   const { data: categories = [] as HelpCategory[] } = useHelpCategories()
 
   return (
-    <div className="max-w-5xl mx-auto px-6 mb-10">
+    <div className="max-w-6xl mx-auto px-6 mb-10">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Browse documentation</h2>
 
-      <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {categories.map((cat: HelpCategory) => (
           <button
             key={cat.id}
             onClick={() => onCategoryClick?.(cat)}
-            className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 hover:border-[#c8e6d4] hover:shadow-sm cursor-pointer transition-all group text-left"
+            className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 hover:border-[#c8e6d4] hover:shadow-sm cursor-pointer transition-all text-left"
           >
             <div
-              className="w-10 h-10 rounded-xl mb-3 flex items-center justify-center flex-shrink-0"
+              className="w-9 h-9 rounded-xl mb-3 flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: hexToTranslucent(cat.color, 0.15), color: cat.color }}
             >
-              {ICON_MAP[cat.icon] ?? <FileText size={20} />}
+              {ICON_MAP[cat.icon] ?? <FileText size={18} />}
             </div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">{cat.name}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{cat.articleCount} articles</p>
-            <p className="text-xs text-[#1a5c3a] font-medium mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              View articles →
-            </p>
           </button>
         ))}
+      </div>
+
+      {/* Articles — all, or filtered by the clicked category tile above */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            {activeCategory ? `${activeCategory.name} articles` : 'All articles'}
+          </h3>
+          {activeCategory && (
+            <button
+              onClick={onClearCategory}
+              className="text-xs text-[#1a5c3a] dark:text-emerald-400 font-medium hover:underline"
+            >
+              ← Show all
+            </button>
+          )}
+        </div>
+
+        {docsLoading ? (
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">Loading articles…</div>
+        ) : docs.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">No articles in this category yet</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {docs.map(article => (
+              <ArticleCard key={article._id} article={article} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

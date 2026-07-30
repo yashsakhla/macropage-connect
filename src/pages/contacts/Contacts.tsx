@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Download, Upload, Plus, Search, SlidersHorizontal, FileDown,
-  LayoutList, LayoutGrid, Users, Activity, UserMinus, UserPlus,
+  LayoutList, LayoutGrid, Users,
   X, Trash2, Tag, Layers,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -21,6 +21,11 @@ import ContactImport from '@/components/contacts/ContactImport'
 import ContactSegments from '@/components/contacts/ContactSegments'
 import BulkActionsBar from '@/components/contacts/BulkActionsBar'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
+import contactBanner from '@/assets/contacts/contact-banner.svg'
+import peoplesIcon from '@/assets/contacts/peoples-icon.png'
+import statsIcon from '@/assets/contacts/stats-icon.png'
+import peopleIcon from '@/assets/contacts/people-icon.png'
+import peoplePlusIcon from '@/assets/contacts/people-plus.png'
 
 type View = 'list' | 'grid'
 
@@ -94,19 +99,24 @@ function applyClientFilters(contacts: Contact[], filters: ContactFilters, active
   return result
 }
 
-function StatCard({ label, value, sub, icon: Icon, bg, color }: {
-  label: string; value: string | number; sub?: string
-  icon: React.ElementType; bg: string; color: string
+function StatCard({ label, value, iconImg, progressPercent, progressLabel }: {
+  label: string; value: string | number; iconImg: string
+  progressPercent?: number; progressLabel?: string
 }) {
   return (
-    <div className="flex items-center gap-4 flex-1">
-      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', bg)}>
-        <Icon size={18} className={color} />
-      </div>
-      <div>
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 flex items-center gap-4">
+      <img src={iconImg} alt="" className="w-20 h-20 object-contain shrink-0" />
+      <div className="min-w-0 flex-1">
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
-        {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500">{sub}</p>}
+        {progressPercent != null && (
+          <div className="mt-2">
+            <p className="text-2xs text-gray-500 dark:text-gray-400 mb-1">{progressLabel}</p>
+            <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#1a5c3a] rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -310,23 +320,27 @@ export default function Contacts() {
         </div>
       </div>
 
+      {/* banner */}
+      <div className="relative rounded-2xl overflow-hidden shadow-card mb-6">
+        <img src={contactBanner} alt="" className="w-full aspect-[320/63] object-cover" />
+      </div>
+
       {/* stats */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center mb-6">
-        <StatCard label="Total contacts" value={stats.total} icon={Users} bg="bg-blue-50 dark:bg-blue-950/30" color="text-blue-600 dark:text-blue-400" />
-        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total contacts" value={stats.total} iconImg={peoplesIcon} />
         <StatCard
           label="Active" value={stats.active}
-          sub={stats.total ? `${Math.round(stats.active / stats.total * 100)}% of total` : undefined}
-          icon={Activity} bg="bg-[#e8f5ee] dark:bg-emerald-950/30" color="text-[#1a5c3a]"
+          progressPercent={stats.total ? Math.round(stats.active / stats.total * 100) : 0}
+          progressLabel={stats.total ? `${Math.round(stats.active / stats.total * 100)}% of total` : '0% of total'}
+          iconImg={statsIcon}
         />
-        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
         <StatCard
           label="Opted out" value={stats.optedOut}
-          sub={stats.total ? `${Math.round(stats.optedOut / stats.total * 100)}% opt-out rate` : undefined}
-          icon={UserMinus} bg="bg-red-50 dark:bg-red-950/30" color="text-red-500 dark:text-red-400"
+          progressPercent={stats.total ? Math.round(stats.optedOut / stats.total * 100) : 0}
+          progressLabel={stats.total ? `${Math.round(stats.optedOut / stats.total * 100)}% opt-out rate` : '0% opt-out rate'}
+          iconImg={peopleIcon}
         />
-        <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />
-        <StatCard label="Added this month" value={stats.addedThisMonth} icon={UserPlus} bg="bg-purple-50 dark:bg-purple-950/30" color="text-purple-600 dark:text-purple-400" />
+        <StatCard label="Added this month" value={stats.addedThisMonth} iconImg={peoplePlusIcon} />
       </div>
 
       <div className="grid grid-cols-4 gap-6">

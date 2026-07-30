@@ -12,6 +12,13 @@ import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import blackLogo from '@assets/macropage-connect-black.svg'
 import whiteLogo from '@assets/macropage-connect-white.svg'
+import signup1 from '@/assets/signup/1.svg'
+import signup2 from '@/assets/signup/2.svg'
+import signup3 from '@/assets/signup/3.svg'
+import signup4 from '@/assets/signup/4.svg'
+import signup5 from '@/assets/signup/5.svg'
+
+const signupImages = [signup1, signup2, signup3, signup4, signup5]
 
 const passwordRegex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
 
@@ -49,6 +56,7 @@ export default function Register() {
   const { theme } = useUIStore()
   const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [showPassword, setShowPassword] = useState(false)
+  const [heroImage] = useState(() => signupImages[Math.floor(Math.random() * signupImages.length)])
   const reg = useRegister()
   const googleAuth = useGoogleAuth()
   const { register: r, handleSubmit, watch, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
@@ -283,24 +291,12 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="hidden lg:block lg:w-1/2 relative bg-[var(--hero)] text-white p-12 overflow-hidden">
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 340, height: 340, borderRadius: '50%', background: 'var(--primary-light)', opacity: 0.5 }} />
-        <div style={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', background: '#0f2d1d', opacity: 0.6 }} />
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-start">
+        <img src={heroImage} alt="Macropage Connect" className="w-full h-auto" />
 
-        <div className="absolute top-10 left-12 max-w-xs">
-          <h3 className="text-white font-bold text-lg">WhatsApp Setup Preview</h3>
-          <p className="text-white/80 mt-2 text-sm">Connect your business number and start sending verified messages that reach customers' inboxes.</p>
-
-          <div className="mt-4 bg-white rounded-2xl p-3 text-gray-800">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold">Onboarding progress</div>
-              <div className="text-xs text-gray-500">2 / 4</div>
-            </div>
-            <div className="mt-3 bg-gray-100 h-2 rounded overflow-hidden">
-              <div style={{ width: '50%', height: '100%', background: 'var(--primary)' }} />
-            </div>
-            <div className="mt-3 text-xs text-gray-600">Connect WABA → Verify business → Add template</div>
-          </div>
+        <div className="p-12 text-center w-full">
+          <h3 className="font-bold text-lg text-gray-900">Reach customers on WhatsApp</h3>
+          <p className="text-gray-500 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
         </div>
       </div>
     </div>
