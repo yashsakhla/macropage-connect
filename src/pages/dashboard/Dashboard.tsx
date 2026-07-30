@@ -18,7 +18,7 @@ import type {
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
 import PromoBanner from '@/components/dashboard/PromoBanner'
-import dashboardBanner from '@/assets/dashboard/dashboard-Banner.svg'
+import dashboardBanner from '@/assets/dashboard/dashboard-banner.svg'
 import msgIcon from '@/assets/dashboard/msg-icon.png'
 import rocketIcon from '@/assets/dashboard/rocket-icon.png'
 import peoplesIcon from '@/assets/dashboard/peoples-icon.png'
