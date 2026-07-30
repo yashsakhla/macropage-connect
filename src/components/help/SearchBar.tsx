@@ -8,7 +8,7 @@ interface Props {
   initialQuery?: string
 }
 
-const POPULAR = ['Connect WhatsApp', 'Create campaign', 'Import contacts', 'Template rejected', 'API keys', 'Billing']
+const POPULAR = ['Connect WhatsApp', 'Create campaign', 'Import contacts', 'Template rejected']
 const RECENT_KEY = 'help_recent_searches'
 
 function getRecent(): string[] {
@@ -46,11 +46,6 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        inputRef.current?.focus()
-        setOpen(true)
-      }
       if (e.key === 'Escape') setOpen(false)
     }
     window.addEventListener('keydown', onKey)
@@ -106,10 +101,10 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
   }
 
   return (
-    <div ref={wrapperRef} className="relative max-w-2xl mx-auto mt-8">
+    <div ref={wrapperRef} className="relative w-full mt-6">
       {/* Input row */}
       <div
-        className={`bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl flex items-center px-4 gap-3 border-2 transition-all ${
+        className={`bg-white dark:bg-[#0b1220] rounded-xl shadow-lg h-11 flex items-center px-3 gap-2 border-2 transition-all ${
           open ? 'border-[#1a5c3a]' : 'border-transparent'
         }`}
       >
@@ -120,14 +115,9 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
           onChange={e => handleChange(e.target.value)}
           onFocus={() => setOpen(true)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          placeholder="Search for help... e.g. 'send campaign', 'connect WhatsApp'"
-          className="flex-1 h-12 text-base text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent placeholder:text-gray-400 dark:text-gray-500"
+          placeholder="Search for help... e.g. 'connect WhatsApp'"
+          className="flex-1 min-w-0 h-full text-base text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent placeholder:text-gray-400 dark:text-gray-500 truncate"
         />
-        {!query && (
-          <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500 text-xs rounded-xl px-2.5 py-1.5 flex-shrink-0 font-mono">
-            ⌘K
-          </span>
-        )}
         {query && (
           <button
             onClick={() => { setQuery(''); setOpen(false) }}
@@ -138,7 +128,7 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
         )}
         <button
           onClick={handleSubmit}
-          className="bg-[#1a5c3a] text-white rounded-xl h-10 px-5 text-sm font-medium hover:bg-[#2d7a4f] transition-colors flex items-center gap-2 flex-shrink-0"
+          className="bg-[#1a5c3a] text-white rounded-lg h-8 px-4 text-sm font-medium hover:bg-[#2d7a4f] transition-colors flex items-center gap-2 flex-shrink-0"
         >
           Search
           <Search size={14} />
@@ -179,15 +169,15 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
 
       {/* Recent searches — inline chips below the input */}
       {recent.length > 0 && !query && (
-        <div className="mt-4 flex items-center gap-2 flex-wrap justify-center">
-          <span className="text-xs text-white/50 flex items-center gap-1">
+        <div className="mt-4 flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <Clock size={11} />
             Recent:
           </span>
           {recent.map(r => (
             <span
               key={r}
-              className="flex items-center gap-1.5 bg-white/10 text-white/80 text-xs rounded-full pl-3 pr-2 py-1.5"
+              className="flex items-center gap-1.5 bg-white/70 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs rounded-full pl-3 pr-2 py-1.5"
             >
               <button
                 onClick={() => handlePopular(r)}
@@ -206,14 +196,14 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
         </div>
       )}
 
-      {/* Popular searches */}
-      <div className="mt-3 flex items-center gap-2 flex-wrap justify-center">
-        <span className="text-xs text-white/50">Popular:</span>
+      {/* Popular searches — single line, scrolls horizontally if it doesn't fit */}
+      <div className="mt-3 flex items-center gap-1.5 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Popular searches:</span>
         {POPULAR.map(term => (
           <button
             key={term}
             onClick={() => handlePopular(term)}
-            className="bg-white/10 text-white/80 text-xs rounded-full px-3 py-1.5 hover:bg-white/20 transition-colors"
+            className="bg-white/70 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2.5 py-1 hover:bg-white transition-colors flex-shrink-0 whitespace-nowrap"
           >
             {term}
           </button>

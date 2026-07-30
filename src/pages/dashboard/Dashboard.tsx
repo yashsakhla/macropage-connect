@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import {
-  TrendingUp, MessageSquare, Send, Users, BarChart2,
+  TrendingUp, MessageSquare, Send, Eye, AlertTriangle,
   ArrowUpRight, CheckCircle2, Circle, ExternalLink,
 } from 'lucide-react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
+  CartesianGrid, PieChart, Pie, Cell,
+} from 'recharts'
 import { cn, formatIndian } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import type {
@@ -15,6 +18,11 @@ import type {
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
 import PromoBanner from '@/components/dashboard/PromoBanner'
+import dashboardBanner from '@/assets/dashboard/dashboard-Banner.svg'
+import msgIcon from '@/assets/dashboard/msg-icon.png'
+import rocketIcon from '@/assets/dashboard/rocket-icon.png'
+import peoplesIcon from '@/assets/dashboard/peoples-icon.png'
+import soundIcon from '@/assets/dashboard/sound-icon.png'
 import MessageUsageCard from '@/components/analytics/MessageUsageCard'
 import {
   StatCardSkeleton, ChartSkeleton, ActivitySkeleton, ChecklistSkeleton,
@@ -25,12 +33,20 @@ import {
   useDashboardHealth, useOnboardingChecklist,
 } from '@/hooks/useAnalytics'
 
+function formatAxisTick(v: number): string {
+  if (v >= 1000) {
+    const k = v / 1000
+    return `${Number.isInteger(k) ? k : k.toFixed(1)}k`
+  }
+  return `${Math.round(v)}`
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon: Icon, trend, hero }: {
+function StatCard({ label, value, iconImg, trend, hero }: {
   label: string
   value: number | string
-  icon: React.ElementType
+  iconImg: string
   trend?: { value: number; positive: boolean }
   hero?: boolean
 }) {
@@ -59,8 +75,8 @@ function StatCard({ label, value, icon: Icon, trend, hero }: {
             </div>
           )}
         </div>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 text-white/90">
-          <Icon size={18} />
+        <div className="w-24 h-24 rounded-xl flex items-center justify-center shrink-0 -mt-1 -mr-1">
+          <img src={iconImg} alt="" className="w-full h-full object-contain drop-shadow-md" />
         </div>
       </div>
     </div>
@@ -130,6 +146,62 @@ function OnboardingChecklist({ steps, progressPercent, completedCount, totalStep
   )
 }
 
+function MiniStat({ label, value, icon: Icon, tone }: {
+  label: string
+  value: number
+  icon: React.ElementType
+  tone: 'green' | 'blue' | 'red'
+}) {
+  const toneMap = {
+    green: 'bg-green-50 text-[#1a5c3a] dark:bg-green-950/30',
+    blue:  'bg-blue-50 text-blue-600 dark:bg-blue-950/30',
+    red:   'bg-red-50 text-red-600 dark:bg-red-950/30',
+  }
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2.5">
+      <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', toneMap[tone])}>
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-2xs text-gray-500 dark:text-gray-400 truncate">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{formatIndian(value)}</p>
+      </div>
+    </div>
+  )
+}
+
+function AnalyticsTooltip({ active, label, points }: {
+  active?: boolean
+  label?: string
+  points: ChartDataPoint[]
+}) {
+  if (!active || !label) return null
+  const point = points.find(p => p.date === label)
+  if (!point) return null
+  const rows: { name: string; value: number; color: string }[] = [
+    { name: 'Sent', value: point.outbound, color: '#1a5c3a' },
+    { name: 'Delivered', value: point.delivered ?? 0, color: '#4ade80' },
+    { name: 'Read', value: point.read ?? 0, color: '#3b82f6' },
+    { name: 'Failed', value: point.failed ?? 0, color: '#ef4444' },
+  ]
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 px-4 py-3 min-w-[180px]">
+      <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{label}</p>
+      <div className="space-y-1.5">
+        {rows.map(row => (
+          <div key={row.name} className="flex items-center justify-between gap-6 text-xs">
+            <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: row.color }} />
+              {row.name}
+            </span>
+            <span className="font-medium text-gray-900 dark:text-white">{formatIndian(row.value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -182,7 +254,21 @@ export default function Dashboard() {
   const recent = recentData as DashboardRecentItem[] | undefined
   const checklist = checklistData as ChecklistData | undefined
   const chartPoints: ChartDataPoint[] = chartData ?? []
-  const maxSent = chartPoints.length ? Math.max(...chartPoints.map(p => p.outbound)) : 0
+
+  const totalSent = chartPoints.reduce((sum, p) => sum + p.outbound, 0)
+  const totalDelivered = chartPoints.reduce((sum, p) => sum + (p.delivered ?? 0), 0)
+  const totalRead = chartPoints.reduce((sum, p) => sum + (p.read ?? 0), 0)
+  const totalFailed = chartPoints.reduce((sum, p) => sum + (p.failed ?? 0), 0)
+  const deliveredOnly = Math.max(totalDelivered - totalRead, 0)
+  const pending = Math.max(totalSent - totalDelivered - totalFailed, 0)
+
+  const donutData = [
+    { name: 'Delivered', value: deliveredOnly, color: '#4ade80' },
+    { name: 'Read', value: totalRead, color: '#3b82f6' },
+    { name: 'Failed', value: totalFailed, color: '#ef4444' },
+    { name: 'Pending', value: pending, color: '#d1d5db' },
+  ]
+  const pct = (v: number) => (totalSent > 0 ? `${((v / totalSent) * 100).toFixed(1)}%` : '0%')
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -203,6 +289,19 @@ export default function Dashboard() {
             + New Campaign
           </button>
           <button className="btn btn-outline" onClick={() => navigate('/contacts?import=true')}>Import Contacts</button>
+        </div>
+      </div>
+
+      {/* Hero Banner */}
+      <div className="relative rounded-2xl overflow-hidden shadow-xl">
+        <img src={dashboardBanner} alt="" className="w-full aspect-[12/2] object-cover object-center" />
+        <div className="absolute inset-0 flex flex-col justify-center pl-6 sm:pl-10 max-w-[55%] sm:max-w-xs">
+          <h2 className="text-base sm:text-2xl font-bold text-[#123724] leading-tight">
+            Grow your business on WhatsApp
+          </h2>
+          <p className="hidden sm:block text-sm text-[#1a5c3a]/80 mt-2 leading-relaxed">
+            Reach customers instantly, run campaigns, and track results — all in one place.
+          </p>
         </div>
       </div>
 
@@ -245,26 +344,26 @@ export default function Dashboard() {
             <StatCard
               label="Conversations"
               value={stats?.conversations?.value ?? 0}
-              icon={MessageSquare}
+              iconImg={msgIcon}
               trend={stats?.conversations?.trend != null ? { value: stats.conversations.trend, positive: stats.conversations.trend >= 0 } : undefined}
               hero
             />
             <StatCard
               label="Messages Sent"
               value={stats?.messagesSent?.value ?? 0}
-              icon={Send}
+              iconImg={rocketIcon}
               trend={stats?.messagesSent?.trend != null ? { value: stats.messagesSent.trend, positive: stats.messagesSent.trend >= 0 } : undefined}
             />
             <StatCard
               label="Active Contacts"
               value={stats?.activeContacts?.value ?? 0}
-              icon={Users}
+              iconImg={peoplesIcon}
               trend={stats?.activeContacts?.trend != null ? { value: stats.activeContacts.trend, positive: stats.activeContacts.trend >= 0 } : undefined}
             />
             <StatCard
               label="Campaigns"
               value={stats?.campaigns?.value ?? 0}
-              icon={BarChart2}
+              iconImg={soundIcon}
               trend={stats?.campaigns?.trend != null ? { value: stats.campaigns.trend, positive: stats.campaigns.trend >= 0 } : undefined}
             />
           </>
@@ -273,7 +372,7 @@ export default function Dashboard() {
 
       {/* Chart + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Chart */}
+        {/* Message Analytics */}
         <div className="lg:col-span-2">
           {chartLoading ? (
             <ChartSkeleton />
@@ -292,27 +391,88 @@ export default function Dashboard() {
                 <h2 className="text-sm font-semibold text-gray-900">Message Analytics</h2>
                 <div className="text-xs text-gray-500">Last 7 days</div>
               </div>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartPoints} margin={{ top: 6, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => formatIndian(v)} contentStyle={{ borderRadius: 8 }} />
-                  <Bar dataKey="outbound" radius={[8, 8, 0, 0]}>
-                    {chartPoints.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={entry.outbound === maxSent ? '#1a5c3a' : '#93d4b5'}
-                        fillOpacity={entry.outbound === maxSent ? 1 : 0.7}
+
+              <div className="grid grid-cols-4 gap-3 mb-5">
+                <MiniStat label="Total Sent" value={totalSent} icon={Send} tone="green" />
+                <MiniStat label="Delivered" value={totalDelivered} icon={CheckCircle2} tone="green" />
+                <MiniStat label="Read" value={totalRead} icon={Eye} tone="blue" />
+                <MiniStat label="Failed" value={totalFailed} icon={AlertTriangle} tone="red" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 items-center">
+                {/* Trend area chart */}
+                <div className="sm:col-span-3">
+                  <ResponsiveContainer width="100%" height={190}>
+                    <AreaChart data={chartPoints} margin={{ top: 6, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="sentGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1a5c3a" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#1a5c3a" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef1ee" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={formatAxisTick} allowDecimals={false} width={28} />
+                      <Tooltip content={<AnalyticsTooltip points={chartPoints} />} />
+                      <Area
+                        type="monotone" dataKey="outbound" name="Sent"
+                        stroke="#1a5c3a" strokeWidth={2.5} fill="url(#sentGradient)"
+                        dot={{ r: 3, fill: '#1a5c3a', strokeWidth: 0 }} activeDot={{ r: 5 }} animationDuration={600}
                       />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Delivery funnel donut */}
+                <div className="sm:col-span-2 flex flex-col items-center">
+                  <div className="relative w-full" style={{ height: 150 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={donutData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius="68%"
+                          outerRadius="100%"
+                          paddingAngle={2}
+                          startAngle={90}
+                          endAngle={-270}
+                          animationDuration={600}
+                        >
+                          {donutData.map(seg => (
+                            <Cell key={seg.name} fill={seg.color} stroke="none" />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => formatIndian(v)} contentStyle={{ borderRadius: 8 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-xl font-bold text-gray-900">{formatIndian(totalSent)}</span>
+                      <span className="text-2xs text-gray-500">Total Sent</span>
+                    </div>
+                  </div>
+                  <div className="w-full space-y-1 mt-2">
+                    {donutData.map(seg => (
+                      <div key={seg.name} className="flex items-center justify-between text-2xs">
+                        <span className="flex items-center gap-1.5 text-gray-600">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: seg.color }} />
+                          {seg.name}
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatIndian(seg.name === 'Delivered' ? totalDelivered : seg.value)} ({pct(seg.name === 'Delivered' ? totalDelivered : seg.value)})
+                        </span>
+                      </div>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
+
+          <MessageUsageCard compact />
         </div>
 
-        {/* Recent Activity + Message usage */}
+        {/* Recent Activity */}
         <div className="space-y-4">
           {recentLoading ? (
             <ActivitySkeleton />
@@ -366,8 +526,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-
-          <MessageUsageCard compact />
         </div>
       </div>
 

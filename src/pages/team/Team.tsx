@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Plus, Users, Zap, Clock } from 'lucide-react'
+import { Plus, Users, Search, SlidersHorizontal } from 'lucide-react'
+import { differenceInCalendarDays } from 'date-fns'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types'
 import { useTeamMembers } from '@/hooks/useTeam'
@@ -9,6 +10,9 @@ import InviteMemberModal from '@/components/team/InviteMemberModal'
 import PendingInvites from '@/components/team/PendingInvites'
 import RolePermissionsTable from '@/components/team/RolePermissionsTable'
 import AgentStats from '@/components/team/AgentStats'
+import TeamStats from '@/components/team/TeamStats'
+import TeamActivityPanel from '@/components/team/TeamActivityPanel'
+import teamHero from '@/assets/teams/5.svg'
 
 type RoleFilter = UserRole | 'all' | 'pending'
 type TabView = 'members' | 'performance' | 'permissions'
@@ -22,6 +26,7 @@ export default function Team() {
   const [showInvite, setShowInvite] = useState(false)
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [activeTab, setActiveTab] = useState<TabView>('members')
+  const [search, setSearch] = useState('')
 
   // Opened via a deep link (e.g. global search quick actions), which pass
   // this through router state — mirrors the pattern used on the Templates page.
@@ -42,51 +47,46 @@ export default function Team() {
     pending: members.filter(m => m.status === 'pending').length,
   }
 
+  const newThisWeek = members.filter(m => m.joinedAt && differenceInCalendarDays(new Date(), new Date(m.joinedAt)) <= 7).length
+  const activeNowCount = members.filter(m => m.onlineStatus === 'online').length
+  const activePercent = counts.all > 0 ? Math.round((activeNowCount / counts.all) * 100) : 0
+
   const filtered = members.filter(m => {
     if (roleFilter === 'all') return m.status !== 'pending'
     if (roleFilter === 'pending') return m.status === 'pending'
     return normRole(m.role) === normRole(String(roleFilter)) && m.status !== 'pending'
   })
 
-  const statCards = [
-    { label: 'Total members', value: counts.all, icon: Users, bg: 'bg-blue-50 dark:bg-blue-950/30', color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Active now', value: members.filter(m => m.onlineStatus === 'online').length, icon: Zap, bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', color: 'text-[#1a5c3a]' },
-    { label: 'Pending invites', value: counts.pending, icon: Clock, bg: 'bg-amber-50 dark:bg-amber-950/30', color: 'text-amber-600 dark:text-amber-400' },
-  ]
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return filtered
+    return filtered.filter(m => m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q))
+  }, [filtered, search])
 
   return (
     <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
-      {/* header */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Team</h1>
-          <p className="page-subtitle mt-0.5">Manage who can access your Macropage Connect account</p>
+      {/* header banner */}
+      <div className="relative rounded-3xl overflow-hidden mb-6">
+        <img src={teamHero} alt="" className="w-full aspect-[2200/500] object-cover object-center" />
+        <div className="absolute inset-0 flex items-center justify-between px-10 py-8">
+          <div>
+            <h1 className="page-title">Team</h1>
+            <p className="page-subtitle mt-0.5">Manage who can access your Macropage Connect account</p>
+          </div>
+          <button className="btn btn-primary h-11 px-6 gap-2 rounded-full flex-shrink-0" onClick={() => setShowInvite(true)}>
+            <Plus size={16} /> Invite member
+          </button>
         </div>
-        <button className="btn btn-primary h-9 gap-2" onClick={() => setShowInvite(true)}>
-          <Plus size={16} /> Invite member
-        </button>
       </div>
 
       {/* stats */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center mb-6">
-        {statCards.map((s, i) => {
-          const Icon = s.icon
-          return (
-            <div key={s.label} className="flex items-center flex-1">
-              <div className="flex items-center gap-4 flex-1">
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', s.bg)}>
-                  <Icon size={18} className={s.color} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
-                </div>
-              </div>
-              {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
-            </div>
-          )
-        })}
-      </div>
+      <TeamStats
+        totalMembers={counts.all}
+        newThisWeek={newThisWeek}
+        activeNow={activeNowCount}
+        activePercent={activePercent}
+        pendingInvites={counts.pending}
+      />
 
       {/* tab navigation */}
       <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 w-fit mb-5">
@@ -98,75 +98,98 @@ export default function Team() {
         ))}
       </div>
 
-      {activeTab === 'members' && (
-        <>
-          {/* role filter tabs */}
-          <div className="flex items-center gap-1 mb-4">
-            {([
-              ['all',     'All members'],
-              ['admin',   'Admins'],
-              ['manager', 'Managers'],
-              ['agent',   'Agents'],
-              ['pending', 'Pending'],
-            ] as const).map(([v, l]) => (
-              <button key={v} onClick={() => setRoleFilter(v)}
-                className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-all',
-                  roleFilter === v ? 'bg-[#1a5c3a] text-white' : 'bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-[#c8e6d4]')}>
-                {l}
-                <span className={cn('text-[10px] rounded-full px-1.5', roleFilter === v ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
-                  {counts[v]}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-            {/* table header */}
-            <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr 80px' }}>
-              <span>Member</span>
-              <span>Role</span>
-              <span>Status</span>
-              <span>Conversations</span>
-              <span>Last active</span>
-              <span />
-            </div>
-
-            {filtered.map(member => (
-              <TeamMemberCard
-                key={member.id}
-                member={member}
-                isCurrentUser={member.id === CURRENT_USER_ID}
-                              />
-            ))}
-
-            {filtered.length === 0 && (
-              <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-                <Users size={28} className="mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No members found</p>
-              </div>
-            )}
-
-            {/* pending section */}
-            {roleFilter === 'all' && counts.pending > 0 && (
-              <>
-                <div className="bg-amber-50/30 border-y border-amber-100 px-4 py-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending invitations</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-start">
+        <div className="min-w-0">
+          {activeTab === 'members' && (
+            <>
+              {/* role filter tabs + search */}
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <div className="flex items-center gap-1 flex-wrap">
+                  {([
+                    ['all',     'All members'],
+                    ['admin',   'Admins'],
+                    ['manager', 'Managers'],
+                    ['agent',   'Agents'],
+                    ['pending', 'Pending'],
+                  ] as const).map(([v, l]) => (
+                    <button key={v} onClick={() => setRoleFilter(v)}
+                      className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-all',
+                        roleFilter === v ? 'bg-[#1a5c3a] text-white' : 'bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-[#c8e6d4]')}>
+                      {l}
+                      <span className={cn('text-[10px] rounded-full px-1.5', roleFilter === v ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
+                        {counts[v]}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                {members.filter(m => m.status === 'pending').map(member => (
-                  <TeamMemberCard key={member.id} member={member} isCurrentUser={false} />
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search members..."
+                      className="input h-9 pl-9 w-56 text-sm"
+                    />
+                  </div>
+                  <button className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-[#c8e6d4] transition-colors flex-shrink-0">
+                    <SlidersHorizontal size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+                {/* table header */}
+                <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr 80px' }}>
+                  <span>Member</span>
+                  <span>Role</span>
+                  <span>Status</span>
+                  <span>Conversations</span>
+                  <span>Last active</span>
+                  <span />
+                </div>
+
+                {searched.map(member => (
+                  <TeamMemberCard
+                    key={member.id}
+                    member={member}
+                    isCurrentUser={member.id === CURRENT_USER_ID}
+                  />
                 ))}
-              </>
-            )}
-          </div>
-        </>
-      )}
 
-      {activeTab === 'performance' && <AgentStats members={members} />}
-      {activeTab === 'permissions' && <RolePermissionsTable />}
+                {searched.length === 0 && (
+                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                    <Users size={28} className="mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No members found</p>
+                  </div>
+                )}
 
-      {/* Pending invites section */}
-      <PendingInvites />
+                {/* pending section */}
+                {roleFilter === 'all' && counts.pending > 0 && (
+                  <>
+                    <div className="bg-amber-50/30 border-y border-amber-100 px-4 py-2">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending invitations</p>
+                    </div>
+                    {members.filter(m => m.status === 'pending').map(member => (
+                      <TeamMemberCard key={member.id} member={member} isCurrentUser={false} />
+                    ))}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === 'performance' && <AgentStats members={members} />}
+          {activeTab === 'permissions' && <RolePermissionsTable />}
+
+          {/* Pending invites section */}
+          {activeTab === 'members' && <PendingInvites />}
+        </div>
+
+        <TeamActivityPanel newMembers={newThisWeek} activeSessions={activeNowCount} pendingInvites={counts.pending} />
+      </div>
 
       {showInvite && <InviteMemberModal onClose={() => setShowInvite(false)} />}
     </div>

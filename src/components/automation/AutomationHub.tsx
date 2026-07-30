@@ -206,7 +206,7 @@ export default function AutomationHub({ activeTab }: Props) {
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl divide-y divide-[#f0f0f0] dark:divide-white/5 overflow-hidden">
                 {customRules.map((rule) => (
                   <RuleCard
                     key={rule.id}

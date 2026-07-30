@@ -1,31 +1,54 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { RefreshCw, Plus, Search, X, CheckCircle, Clock, XCircle, PauseCircle, Layers, Sparkles } from 'lucide-react'
+import { RefreshCw, Plus, Search, X, Clock, XCircle, PauseCircle, Layers, Sparkles, ArrowRight, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Template, TemplateStatus, TemplateCategory, CreateTemplateHeader } from '@/types'
 import { useTemplates, useSyncTemplates, useDeleteTemplate, useCreateTemplate } from '@/hooks/useTemplates'
 import { useSampleTemplates, type SampleTemplate } from '@/hooks/useSampleTemplates'
 import { usePermissions } from '@/lib/permissions'
-import TemplateCard from '@/components/templates/TemplateCard'
+import TemplateCard, { CATEGORY_CONFIG } from '@/components/templates/TemplateCard'
 import TemplateForm from '@/components/templates/TemplateForm'
 import TemplatePreview from '@/components/templates/TemplatePreview'
 import SampleTemplateCard from '@/components/templates/SampleTemplateCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import { format } from 'date-fns'
 
-const STATUS_TABS: { value: TemplateStatus | 'all'; label: string }[] = [
-  { value: 'all',      label: 'All' },
-  { value: 'APPROVED', label: 'Approved' },
-  { value: 'PENDING',  label: 'Pending' },
-  { value: 'REJECTED', label: 'Rejected' },
-  { value: 'PAUSED',   label: 'Paused' },
-]
+import totalTemplatesIcon from '@/assets/templates/icons/total-templates.png'
+import approvedIcon from '@/assets/templates/icons/approved.png'
+import pendingIcon from '@/assets/templates/icons/pending.png'
+import rejectedIcon from '@/assets/templates/icons/rejected.png'
+import marketingIcon from '@/assets/templates/icons/marketing.png'
+import utilityIcon from '@/assets/templates/icons/utility.png'
+import authenticationIcon from '@/assets/templates/icons/authentication.png'
+import promotionsIcon from '@/assets/templates/icons/promotions.png'
+import remindersIcon from '@/assets/templates/icons/reminders.png'
+import bannerIllustration from '@/assets/templates/icons/banner-illustration.png'
 
 const CATEGORY_TABS: { value: TemplateCategory | 'all'; label: string }[] = [
   { value: 'all',            label: 'All' },
   { value: 'MARKETING',      label: 'Marketing' },
   { value: 'UTILITY',        label: 'Utility' },
   { value: 'AUTHENTICATION', label: 'Authentication' },
+]
+
+// Decorative shortcuts shown in the "Create template" banner. Meta only recognises
+// three real template categories (see TemplateCategory) — Promotions and Reminders
+// aren't separate categories, they're just friendlier entry points that open the
+// create form pre-set to the closest real category (Marketing / Utility).
+const CREATE_CARDS: {
+  key: string
+  label: string
+  desc: string
+  icon: string
+  category: TemplateCategory
+  cardBg: string
+  cardBorder: string
+}[] = [
+  { key: 'marketing',      label: 'Marketing',      desc: 'Promote offers and engage customers', icon: marketingIcon,      category: 'MARKETING',      cardBg: 'bg-white dark:bg-[#0b1220]',              cardBorder: 'border-[#e8ebe8] dark:border-white/10' },
+  { key: 'utility',        label: 'Utility',        desc: 'Share important updates and info',    icon: utilityIcon,        category: 'UTILITY',        cardBg: 'bg-blue-50/60 dark:bg-blue-950/20',       cardBorder: 'border-blue-100 dark:border-blue-900/30' },
+  { key: 'authentication', label: 'Authentication', desc: 'Verify users and secure access',       icon: authenticationIcon, category: 'AUTHENTICATION', cardBg: 'bg-orange-50/60 dark:bg-orange-950/20',   cardBorder: 'border-orange-100 dark:border-orange-900/30' },
+  { key: 'promotions',     label: 'Promotions',     desc: 'Run discounts and special campaigns',  icon: promotionsIcon,     category: 'MARKETING',      cardBg: 'bg-purple-50/60 dark:bg-purple-950/20',   cardBorder: 'border-purple-100 dark:border-purple-900/30' },
+  { key: 'reminders',      label: 'Reminders',      desc: 'Send timely reminders and alerts',     icon: remindersIcon,      category: 'UTILITY',        cardBg: 'bg-amber-50/60 dark:bg-amber-950/20',     cardBorder: 'border-amber-100 dark:border-amber-900/30' },
 ]
 
 // Template['header'] (read shape: type/mediaUrl) → CreateTemplateHeader (write shape: format/mediaUrl)
@@ -131,6 +154,72 @@ function DetailSidebar({ template, onClose, onEdit, onUseInCampaign, onDelete, c
   )
 }
 
+function SampleDetailSidebar({ starter, existing, canUse, isSubmitting, onClose, onUse, onUseInCampaign }: {
+  starter: SampleTemplate
+  existing?: Template
+  canUse: boolean
+  isSubmitting: boolean
+  onClose: () => void
+  onUse: (starter: SampleTemplate) => void
+  onUseInCampaign: (template: Template) => void
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/20 z-30" onClick={onClose} />
+      <div className="fixed right-0 top-0 h-screen w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 shadow-2xl flex flex-col overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-[#0b1220] px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex items-center justify-between z-10">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate pr-4">{starter.title}</h3>
+          <button className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div className="px-6 py-5 space-y-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{starter.description}</p>
+
+          <TemplatePreview template={{
+            header: starter.payload.header
+              ? { type: starter.payload.header.format, text: starter.payload.header.text, mediaUrl: starter.payload.header.mediaUrl }
+              : undefined,
+            body: starter.payload.body,
+            footer: starter.payload.footer,
+            buttons: starter.payload.buttons?.buttons,
+          }} />
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Details</h4>
+            {[
+              ['Category', starter.category],
+              ['Language', starter.payload.language.toUpperCase()],
+              ['Meta status', existing?.status ?? 'Not submitted'],
+            ].map(([label, val]) => (
+              <div key={label} className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                <span className="text-gray-900 dark:text-white font-medium">{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-6 pb-6 mt-auto pt-4">
+          {existing?.status === 'APPROVED' ? (
+            <button className="btn-primary w-full h-10" onClick={() => onUseInCampaign(existing)}>
+              Use in new campaign
+            </button>
+          ) : existing?.status === 'PENDING' ? (
+            <div className="flex items-center justify-center gap-1.5 text-amber-600 dark:text-amber-400 text-sm font-medium h-10">
+              <Clock size={14} className="animate-pulse" />
+              Waiting for Meta approval
+            </div>
+          ) : (
+            <button className="btn-primary w-full h-10 disabled:opacity-50" disabled={isSubmitting || !canUse} onClick={() => onUse(starter)}>
+              {isSubmitting ? 'Submitting…' : 'Submit for review'}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function Templates() {
   const { data: templates = [], isLoading } = useTemplates()
   const syncTemplates = useSyncTemplates()
@@ -141,8 +230,11 @@ export default function Templates() {
   const [statusFilter, setStatusFilter] = useState<TemplateStatus | 'all'>('all')
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
   const [showForm, setShowForm] = useState(false)
+  const [createCategory, setCreateCategory] = useState<TemplateCategory>('MARKETING')
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
+  const [selectedSample, setSelectedSample] = useState<SampleTemplate | null>(null)
   const [editTemplate, setEditTemplate] = useState<Template | null>(null)
   const [duplicateTemplate, setDuplicateTemplate] = useState<Template | null>(null)
   const [wizardTemplate, setWizardTemplate] = useState<Template | null>(null)
@@ -234,12 +326,10 @@ export default function Templates() {
     })
   }
 
-  const filtered = templates.filter(t => {
-    if (statusFilter !== 'all' && t.status !== statusFilter) return false
-    if (categoryFilter !== 'all' && t.category !== categoryFilter) return false
-    if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+  const openCreateForm = (category: TemplateCategory = 'MARKETING') => {
+    setCreateCategory(category)
+    setShowForm(true)
+  }
 
   const counts = {
     all: templates.length,
@@ -250,20 +340,41 @@ export default function Templates() {
     DRAFT: templates.filter(t => t.status === 'DRAFT').length,
   }
 
-  const statCards = [
-    { label: 'Total templates', value: templates.length, bg: 'bg-purple-50 dark:bg-purple-950/30', color: 'text-purple-600 dark:text-purple-400', icon: Layers },
-    { label: 'Approved', value: counts.APPROVED, bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', color: 'text-[#1a5c3a]', icon: CheckCircle },
-    { label: 'Pending review', value: counts.PENDING, bg: 'bg-amber-50 dark:bg-amber-950/30', color: 'text-amber-600 dark:text-amber-400', icon: Clock },
-    { label: 'Rejected', value: counts.REJECTED, bg: 'bg-red-50 dark:bg-red-950/30', color: 'text-red-500 dark:text-red-400', icon: XCircle },
+  const statCards: { key: TemplateStatus | 'all'; label: string; sub: string; value: number; icon: string }[] = [
+    { key: 'all',      label: 'Total Templates', sub: 'All templates created',   value: counts.all,      icon: totalTemplatesIcon },
+    { key: 'APPROVED', label: 'Approved',         sub: 'Ready to use',            value: counts.APPROVED, icon: approvedIcon },
+    { key: 'PENDING',  label: 'Pending Review',   sub: 'Awaiting Meta review',    value: counts.PENDING,  icon: pendingIcon },
+    { key: 'REJECTED', label: 'Rejected',         sub: 'Not approved templates',  value: counts.REJECTED, icon: rejectedIcon },
   ]
 
+  // Category tab counts are scoped to the active status filter, so picking
+  // "Pending" and then looking at the category row shows what's actually pending.
+  const statusScoped = templates.filter(t => statusFilter === 'all' || t.status === statusFilter)
+  const categoryCounts = {
+    all: statusScoped.length,
+    MARKETING: statusScoped.filter(t => t.category === 'MARKETING').length,
+    UTILITY: statusScoped.filter(t => t.category === 'UTILITY').length,
+    AUTHENTICATION: statusScoped.filter(t => t.category === 'AUTHENTICATION').length,
+  }
+
+  const filtered = useMemo(() => {
+    return statusScoped
+      .filter(t => categoryFilter === 'all' || t.category === categoryFilter)
+      .filter(t => !search || t.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => {
+        const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        return sortOrder === 'desc' ? -diff : diff
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates, statusFilter, categoryFilter, search, sortOrder])
+
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen relative">
       {/* header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Templates</h1>
-          <p className="page-subtitle mt-0.5">Manage your WhatsApp message templates</p>
+          <p className="page-subtitle mt-0.5">Create, manage and sync your WhatsApp message templates. Sync with Meta and launch campaigns in seconds.</p>
         </div>
         <div className="flex items-center gap-3">
           {view === 'mine' && (
@@ -276,12 +387,79 @@ export default function Templates() {
               Sync from Meta
             </button>
           )}
-          {view === 'mine' && canCreateTemplate && (
-            <button className="btn btn-primary h-9 gap-2" onClick={() => setShowForm(true)}>
-              <Plus size={16} /> New Template
-            </button>
-          )}
         </div>
+      </div>
+
+      {/* banner illustration — floats below the header, outside the create-template box */}
+      {view === 'mine' && canCreateTemplate && (
+        <img
+          src={bannerIllustration}
+          alt=""
+          className="hidden lg:block absolute top-16 right-0 -translate-x-1/2 w-80 xl:w-96 pointer-events-none select-none opacity-95 z-10"
+        />
+      )}
+
+      {/* create template banner */}
+      {canCreateTemplate && (
+        <div className="relative rounded-2xl border border-[#d9f0e2] dark:border-emerald-900/30 bg-gradient-to-br from-[#eefaf3] via-[#f6fbf8] to-white dark:from-emerald-950/20 dark:via-[#0b1220] dark:to-[#0b1220] p-6 mb-6">
+          <div className="relative max-w-2xl">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Create template</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              <button className="font-semibold text-[#1a5c3a] hover:underline" onClick={() => openCreateForm('MARKETING')}>
+                Start from scratch
+              </button>
+              {' '}or choose a category to create a new WhatsApp template.
+            </p>
+          </div>
+          <div className="relative mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+            {CREATE_CARDS.map(card => {
+              const catConf = CATEGORY_CONFIG[card.category]
+              return (
+                <div key={card.key} className={cn('border rounded-xl p-3 flex items-center gap-3', card.cardBg, card.cardBorder)}>
+                  <img src={card.icon} alt="" className="w-20 h-20 object-contain flex-shrink-0" />
+                  <div className="min-w-0 flex flex-col">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{card.label}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 leading-snug">{card.desc}</p>
+                    <button
+                      className={cn(
+                        'mt-2 inline-flex items-center gap-1 self-start text-xs font-semibold rounded-lg border px-3 h-7 transition-colors',
+                        catConf.buttonBorder, catConf.buttonText, catConf.buttonHoverBg
+                      )}
+                      onClick={() => openCreateForm(card.category)}
+                    >
+                      Create <ArrowRight size={11} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* stats — also act as status filters */}
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center gap-0 mb-6">
+        {statCards.map((s, i) => (
+          <div key={s.key} className="flex items-center gap-0 flex-1">
+            <button
+              onClick={() => setStatusFilter(s.key)}
+              className={cn(
+                'flex items-center gap-4 flex-1 rounded-xl px-2 py-1 -mx-2 transition-colors text-left border-2',
+                statusFilter === s.key
+                  ? 'border-[#1a5c3a]/50 dark:border-emerald-400/50 shadow-sm'
+                  : 'border-transparent hover:bg-[#f7f8f6] dark:hover:bg-white/5'
+              )}
+            >
+              <img src={s.icon} alt="" className="w-11 h-11 object-contain flex-shrink-0" />
+              <div>
+                <p className={cn('text-2xl font-bold', statusFilter === s.key ? 'text-[#1a5c3a] dark:text-emerald-400' : 'text-gray-900 dark:text-white')}>{s.value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">{s.sub}</p>
+              </div>
+            </button>
+            {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
+          </div>
+        ))}
       </div>
 
       {/* view tabs */}
@@ -353,6 +531,7 @@ export default function Templates() {
                   isSubmitting={submittingStarterId === starter.id}
                   onUse={handleUseStarter}
                   onUseInCampaign={openWizard}
+                  onClick={setSelectedSample}
                 />
               ))}
             </div>
@@ -378,48 +557,8 @@ export default function Templates() {
         </div>
       )}
 
-      {/* stats */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center gap-0 mb-6">
-        {statCards.map((s, i) => {
-          const Icon = s.icon
-          return (
-            <div key={s.label} className="flex items-center gap-0 flex-1">
-              <div className="flex items-center gap-4 flex-1">
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', s.bg)}>
-                  <Icon size={18} className={s.color} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
-                </div>
-              </div>
-              {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
-            </div>
-          )
-        })}
-      </div>
-
       {/* filters */}
       <div className="flex items-center gap-3 mb-5 flex-wrap">
-        {/* status tabs */}
-        <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
-          {STATUS_TABS.map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={cn(
-                'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
-                statusFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              )}
-            >
-              {tab.label}
-              <span className={cn('text-[10px] rounded-full px-1.5', statusFilter === tab.value ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
-                {tab.value === 'all' ? counts.all : counts[tab.value as TemplateStatus] ?? 0}
-              </span>
-            </button>
-          ))}
-        </div>
-
         {/* category filter */}
         <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
           {CATEGORY_TABS.map(tab => (
@@ -427,24 +566,40 @@ export default function Templates() {
               key={tab.value}
               onClick={() => setCategoryFilter(tab.value)}
               className={cn(
-                'px-3 h-7 rounded-lg text-xs font-medium transition-all',
+                'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
                 categoryFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               )}
             >
               {tab.label}
+              <span className={cn('text-[10px] rounded-full px-1.5', categoryFilter === tab.value ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
+                {tab.value === 'all' ? categoryCounts.all : categoryCounts[tab.value as TemplateCategory] ?? 0}
+              </span>
             </button>
           ))}
         </div>
 
-        {/* search */}
-        <div className="ml-auto relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="input pl-8 w-56 h-9"
-            placeholder="Search templates..."
-          />
+        {/* search + sort */}
+        <div className="ml-auto flex items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="input pl-8 w-56 h-9"
+              placeholder="Search templates..."
+            />
+          </div>
+          <div className="relative">
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as 'desc' | 'asc')}
+              className="appearance-none bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 pl-3 pr-8 text-xs font-medium text-gray-600 dark:text-gray-300 cursor-pointer"
+            >
+              <option value="desc">Latest first</option>
+              <option value="asc">Oldest first</option>
+            </select>
+            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -463,7 +618,7 @@ export default function Templates() {
           <p className="text-xl font-semibold text-gray-700 dark:text-gray-300">No templates found</p>
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Create your first template to start sending campaigns</p>
           {canCreateTemplate && (
-            <button className="btn btn-primary h-10 px-6 mt-6 gap-2" onClick={() => setShowForm(true)}>
+            <button className="btn btn-primary h-10 px-6 mt-6 gap-2" onClick={() => openCreateForm('MARKETING')}>
               <Plus size={16} /> Create template
             </button>
           )}
@@ -496,6 +651,19 @@ export default function Templates() {
           onDelete={setDeleteTarget}
           canCreateTemplate={canCreateTemplate}
           canDeleteTemplate={canDeleteTemplate}
+        />
+      )}
+
+      {/* sample template detail sidebar */}
+      {selectedSample && (
+        <SampleDetailSidebar
+          starter={selectedSample}
+          existing={templates.find(t => t.name === selectedSample.payload.name)}
+          canUse={canCreateTemplate}
+          isSubmitting={submittingStarterId === selectedSample.id}
+          onClose={() => setSelectedSample(null)}
+          onUse={(s) => { setSelectedSample(null); handleUseStarter(s) }}
+          onUseInCampaign={(t) => { setSelectedSample(null); openWizard(t) }}
         />
       )}
 
@@ -562,7 +730,7 @@ export default function Templates() {
             footer: duplicateTemplate.footer,
             buttons: duplicateTemplate.buttons ? { buttons: duplicateTemplate.buttons } : undefined,
             sampleVariables: {},
-          } : undefined}
+          } : { category: createCategory }}
         />
       )}
     </div>

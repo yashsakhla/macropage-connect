@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, GitBranch, Sparkles, FileText, X, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import automationHero from '@/assets/automation/1.svg'
 import AutomationStats from '@/components/automation/AutomationStats'
 import AutomationHub from '@/components/automation/AutomationHub'
 import RuleForm from '@/components/automation/RuleForm'
@@ -126,12 +127,19 @@ export default function Automation() {
   return (
     <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724] p-6">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Automation</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Set up auto-replies, flows and AI to handle conversations automatically</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Zap size={22} className="text-[#1a5c3a] fill-[#1a5c3a]" /> Automation
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Smart automations to engage, respond and convert – on autopilot.</p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="hidden md:block h-40 aspect-[1908/880] overflow-hidden flex-shrink-0 -my-8">
+          <img src={automationHero} alt="" className="w-full h-full object-cover object-center" />
+        </div>
+
+        <div className="flex items-center gap-3 flex-shrink-0">
           <button className="btn-ghost h-9 text-sm flex items-center gap-1.5">
             <FileText size={14} /> View automation logs
           </button>

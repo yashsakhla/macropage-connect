@@ -1,14 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
-  Plus, Upload, Search, Calendar, ChevronDown,
-  Megaphone, Send, TrendingUp, Zap, LayoutList, LayoutGrid, ArrowUp, ArrowDown
+  Plus, Upload, Search, Calendar, ChevronDown, Download,
+  Megaphone, Send, LayoutList, LayoutGrid, ArrowUp, ArrowDown,
+  ArrowRight, CheckCheck, Eye,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { cn, downloadCSV } from '@/lib/utils'
 import type { Campaign, CampaignStatus } from '@/types'
 import { useCampaigns, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
-import CampaignCard from '@/components/campaigns/CampaignCard'
+import CampaignCard, { LIST_GRID_COLS } from '@/components/campaigns/CampaignCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
+import rocketIcon from '@/assets/campaigns/roccket.svg'
+import messageIcon from '@/assets/campaigns/message.svg'
+import goalIcon from '@/assets/campaigns/goal.svg'
 
 type DateRange = '7d' | '30d' | '90d' | 'all'
 type SortOrder = 'newest' | 'oldest'
@@ -48,6 +53,8 @@ export default function Campaigns() {
 
   const dateMenuRef = useRef<HTMLDivElement>(null)
   const sortMenuRef = useRef<HTMLDivElement>(null)
+  const campaignRowsRef = useRef<HTMLDivElement>(null)
+  const scrollToCampaignRows = () => campaignRowsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   // Opened via a deep link (e.g. global search quick actions), which pass
   // this through router state — mirrors the pattern used on the Templates page.
@@ -95,15 +102,28 @@ export default function Campaigns() {
 
   const totalSent = campaigns.reduce((a, c) => a + c.sent, 0)
   const totalDelivered = campaigns.reduce((a, c) => a + c.delivered, 0)
-  const avgDelivery = totalSent > 0 ? ((totalDelivered / totalSent) * 100).toFixed(1) : '—'
-  const activeCount = campaigns.filter(c => c.status === 'running').length
+  const totalRead = campaigns.reduce((a, c) => a + c.read, 0)
+  const openRate = totalSent > 0 ? ((totalRead / totalSent) * 100).toFixed(1) : '—'
 
-  const statCards = [
-    { label: 'Total campaigns', value: campaigns.length, icon: Megaphone, bg: 'bg-purple-50 dark:bg-purple-950/30', color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Messages sent', value: totalSent.toLocaleString(), icon: Send, bg: 'bg-blue-50 dark:bg-blue-950/30', color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Avg delivery rate', value: `${avgDelivery}%`, icon: TrendingUp, bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', color: 'text-[#1a5c3a]' },
-    { label: 'Active now', value: activeCount, icon: Zap, bg: 'bg-amber-50 dark:bg-amber-950/30', color: 'text-amber-600 dark:text-amber-400' },
+  const promoMetrics = [
+    { label: 'Messages Sent', value: totalSent.toLocaleString(), icon: Send },
+    { label: 'Delivered', value: totalDelivered.toLocaleString(), icon: CheckCheck },
+    { label: 'Open Rate', value: `${openRate}%`, icon: Eye },
   ]
+
+  const handleDownloadReport = () => {
+    const rows = [
+      ['Campaign', 'Type', 'Created At', 'Status', 'Audience'],
+      ...filtered.map(c => [
+        c.name,
+        c.audienceType.toUpperCase(),
+        format(new Date(c.createdAt), 'dd MMM yyyy, h:mm a'),
+        c.status,
+        String(c.totalContacts),
+      ]),
+    ]
+    downloadCSV(`campaigns-report-${format(new Date(), 'yyyy-MM-dd')}.csv`, rows)
+  }
 
   return (
     <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
@@ -123,49 +143,80 @@ export default function Campaigns() {
         </div>
       </div>
 
-      {/* stats row */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center mb-6">
-        {statCards.map((s, i) => {
-          const Icon = s.icon
-          return (
-            <div key={s.label} className="flex items-center flex-1">
-              <div className="flex items-center gap-4 flex-1">
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', s.bg)}>
-                  <Icon size={18} className={s.color} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
-                </div>
-              </div>
-              {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
-            </div>
-          )
-        })}
+      {/* promo cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <PromoCampaignCard
+          badge="Product Launch"
+          title={<>Product<br />Launch</>}
+          description="Introduce your new product to your audience and drive maximum engagement."
+          image={rocketIcon}
+          imageAlt=""
+          cardClass="bg-gradient-to-br from-[#e8f5ee] to-[#d5f0e2] border-[#c8e6d4]"
+          badgeClass="bg-white/70 text-[#1a5c3a]"
+          buttonClass="bg-[#1a5c3a] hover:bg-[#164a30]"
+          metrics={promoMetrics}
+          ctaLabel="Create Campaign"
+          onCta={() => setShowWizard(true)}
+          onSecondary={() => setShowWizard(true)}
+          secondaryIcon={Plus}
+        />
+        <PromoCampaignCard
+          badge="Track Campaigns"
+          title={<>Track<br />Campaigns</>}
+          description="Monitor delivery, opens and replies across every campaign you send."
+          image={messageIcon}
+          imageAlt=""
+          cardClass="bg-gradient-to-br from-[#fff7e6] to-[#ffedc2] border-[#ffe1a3]"
+          badgeClass="bg-white/70 text-amber-700"
+          buttonClass="bg-amber-500 hover:bg-amber-600"
+          metrics={promoMetrics}
+          ctaLabel="Create Campaign"
+          onCta={() => setShowWizard(true)}
+          onSecondary={scrollToCampaignRows}
+          secondaryIcon={ArrowDown}
+        />
+        <PromoCampaignCard
+          badge="Campaign Stats"
+          title={<>Campaign<br />Stats</>}
+          description="Track performance across all your WhatsApp campaigns at a glance."
+          image={goalIcon}
+          imageAlt=""
+          cardClass="bg-gradient-to-br from-[#f3eefd] to-[#e6d9fb] border-[#ddc8f7]"
+          badgeClass="bg-white/70 text-purple-700"
+          buttonClass="bg-purple-600 hover:bg-purple-700"
+          metrics={promoMetrics}
+          ctaLabel="Download Report"
+          onCta={handleDownloadReport}
+          onSecondary={handleDownloadReport}
+          secondaryIcon={Download}
+        />
       </div>
 
       {/* filters + search */}
-      <div className="flex items-center gap-3 mt-6 mb-4 flex-wrap">
-        {/* status tabs */}
-        <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
+      <div ref={campaignRowsRef} className="flex items-end justify-between gap-3 mt-6 mb-4 flex-wrap border-b border-[#e8ebe8] dark:border-white/10">
+        {/* status tabs — underline style */}
+        <div className="flex items-center gap-5">
           {STATUS_TABS.map(tab => (
             <button
               key={tab.value}
               onClick={() => setStatusFilter(tab.value)}
               className={cn(
-                'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
-                statusFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                'relative pb-3 text-sm font-medium transition-colors flex items-center gap-1.5',
+                statusFilter === tab.value ? 'text-[#1a5c3a]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               )}
             >
               {tab.label}
-              <span className={cn('text-[10px] rounded-full px-1.5', statusFilter === tab.value ? 'bg-white/20 text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
+              <span className={cn('text-[10px] rounded-full px-1.5', statusFilter === tab.value ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-400 dark:text-gray-500')}>
                 {counts[tab.value] ?? 0}
               </span>
+              {statusFilter === tab.value && (
+                <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-[#1a5c3a] rounded-full" />
+              )}
             </button>
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2 pb-3">
           {/* search */}
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
@@ -251,6 +302,15 @@ export default function Campaigns() {
               <LayoutGrid size={14} />
             </button>
           </div>
+
+          {/* report export */}
+          <button
+            className="btn btn-outline h-9 gap-2"
+            onClick={handleDownloadReport}
+            disabled={filtered.length === 0}
+          >
+            <Download size={14} /> Download Report
+          </button>
         </div>
       </div>
 
@@ -264,7 +324,15 @@ export default function Campaigns() {
       ) : filtered.length === 0 ? (
         <EmptyState onCreateClick={() => setShowWizard(true)} hasFilter={statusFilter !== 'all' || !!search || dateRange !== 'all'} />
       ) : view === 'list' ? (
-        <div className="flex flex-col gap-3">
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+          <div
+            className="grid items-center gap-3 px-5 py-3 border-b border-[#eef0ee] dark:border-white/10 bg-[#fafbfa] dark:bg-white/5"
+            style={{ gridTemplateColumns: LIST_GRID_COLS }}
+          >
+            {['Campaign', 'Status', 'Contacts', 'Delivered', 'Open Rate', 'Sent', 'Read', 'Failed', 'Last Updated', ''].map(label => (
+              <span key={label} className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{label}</span>
+            ))}
+          </div>
           {filtered.map(c => (
             <CampaignCard
               key={c.id}
@@ -298,6 +366,67 @@ export default function Campaigns() {
           onSuccess={(id: string) => navigate(`/campaigns/${id}`)}
         />
       )}
+    </div>
+  )
+}
+
+function PromoCampaignCard({
+  badge, title, description, image, imageAlt,
+  cardClass, badgeClass, buttonClass,
+  metrics, ctaLabel, onCta, onSecondary, secondaryIcon: SecondaryIcon,
+}: {
+  badge: string
+  title: React.ReactNode
+  description: string
+  image: string
+  imageAlt: string
+  cardClass: string
+  badgeClass: string
+  buttonClass: string
+  metrics: { label: string; value: string; icon: React.ElementType }[]
+  ctaLabel: string
+  onCta: () => void
+  onSecondary: () => void
+  secondaryIcon: React.ElementType
+}) {
+  return (
+    <div className={cn('relative rounded-2xl border overflow-hidden p-5 flex flex-col h-full dark:border-white/10', cardClass)}>
+      <img src={image} alt={imageAlt} className="pointer-events-none select-none absolute -top-3 -right-3 w-56 h-56 object-contain drop-shadow-lg" />
+      <span className={cn('inline-flex w-fit text-2xs font-semibold px-2.5 py-1 rounded-full mb-3 relative z-10', badgeClass)}>
+        {badge}
+      </span>
+      <h3 className="text-2xl font-bold text-gray-900 leading-tight max-w-[62%] relative z-10">{title}</h3>
+      <p className="text-xs text-gray-600 mt-2 max-w-[62%] leading-relaxed relative z-10">{description}</p>
+      <div className="mt-auto pt-6">
+        <div className="flex items-center border-t border-black/10 pt-3 mb-3 relative z-10">
+          {metrics.map(m => {
+            const Icon = m.icon
+            return (
+              <div key={m.label} className="flex-1 flex items-center gap-1.5 min-w-0">
+                <Icon size={13} className="text-gray-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-2xs text-gray-500 leading-none truncate">{m.label}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight mt-0.5">{m.value}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="flex items-center gap-2 relative z-10">
+          <button
+            onClick={onCta}
+            className={cn('flex-1 h-10 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1.5 transition-colors', buttonClass)}
+          >
+            {ctaLabel} <ArrowRight size={14} />
+          </button>
+          <button
+            onClick={onSecondary}
+            className="w-10 h-10 rounded-xl bg-white/70 hover:bg-white flex items-center justify-center text-gray-600 shrink-0 transition-colors"
+          >
+            <SecondaryIcon size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

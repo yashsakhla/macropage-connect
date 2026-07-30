@@ -5,10 +5,10 @@ import type { CampaignRecipient } from '@/types'
 
 const STATUS_TABS = [
   { value: 'all',       label: 'All' },
-  { value: 'pending',   label: 'Pending' },
   { value: 'sent',      label: 'Sent' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'read',      label: 'Read' },
+  { value: 'replied',   label: 'Replied' },
   { value: 'failed',    label: 'Failed' },
 ] as const
 
@@ -35,11 +35,14 @@ function Avatar({ name }: { name: string }) {
 interface RecipientTableProps {
   recipients: CampaignRecipient[]
   isLoading?: boolean
+  // campaign-level totals — when provided, tab badge counts reflect the
+  // whole campaign rather than just the (possibly paginated) recipients list
+  campaignTotals?: { sent: number; delivered: number; read: number; replied: number; failed: number }
 }
 
 const PER_PAGE = 10
 
-export default function RecipientTable({ recipients, isLoading }: RecipientTableProps) {
+export default function RecipientTable({ recipients, isLoading, campaignTotals }: RecipientTableProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -56,8 +59,17 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  const counts: Record<string, number> = { all: recipients.length }
-  recipients.forEach(r => { counts[r.status] = (counts[r.status] ?? 0) + 1 })
+  const counts: Record<string, number> = campaignTotals
+    ? {
+        all: recipients.length,
+        sent: campaignTotals.sent,
+        delivered: campaignTotals.delivered,
+        read: campaignTotals.read,
+        replied: campaignTotals.replied,
+        failed: campaignTotals.failed,
+      }
+    : { all: recipients.length }
+  if (!campaignTotals) recipients.forEach(r => { counts[r.status] = (counts[r.status] ?? 0) + 1 })
 
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
@@ -121,13 +133,14 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
               <th>Status</th>
               <th>Delivered</th>
               <th>Read</th>
-              <th>Failure reason</th>
+              <th>Replied</th>
+              <th>Clicked</th>
             </tr>
           </thead>
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-gray-400 dark:text-gray-500 py-10">No recipients found</td>
+                <td colSpan={7} className="text-center text-gray-400 dark:text-gray-500 py-10">No recipients found</td>
               </tr>
             ) : paged.map(r => {
               const badge = STATUS_BADGE[r.status]
@@ -143,7 +156,12 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{formatPhone(r.phone)}</span>
                   </td>
                   <td>
-                    <span className={cn('badge text-xs', badge.bg, badge.text)}>{badge.label}</span>
+                    <span
+                      className={cn('badge text-xs', badge.bg, badge.text)}
+                      title={r.status === 'failed' ? r.failureReason : undefined}
+                    >
+                      {badge.label}
+                    </span>
                   </td>
                   <td>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -155,15 +173,9 @@ export default function RecipientTable({ recipients, isLoading }: RecipientTable
                       {r.readAt ? fromNow(r.readAt) : '—'}
                     </span>
                   </td>
-                  <td>
-                    {r.failureReason ? (
-                      <span className="text-xs text-red-500 dark:text-red-400 truncate max-w-32 block" title={r.failureReason}>
-                        {r.failureReason}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
-                    )}
-                  </td>
+                  {/* per-recipient reply/click timestamps aren't tracked yet — only campaign-level totals exist */}
+                  <td><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
+                  <td><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
                 </tr>
               )
             })}
