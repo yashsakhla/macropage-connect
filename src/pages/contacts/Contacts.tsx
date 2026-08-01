@@ -38,8 +38,15 @@ const SEGMENT_FILTERS: Record<string, Partial<ContactFilters>> = {
   seg_silent: { status: 'inactive' },
 }
 
-function applyClientFilters(contacts: Contact[], filters: ContactFilters, activeTags: string[]): Contact[] {
+function applyClientFilters(contacts: Contact[], filters: ContactFilters, activeTags: string[], segmentContactIds?: string[]): Contact[] {
   let result = contacts
+
+  // custom segment — restrict to its explicit member list, since its "filters"
+  // are just pagination params and carry no actual matching criteria
+  if (segmentContactIds) {
+    const idSet = new Set(segmentContactIds)
+    result = result.filter(c => idSet.has(c.id))
+  }
 
   // status — "opted_out" also covers contacts whose isOptedOut flag is set
   // without their status field having been separately updated to match.
@@ -204,10 +211,16 @@ export default function Contacts() {
     return counts
   }, [allContacts])
 
+  // when the active segment is a custom one, restrict to its explicit contactIds
+  const activeSegmentContactIds = useMemo(
+    () => customSegments.find(s => s.id === activeSegmentId)?.contactIds,
+    [customSegments, activeSegmentId]
+  )
+
   // apply all non-search filters client-side
   const contacts = useMemo(
-    () => applyClientFilters(allContacts, filters, activeTags),
-    [allContacts, filters, activeTags]
+    () => applyClientFilters(allContacts, filters, activeTags, activeSegmentContactIds),
+    [allContacts, filters, activeTags, activeSegmentContactIds]
   )
 
   const filterCount = useFilterCount(filters)

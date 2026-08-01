@@ -36,7 +36,7 @@ export function useUpdateAvatar() {
   return useMutation({
     mutationFn: async (file: File) => {
       const { url } = await uploadImage(file)
-      return api.patch('/me', { avatarUrl: url }).then((r) => r.data)
+      return api.patch('/users/me', { avatarUrl: url }).then((r) => r.data)
     },
     onSuccess: ({ data }) => {
       if (data?.user) setUser(data.user)

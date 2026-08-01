@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   MoreVertical, XCircle, Clock, PauseCircle, Pencil, RotateCcw, Copy,
   Megaphone, Wrench, ShieldCheck, Globe, RotateCw, TrendingUp, CalendarDays, Infinity,
-  ArrowRight, FileText,
+  ArrowRight, FileText, Image, Video, File, MousePointerClick,
 } from 'lucide-react'
 import type { Template, TemplateCategory } from '@/types'
 import { cn } from '@/lib/utils'
@@ -66,6 +66,12 @@ export const CATEGORY_CONFIG: Record<TemplateCategory, {
 
 const LANG_FLAG: Record<string, string> = {
   en: '🇬🇧', en_US: '🇬🇧', hi: '🇮🇳', ta: '🇮🇳', te: '🇮🇳', mr: '🇮🇳', bn: '🇮🇳', gu: '🇮🇳', kn: '🇮🇳',
+}
+
+const MEDIA_HEADER_ICON: Record<'IMAGE' | 'VIDEO' | 'DOCUMENT', React.ElementType> = {
+  IMAGE: Image,
+  VIDEO: Video,
+  DOCUMENT: File,
 }
 
 function formatCount(n: number): string {
@@ -175,9 +181,34 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
               {template.header?.type === 'TEXT' && template.header.text && (
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">{template.header.text}</p>
               )}
+              {template.header && template.header.type !== 'TEXT' && (() => {
+                const MediaIcon = MEDIA_HEADER_ICON[template.header.type]
+                return (
+                  <div className="flex items-center gap-1.5 bg-white/60 dark:bg-white/10 rounded-lg px-2 py-1.5 mb-1.5 text-[10px] font-medium text-gray-600 dark:text-gray-300">
+                    <MediaIcon size={12} className="flex-shrink-0" />
+                    {template.header.type.charAt(0) + template.header.type.slice(1).toLowerCase()} header
+                  </div>
+                )
+              })()}
               <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed">
                 {renderBodyWithPills(template.body)}
               </p>
+              {template.footer && (
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">{template.footer}</p>
+              )}
+              {template.buttons && template.buttons.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-black/5 dark:border-white/10">
+                  {template.buttons.slice(0, 3).map((btn, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 bg-white/70 dark:bg-white/10 text-gray-700 dark:text-gray-200 text-[10px] font-medium rounded-md px-1.5 py-0.5 truncate max-w-full">
+                      <MousePointerClick size={10} className="flex-shrink-0" />
+                      {btn.text}
+                    </span>
+                  ))}
+                  {template.buttons.length > 3 && (
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 self-center">+{template.buttons.length - 3} more</span>
+                  )}
+                </div>
+              )}
               <div className="flex justify-end mt-1">
                 <span className="text-[9px] text-gray-400 dark:text-gray-500">
                   {format(new Date(template.updatedAt ?? template.createdAt), 'h:mm a')}
@@ -228,7 +259,7 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
       <div className="border-t border-[#f5f5f5] dark:border-white/10 px-5 py-3 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
         {/* left: sync status */}
         <div className="flex items-center gap-1.5 min-w-0">
-          <Infinity size={14} className="text-blue-500 flex-shrink-0" />
+          <Infinity size={20} className="text-blue-500 flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-[11px] font-medium text-gray-700 dark:text-gray-300 leading-tight">Synced with Meta</p>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">

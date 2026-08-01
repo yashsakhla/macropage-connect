@@ -135,6 +135,7 @@ export interface ContactSegment {
   name: string
   color: string
   filters: ContactFilters
+  contactIds?: string[]
   contactCount: number
   isBuiltIn?: boolean
   createdAt: string
