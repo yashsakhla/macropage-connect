@@ -65,7 +65,7 @@ export default function ContactSegments({
             key={seg.id}
             name={seg.name}
             color={seg.color}
-            count={seg.contactCount}
+            count={seg.contactIds?.length ?? seg.contactCount}
             active={activeSegmentId === seg.id}
             onClick={() => onSegmentChange(seg.id)}
           />

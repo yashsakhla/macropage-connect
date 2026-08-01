@@ -9,6 +9,7 @@ function normalizeSegment(raw: any): ContactSegment {
     name: raw.name,
     color: raw.color ?? '#1a5c3a',
     filters: raw.filters ?? {},
+    contactIds: raw.contactIds,
     contactCount: raw.count ?? raw.contactCount ?? 0,
     isBuiltIn: raw.type ? raw.type !== 'custom' : (raw.isBuiltIn ?? false),
     createdAt: raw.createdAt,

@@ -391,7 +391,7 @@ function PromoCampaignCard({
 }) {
   return (
     <div className={cn('relative rounded-2xl border overflow-hidden p-5 flex flex-col h-full dark:border-white/10', cardClass)}>
-      <img src={image} alt={imageAlt} className="pointer-events-none select-none absolute -top-3 -right-3 w-56 h-56 object-contain drop-shadow-lg" />
+      <img src={image} alt={imageAlt} className="pointer-events-none select-none absolute -top-2 -right-3 w-56 h-56 object-contain drop-shadow-lg" />
       <span className={cn('inline-flex w-fit text-2xs font-semibold px-2.5 py-1 rounded-full mb-3 relative z-10', badgeClass)}>
         {badge}
       </span>
