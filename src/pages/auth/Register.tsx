@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
 import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
-import { cn } from '@/lib/utils'
+import { cn, stripEmojis } from '@/lib/utils'
+import FormError from '@/components/shared/FormError'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import blackLogo from '@assets/macropage-connect-black.svg'
@@ -21,15 +22,17 @@ import signup5 from '@/assets/signup/5.svg'
 const signupImages = [signup1, signup2, signup3, signup4, signup5]
 
 const passwordRegex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
+const nameRegex = /^[A-Za-z][A-Za-z' -]*$/;
+const companyNameRegex = /^[A-Za-z0-9][A-Za-z0-9&.,'\- ]*$/;
 
 const schema = z.object({
-  firstName: z.string().min(2, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Enter a valid email'),
-  companyName: z.string().min(2, 'Company name is required'),
+  firstName: z.string().min(2, 'First name is required').max(50, 'First name must be at most 50 characters').regex(nameRegex, 'First name can only contain letters, spaces, hyphens and apostrophes'),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name must be at most 50 characters').regex(nameRegex, 'Last name can only contain letters, spaces, hyphens and apostrophes'),
+  email: z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email'),
+  companyName: z.string().min(2, 'Company name is required').max(100, 'Company name must be at most 100 characters').regex(companyNameRegex, 'Company name contains invalid characters'),
   phone: z.string().optional().refine((v) => !v || /^\d{10}$/.test(v), 'Enter a valid 10-digit number'),
-  password: z.string().min(8, 'Password must be at least 8 characters').regex(passwordRegex, 'Password must contain uppercase, lowercase, number and special character'),
-  confirmPassword: z.string(),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(64, 'Password must be at most 64 characters').regex(passwordRegex, 'Password must contain uppercase, lowercase, number and special character'),
+  confirmPassword: z.string().max(64, 'Password must be at most 64 characters'),
   terms: z.boolean().refine((v) => v === true, 'You must accept the terms'),
   updates: z.boolean().optional(),
 }).superRefine((val, ctx) => {
@@ -59,7 +62,7 @@ export default function Register() {
   const [heroImage] = useState(() => signupImages[Math.floor(Math.random() * signupImages.length)])
   const reg = useRegister()
   const googleAuth = useGoogleAuth()
-  const { register: r, handleSubmit, watch, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register: r, handleSubmit, watch, formState: { errors, isValid } } = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onChange' })
   const pw = watch('password') || ''
   const score = passwordScore(pw)
 
@@ -186,28 +189,36 @@ export default function Register() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">First name</div>
-                <input {...r('firstName')} className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.firstName && 'border-red-400')} />
-                {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName.message}</p>}
+                <input {...r('firstName')} maxLength={50}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.firstName && 'border-red-400')} />
+                <FormError message={errors.firstName?.message} />
               </div>
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Last name</div>
-                <input {...r('lastName')} className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.lastName && 'border-red-400')} />
-                {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName.message}</p>}
+                <input {...r('lastName')} maxLength={50}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.lastName && 'border-red-400')} />
+                <FormError message={errors.lastName?.message} />
               </div>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Work email</div>
-              <input {...r('email')} type="email" className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.email && 'border-red-400')} />
+              <input {...r('email')} type="email" maxLength={254}
+                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.email && 'border-red-400')} />
               <p className="text-xs text-gray-500 mt-1">Use your company email for better deliverability</p>
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              <FormError message={errors.email?.message} />
             </div>
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Company / Business name</div>
-              <input {...r('companyName')} className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.companyName && 'border-red-400')} />
+              <input {...r('companyName')} maxLength={100}
+                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.companyName && 'border-red-400')} />
               <p className="text-xs text-gray-500 mt-1">This will appear on your WhatsApp business profile</p>
-              {errors.companyName && <p className="text-xs text-red-500 mt-1">{errors.companyName.message}</p>}
+              <FormError message={errors.companyName?.message} />
             </div>
 
             <div>
@@ -224,14 +235,16 @@ export default function Register() {
                   className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl flex-1', errors.phone && 'border-red-400')}
                 />
               </div>
-              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+              <FormError message={errors.phone?.message} />
               <p className="text-xs text-gray-500 mt-1">This is not your WhatsApp Business number — enter your business contact number, not the WhatsApp Business number you'll use for messaging</p>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Password</div>
               <div className="relative">
-                <input {...r('password')} type={showPassword ? 'text' : 'password'} className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-12', errors.password && 'border-red-400')} />
+                <input {...r('password')} type={showPassword ? 'text' : 'password'} maxLength={64}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-12', errors.password && 'border-red-400')} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
               <div className="mt-2">
@@ -250,13 +263,15 @@ export default function Register() {
                   <div className="flex items-center gap-2"><span className={/[^A-Za-z0-9]/.test(pw) ? 'text-green-500' : 'text-gray-300'}>{/[^A-Za-z0-9]/.test(pw) ? '✓' : '•'}</span> At least one special character</div>
                 </div>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+              <FormError message={errors.password?.message} />
             </div>
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Confirm password</div>
-              <input {...r('confirmPassword')} type="password" className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
-              {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}
+              <input {...r('confirmPassword')} type="password" maxLength={64}
+                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
+              <FormError message={errors.confirmPassword?.message} />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -264,7 +279,7 @@ export default function Register() {
               <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-sm text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
 
-            <button type="submit" disabled={reg.isPending} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
+            <button type="submit" disabled={reg.isPending || !isValid} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-100" />
@@ -272,14 +287,14 @@ export default function Register() {
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            <div className="flex justify-center [&>div]:w-full">
+            <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={(cred) => {
                   if (cred.credential) googleAuth.mutate(cred.credential)
                   else toast.error('Google sign-in failed')
                 }}
                 onError={() => toast.error('Google sign-in failed')}
-                width="384"
+                width="448"
                 text="signup_with"
                 shape="pill"
               />

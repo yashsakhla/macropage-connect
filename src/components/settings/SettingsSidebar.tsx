@@ -64,8 +64,9 @@ export default function SettingsSidebar({ activeSection }: Props) {
   const navigate = useNavigate()
   const user = useAuthStore(s => s.user)
   const isPlanExpired = useAuthStore(s => s.isPlanExpired)
-  const plan = user?.plan ?? 'trial'
+  const plan = (user?.billingPlan ?? user?.plan ?? 'trial').toLowerCase()
   const initials = (user?.companyName ?? user?.name ?? 'M').charAt(0).toUpperCase()
+  const avatarUrl = user?.avatarUrl
   const {
     canAccessBilling,
     canViewSettings,
@@ -115,8 +116,12 @@ export default function SettingsSidebar({ activeSection }: Props) {
       {/* Company identity */}
       <div className="px-4 py-4 border-b border-[#e8ebe8] dark:border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1a3d2b] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {initials}
+          <div className="w-10 h-10 rounded-xl bg-[#1a3d2b] flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={user?.name ?? 'Profile'} className="w-full h-full object-cover" />
+            ) : (
+              <span>{initials}</span>
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.companyName ?? 'My Company'}</p>

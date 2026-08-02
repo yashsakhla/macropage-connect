@@ -2,7 +2,7 @@ import { NavLink, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Megaphone, FileText,
   Users, Users2, Settings, ChevronLeft, ChevronRight,
-  HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock,
+  HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock, BookOpen,
 } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -35,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/campaigns',  label: 'Campaigns',  Icon: Megaphone,       permission: 'view_campaigns',   feature: null              },
   { to: '/templates',  label: 'Templates',  Icon: FileText,        permission: 'view_templates',   feature: null              },
   { to: '/automation', label: 'Automation', Icon: Zap,             permission: 'view_automation',  feature: 'automation_rules'},
+  { to: '/developers', label: 'Developers', Icon: BookOpen,        permission: null,               feature: null              },
   { to: '/team',       label: 'Team',       Icon: Users2,          permission: 'view_team',        feature: null              },
 ]
 
@@ -58,19 +59,21 @@ export default function Sidebar() {
 
   // Mirror ProtectedRoute's exact expiry check so sidebar and route guard stay in sync
   const isOwner = (((user?.role as string) ?? '').toUpperCase()) === 'OWNER'
+  const activePlan = (user?.billingPlan ?? user?.plan ?? 'TRIAL') as string
   const trialExpiredForOwner =
     isOwner &&
-    normalisePlan(user?.plan as string | undefined) === 'TRIAL' &&
+    normalisePlan(activePlan) === 'TRIAL' &&
     !!user?.trialEndsAt &&
     new Date(user.trialEndsAt) < new Date()
   const planExpired = isOwner && (trialExpiredForOwner || user?.subscriptionActive === false)
 
-  const plan = normalisePlan(user?.plan as string | undefined)
+  const plan = normalisePlan(activePlan)
   const role = (((user?.role as string) ?? 'AGENT').toUpperCase() as Role)
   const userPerms = ROLE_PERMISSIONS[role] ?? []
   const initials = user?.name
     ? user.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('')
     : 'U'
+  const avatarUrl = user?.avatarUrl
 
   const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.TRIAL
   const inTrial = isInTrial()
@@ -234,12 +237,16 @@ export default function Sidebar() {
                 <div className="p-4 flex flex-col gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={cn(
-                      'w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white ring-2 ring-white',
+                      'w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white ring-2 ring-white overflow-hidden',
                       planExpired
                         ? 'bg-gradient-to-tr from-red-600 to-red-400'
                         : 'bg-gradient-to-tr from-[var(--primary)] via-blue-500 to-violet-500'
                     )}>
-                      {initials}
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt={user?.name ?? 'Profile'} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{initials}</span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold name text-gray-900 truncate">{user?.name ?? 'Your name'}</div>

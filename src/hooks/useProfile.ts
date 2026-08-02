@@ -7,9 +7,16 @@ import type { UpdateProfilePayload, ChangePasswordPayload } from '@/types'
 
 export function useProfile() {
   const user = useAuthStore((s) => s.user)
+  const setUser = useAuthStore((s) => s.setUser)
+
   return useQuery({
     queryKey: ['profile', user?.id],
-    queryFn: () => api.get('/users/me').then((r) => r.data.data),
+    queryFn: () =>
+      api.get('/users/me').then((r) => {
+        const profile = r.data?.data?.user ?? r.data?.data ?? r.data?.user ?? r.data
+        if (profile) setUser(profile)
+        return profile
+      }),
     enabled: !!user?.id,
   })
 }

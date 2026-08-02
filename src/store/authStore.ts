@@ -14,14 +14,15 @@ function decodeRoleFromToken(token: string): string | undefined {
 // Normalise role + plan to UPPERCASE so permission lookups always work
 // regardless of whether the backend returns 'owner' or 'OWNER'
 function normaliseUser(incoming: User): User {
+  const activePlan = incoming.billingPlan ?? incoming.plan ?? 'TRIAL'
+
   return {
     whatsappSetupDone: false,
     emailVerified: false,
     ...incoming,
     role: (incoming.role as string)?.toUpperCase() as User['role'],
-    plan: incoming.plan
-      ? (incoming.plan as string).toUpperCase()
-      : 'TRIAL',
+    billingPlan: incoming.billingPlan ?? incoming.plan,
+    plan: activePlan ? (activePlan as string).toUpperCase() : 'TRIAL',
   }
 }
 
@@ -67,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
         })
       },
 
-      setUser: (user) => set({ user: normaliseUser(user) }),
+      setUser: (user) => set((state) => ({ user: normaliseUser({ ...state.user, ...user }) })),
 
       setToken: (token) => set({ token }),
 
@@ -78,8 +79,9 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       isInTrial: () => {
-        // 'FREE' is backend's alias for the trial plan — treat both as TRIAL
-        const plan = (get().user?.plan ?? 'TRIAL').toUpperCase()
+        // Prefer the current billing plan when present; /auth/me may still be stale
+        // in persisted storage while the backend has already moved the account forward.
+        const plan = ((get().user?.billingPlan ?? get().user?.plan ?? 'TRIAL') as string).toUpperCase()
         return plan === 'TRIAL' || plan === 'FREE'
       },
 
@@ -92,7 +94,7 @@ export const useAuthStore = create<AuthState>()(
         return Math.max(0, diff)
       },
 
-      effectivePlan: () => get().user?.plan ?? 'TRIAL',
+      effectivePlan: () => get().user?.billingPlan ?? get().user?.plan ?? 'TRIAL',
 
       isPlanExpired: () => {
         const u = get().user
@@ -100,8 +102,8 @@ export const useAuthStore = create<AuthState>()(
         const status = (u.status as string ?? '').toUpperCase()
         if (status === 'SUSPENDED') return true
         if (u.subscriptionActive === false) return true
-        // 'FREE' is the backend alias for the 14-day trial — treat same as 'TRIAL'
-        const plan = (u.plan ?? 'TRIAL').toUpperCase()
+        // Prefer the active billing plan; the stale persisted plan may still say FREE.
+        const plan = ((u.billingPlan ?? u.plan ?? 'TRIAL') as string).toUpperCase()
         if (plan === 'TRIAL' || plan === 'FREE') {
           const daysLeft = get().trialDaysLeft()
           return daysLeft <= 0

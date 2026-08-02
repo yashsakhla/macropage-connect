@@ -3,6 +3,46 @@ import { toast } from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { TicketPayload, SearchResult, HelpArticle, HelpCategory, FAQ, SystemStatus } from '@/types'
 
+function normalizeSystemStatus(raw: any): SystemStatus {
+  const payload = raw?.data ?? raw ?? {}
+
+  const services = Array.isArray(payload.services)
+    ? payload.services.map((svc: any) => ({
+        name: svc?.name ?? 'Service',
+        status: svc?.status === 'degraded' ? 'degraded' : svc?.status === 'outage' ? 'outage' : 'operational',
+        uptime: typeof svc?.uptime === 'number' ? svc.uptime : 100,
+        history: Array.isArray(svc?.history) && svc.history.length > 0
+          ? svc.history.map((h: any) => h === 'degraded' ? 'degraded' : h === 'outage' ? 'outage' : 'operational')
+          : [svc?.status === 'degraded' ? 'degraded' : svc?.status === 'outage' ? 'outage' : 'operational'],
+      }))
+    : []
+
+  const incidents = Array.isArray(payload.incidents) && payload.incidents.length > 0
+    ? payload.incidents.map((incident: any) => ({
+        id: incident?.id ?? incident?._id ?? `${incident?.title ?? 'incident'}-${incident?.createdAt ?? Date.now()}`,
+        title: incident?.title ?? incident?.subject ?? 'System incident',
+        status: incident?.status === 'resolved' ? 'resolved' : incident?.status === 'monitoring' ? 'monitoring' : 'identified',
+        createdAt: incident?.createdAt ?? new Date().toISOString(),
+        resolvedAt: incident?.resolvedAt,
+      }))
+    : Array.isArray(payload.tickets?.data)
+      ? payload.tickets.data.map((ticket: any) => ({
+          id: ticket?._id ?? ticket?.id ?? `${ticket?.subject ?? 'ticket'}-${ticket?.createdAt ?? Date.now()}`,
+          title: ticket?.subject ?? 'Support ticket',
+          status: ticket?.status === 'RESOLVED' ? 'resolved' : ticket?.status === 'OPEN' ? 'monitoring' : 'identified',
+          createdAt: ticket?.createdAt ?? new Date().toISOString(),
+          resolvedAt: ticket?.updatedAt,
+        }))
+      : []
+
+  return {
+    overall: payload.overall === 'degraded' ? 'degraded' : payload.overall === 'outage' ? 'outage' : 'operational',
+    services,
+    incidents,
+    lastUpdated: payload.updatedAt ?? payload.lastUpdated ?? new Date().toISOString(),
+  }
+}
+
 export function useHelpDocs() {
   return useQuery<HelpArticle[]>({
     queryKey: ['help-docs'],
@@ -74,7 +114,7 @@ export function useArticleFeedback() {
 export function useSystemStatus() {
   return useQuery<SystemStatus>({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/help/status').then(r => r.data.data),
+    queryFn: () => api.get('/help/status').then(r => normalizeSystemStatus(r.data)),
     refetchInterval: 60000,
   })
 }

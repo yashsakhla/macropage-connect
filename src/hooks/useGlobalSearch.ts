@@ -70,7 +70,7 @@ export function useGlobalSearch(query: string, open: boolean) {
   )
 
   const templatesQuery = useQuery({
-    queryKey: ['templates', undefined],
+    queryKey: ['global-search', 'templates'],
     queryFn: () =>
       api.get('/templates').then((r) => {
         const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
@@ -81,7 +81,7 @@ export function useGlobalSearch(query: string, open: boolean) {
   })
 
   const campaignsQuery = useQuery({
-    queryKey: ['campaigns', undefined],
+    queryKey: ['global-search', 'campaigns'],
     queryFn: () =>
       api.get('/campaigns').then((r) => {
         const raw: any[] = r.data?.data ?? r.data ?? []

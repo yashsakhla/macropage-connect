@@ -1,7 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { AccountSettings, NotificationPreferences, Webhook } from '@/types'
+import type { AccountSettings, IntegrationPlatform, NotificationPreferences, Webhook } from '@/types'
+
+// integration-platforms lives under /api/, not the /api/v1 prefix the rest of the API uses
+const INTEGRATION_PLATFORMS_BASE = (api.defaults.baseURL ?? '').replace(/\/api\/v\d+\/?$/, '/api')
+
+function normalizeIntegrationPlatform(raw: any): IntegrationPlatform {
+  return {
+    id: raw._id ?? raw.id,
+    name: raw.name,
+    description: raw.description ?? '',
+    category: raw.category ?? 'Other',
+    logoUrl: raw.logoUrl ?? raw.logo,
+    logoText: raw.logoText,
+    isActive: raw.isActive ?? true,
+    isComingSoon: raw.isComingSoon ?? raw.isSoon ?? false,
+    connectUrl: raw.connectUrl ?? raw.url,
+    createdAt: raw.createdAt,
+  }
+}
 
 function normalizeWebhook(raw: any): Webhook {
   return {
@@ -79,11 +97,13 @@ export function useAPIKeys() {
 }
 
 export function useCreateAPIKey() {
-  const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: { name: string; permissions: string[]; expiresIn?: string }) =>
       api.post('/settings/api-keys', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['api-keys'] }),
+    // Deliberately do not invalidate/refetch the keys list here — the newly
+    // created key's record isn't guaranteed to be readable via GET yet, and
+    // the create response already carries what we need to show the user.
+    // The list picks up the new key next time this page is (re)mounted.
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Failed to create key'),
   })
@@ -172,5 +192,62 @@ export function useUpdateNotifications() {
     },
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Failed to save preferences'),
+  })
+}
+
+export function useIntegrationPlatforms() {
+  return useQuery({
+    queryKey: ['integration-platforms'],
+    queryFn: () =>
+      api
+        .get('/macropage-connect/integration-platforms', { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .then((r) => {
+          const body = r.data?.data ?? r.data
+          const list: any[] = Array.isArray(body) ? body : (body?.platforms ?? [])
+          return list.map(normalizeIntegrationPlatform)
+        }),
+  })
+}
+
+export function useIntegrationPlatform(id: string) {
+  return useQuery({
+    queryKey: ['integration-platforms', id],
+    enabled: !!id,
+    queryFn: () =>
+      api
+        .get(`/macropage-connect/integration-platforms/${id}`, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .then((r) => normalizeIntegrationPlatform(r.data?.data ?? r.data)),
+  })
+}
+
+export function useCreateIntegrationPlatform() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<IntegrationPlatform>) =>
+      api
+        .post('/macropage-connect/integration-platforms', data, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['integration-platforms'] })
+      toast.success('Integration platform added')
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message ?? 'Failed to add integration platform'),
+  })
+}
+
+export function useUpdateIntegrationPlatform() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<IntegrationPlatform> }) =>
+      api
+        .put(`/macropage-connect/integration-platforms/${id}`, data, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['integration-platforms'] })
+      toast.success('Integration platform updated')
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message ?? 'Failed to update integration platform'),
   })
 }

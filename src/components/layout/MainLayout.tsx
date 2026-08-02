@@ -19,10 +19,12 @@ import SupportChat from '@/components/support/SupportChat'
 import NotificationPanel from '@/components/notifications/NotificationPanel'
 import { useSocket } from '@/hooks/useSocket'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
+import { useGetMe } from '@/hooks/useAuth'
 
 export default function MainLayout() {
   useSocket()
   useTokenRefresh()
+  useGetMe()
 
   const { sidebarOpen } = useUIStore()
   const { user, isInTrial, trialDaysLeft, isPlanExpired } = useAuthStore()

@@ -34,9 +34,10 @@ interface ContactFormProps {
   contact?: Contact
   onClose: () => void
   mode: 'add' | 'edit'
+  onDeleted?: () => void
 }
 
-export default function ContactForm({ contact, onClose, mode }: ContactFormProps) {
+export default function ContactForm({ contact, onClose, mode, onDeleted }: ContactFormProps) {
   const createContact = useCreateContact()
   const updateContact = useUpdateContact()
   const deleteContact = useDeleteContact()
@@ -84,7 +85,7 @@ export default function ContactForm({ contact, onClose, mode }: ContactFormProps
 
   const handleDelete = () => {
     if (!contact) return
-    deleteContact.mutate(contact.id, { onSuccess: onClose })
+    deleteContact.mutate(contact.id, { onSuccess: onDeleted ?? onClose })
   }
 
   const isSubmitting = createContact.isPending || updateContact.isPending

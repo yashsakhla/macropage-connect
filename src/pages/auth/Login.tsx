@@ -9,13 +9,16 @@ import toast from 'react-hot-toast'
 import { useLogin, useGoogleAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { useRememberMeStore } from '@/store/rememberMeStore'
+import { stripEmojis } from '@/lib/utils'
+import FormError from '@/components/shared/FormError'
 import blackLogo from '@assets/macropage-connect-black-icon.svg'
 import whiteLogo from '@assets/macropage-connect-white-icon.svg'
 import loginVideo from '@/assets/login/marketing.mp4'
 
 const schema = z.object({
-  email:    z.string().email('Enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email:    z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(64, 'Password must be at most 64 characters'),
   remember: z.boolean().optional(),
 })
 type FormData = z.infer<typeof schema>
@@ -27,7 +30,12 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const login = useLogin()
   const googleAuth = useGoogleAuth()
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { rememberedEmail, setRememberedEmail } = useRememberMeStore()
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    mode: 'onChange',
+    defaultValues: { email: rememberedEmail ?? '', remember: !!rememberedEmail },
+  })
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
@@ -44,12 +52,16 @@ export default function Login() {
           <h1 className="text-5xl font-black text-[var(--primary)] mt-1">MACROPAGE CONNECT</h1>
           <p className="text-sm text-gray-400 mt-2 mb-8">Sign in to your account to continue</p>
 
-          <form onSubmit={handleSubmit((d) => login.mutate({ email: d.email, password: d.password }))} className="space-y-4 max-w-md">
+          <form onSubmit={handleSubmit((d) => {
+            setRememberedEmail(d.remember ? d.email : null)
+            login.mutate({ email: d.email, password: d.password })
+          })} className="space-y-4 max-w-md">
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Email address</div>
-              <input {...register('email')} type="email" placeholder="you@company.com" autoComplete="email"
+              <input {...register('email')} type="email" placeholder="you@company.com" autoComplete="email" maxLength={254}
+                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
                 className="h-11 px-4 text-sm bg-[var(--page-bg)] border-0 rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-white transition-all placeholder:text-gray-300 w-full" />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              <FormError message={errors.email?.message} />
             </div>
 
             <div>
@@ -57,11 +69,12 @@ export default function Login() {
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Password</div>
               </div>
               <div className="relative">
-                <input {...register('password')} type={showPassword ? 'text' : 'password'} placeholder="Enter your password"
+                <input {...register('password')} type={showPassword ? 'text' : 'password'} placeholder="Enter your password" maxLength={64}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
                   className="h-11 px-4 text-sm bg-[var(--page-bg)] border-0 rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-white transition-all placeholder:text-gray-300 w-full pr-12" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+              <FormError message={errors.password?.message} />
             </div>
 
             <div className="flex items-center justify-between text-sm">
@@ -72,7 +85,7 @@ export default function Login() {
               <Link to="/forgot-password" className="text-xs text-[var(--primary)] font-medium hover:underline">Forgot password?</Link>
             </div>
 
-            <button type="submit" disabled={login.isPending} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--primary-light)] active:scale-[0.98] transition-all mt-6">
+            <button type="submit" disabled={login.isPending || !isValid} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--primary-light)] active:scale-[0.98] transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed">
               {login.isPending ? <><Loader2 className="animate-spin mr-2" />Signing in…</> : 'Sign in'}
             </button>
 
@@ -82,14 +95,14 @@ export default function Login() {
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            <div className="flex justify-center [&>div]:w-full">
+            <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={(cred) => {
                   if (cred.credential) googleAuth.mutate(cred.credential)
                   else toast.error('Google sign-in failed')
                 }}
                 onError={() => toast.error('Google sign-in failed')}
-                width="384"
+                width="448"
                 text="continue_with"
                 shape="pill"
               />

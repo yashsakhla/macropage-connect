@@ -196,7 +196,7 @@ export function useGetMe() {
   return useQuery({
     queryKey: ['me'],
     queryFn: () => api.get('/auth/me').then((r) => {
-      const user = r.data?.data?.user ?? r.data?.data ?? r.data?.user
+      const user = r.data?.data?.user ?? r.data?.data ?? r.data?.user ?? r.data
       if (user) setUser(user)
       return user
     }),
