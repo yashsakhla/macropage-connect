@@ -651,6 +651,20 @@ export interface APIKey {
   createdAt: string
   isActive: boolean
   requestsToday: number
+  key?: string
+}
+
+export interface IntegrationPlatform {
+  id: string
+  name: string
+  description: string
+  category: string
+  logoUrl?: string
+  logoText?: string
+  isActive: boolean
+  isComingSoon?: boolean
+  connectUrl?: string
+  createdAt?: string
 }
 
 export interface Webhook {
@@ -752,8 +766,8 @@ export interface SystemStatus {
   services: Array<{
     name: string
     status: 'operational' | 'degraded' | 'outage'
-    uptime: number
-    history: Array<'operational' | 'degraded' | 'outage'>
+    uptime?: number
+    history?: Array<'operational' | 'degraded' | 'outage'>
   }>
   incidents: Array<{
     id: string

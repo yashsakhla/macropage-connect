@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
 import type { APIKey } from '@/types'
+import { isApiKeyRecentlyCreated } from '@/lib/apiKeys'
 
 interface Props {
   apiKey: APIKey
@@ -14,9 +15,11 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
   const [revealed, setRevealed] = useState(false)
   const [copied, setCopied] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const isOldKey = !apiKey.key && !isApiKeyRecentlyCreated(apiKey.id)
 
   function copy() {
-    navigator.clipboard.writeText(apiKey.keyPreview)
+    if (!apiKey.key) return
+    navigator.clipboard.writeText(apiKey.key)
     setCopied(true)
     toast.success('Copied to clipboard')
     setTimeout(() => setCopied(false), 2000)
@@ -38,8 +41,8 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={cn('text-2xs font-medium rounded-full px-2.5 py-0.5', apiKey.isActive ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400')}>
-            {apiKey.isActive ? 'Active' : 'Expired'}
+          <span className={cn('text-2xs font-medium rounded-full px-2.5 py-0.5', isOldKey ? 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400' : apiKey.isActive ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]' : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400')}>
+            {isOldKey ? 'Old key' : apiKey.isActive ? 'Active' : 'Expired'}
           </span>
           <div className="relative">
             <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">
@@ -57,17 +60,27 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
 
       <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl px-4 py-2.5 mt-3 flex items-center gap-3">
         <code className="font-mono text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
-          {revealed ? apiKey.keyPreview.replace(/•+/, 'sk_live_xxxxxxxxxxxxxxxxxxxxxxx') : apiKey.keyPreview}
+          {revealed && apiKey.key ? apiKey.key : apiKey.keyPreview}
         </code>
-        <button onClick={revealed ? () => setRevealed(false) : reveal} className="btn-ghost h-7 px-3 text-xs flex items-center gap-1.5 flex-shrink-0">
-          {revealed ? <EyeOff size={12} /> : <Eye size={12} />}
-          {revealed ? 'Hide' : 'Reveal'}
-        </button>
-        <button onClick={copy} className="btn-ghost h-7 px-3 text-xs flex items-center gap-1.5 flex-shrink-0">
-          {copied ? <CheckCircle size={12} className="text-[#1a5c3a]" /> : <Copy size={12} />}
-          {copied ? 'Copied' : 'Copy'}
-        </button>
+        {!isOldKey && (
+          <>
+            <button onClick={revealed ? () => setRevealed(false) : reveal} className="btn-ghost h-7 px-3 text-xs flex items-center gap-1.5 flex-shrink-0">
+              {revealed ? <EyeOff size={12} /> : <Eye size={12} />}
+              {revealed ? 'Hide' : 'Reveal'}
+            </button>
+            <button onClick={copy} className="btn-ghost h-7 px-3 text-xs flex items-center gap-1.5 flex-shrink-0">
+              {copied ? <CheckCircle size={12} className="text-[#1a5c3a]" /> : <Copy size={12} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </>
+        )}
       </div>
+
+      {isOldKey && (
+        <p className="text-2xs text-gray-400 dark:text-gray-500 mt-1.5">
+          This is an old key — for security reasons it can't be copied here. You needed to copy and store it somewhere secure at the time of creation; this platform doesn't allow retrieving old API keys.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-1.5 mt-2.5">
         {apiKey.permissions.map((p) => (

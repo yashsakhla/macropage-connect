@@ -25,6 +25,8 @@ const ContactDetail  = lazy(() => import('@/pages/contacts/ContactDetail'))
 const Team           = lazy(() => import('@/pages/team/Team'))
 const MemberProfile  = lazy(() => import('@/pages/team/MemberProfile'))
 const Settings       = lazy(() => import('@/pages/settings/Settings'))
+const DeveloperDocs   = lazy(() => import('@/pages/developers/DeveloperDocs'))
+const ApiReference    = lazy(() => import('@/pages/developers/ApiReference'))
 const WhatsAppSetup   = lazy(() => import('@/pages/setup/WhatsAppSetup'))
 const SetupComplete   = lazy(() => import('@/pages/setup/SetupComplete'))
 const Help            = lazy(() => import('@/pages/help/Help'))
@@ -80,6 +82,8 @@ const router = createBrowserRouter([
       { path: '/setup/complete', element: <SetupComplete /> },
       { path: '/settings', element: <Settings /> },
       { path: '/settings/:section', element: <Settings /> },
+      { path: '/developers', element: <DeveloperDocs /> },
+      { path: '/developers/api-reference', element: <ApiReference /> },
       { path: '/help', element: <Help /> },
       { path: '/help/articles/:slug', element: <ArticleDetail /> },
       { path: '/plans', element: <Plans /> },

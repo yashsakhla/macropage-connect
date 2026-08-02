@@ -7,7 +7,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useContacts, useCreateContact } from '@/hooks/useContacts'
 import { useApprovedTemplates } from '@/hooks/useCampaigns'
-import { useConversationByContact, useCreateConversation, useSendMessage } from '@/hooks/useConversations'
+import { useConversationByContact, useCreateConversation, useSendMessage, normalizeTemplateVars } from '@/hooks/useConversations'
 import TemplatePreview from '@/components/templates/TemplatePreview'
 import type { Contact, Template } from '@/types'
 
@@ -85,7 +85,11 @@ export default function TestSendModal({ onClose }: Props) {
 
       let conversationId = existingConversation?.id ?? existingConversation?._id
       if (!conversationId) {
-        const conv = await createConversationAsync(contactId)
+        const conv = await createConversationAsync({
+          contactId,
+          templateName: selectedTemplate.name,
+          templateVars: normalizeTemplateVars(variableValues),
+        })
         conversationId = conv?.id ?? conv?._id
       }
       if (!conversationId) throw new Error('Could not start a conversation with this recipient')

@@ -7,7 +7,13 @@ export function useOpenConversation() {
   const navigate = useNavigate()
   const [creating, setCreating] = useState(false)
 
-  const openConversation = async (contactId: string) => {
+  /**
+   * Returns true if an existing conversation was found and the user was sent to the
+   * inbox. Returns false if this contact has never messaged and no conversation
+   * exists yet — the caller should fall back to the in-page "new conversation"
+   * template flow instead of creating one blind.
+   */
+  const openConversation = async (contactId: string): Promise<boolean> => {
     setCreating(true)
     try {
       const res = await api.get('/conversations', { params: { contactId, limit: 50 } })
@@ -26,18 +32,12 @@ export function useOpenConversation() {
         const conv = fetched.data?.data ?? fetched.data
         const id = conv?._id ?? conv?.id ?? existingId
         navigate(`/inbox?conversationId=${id}`)
-        return
+        return true
       }
-      // No conversation yet — create one so the chat panel has something to open.
-      // It starts with zero messages, so the inbox will require an approved
-      // template to reach the customer, per Meta's messaging policy.
-      const created = await api.post('/conversations/initiate', { contactId })
-      const conv = created.data?.data ?? created.data
-      const id = conv?._id ?? conv?.id
-      if (id) navigate(`/inbox?conversationId=${id}`)
-      else navigate('/inbox')
+      return false
     } catch {
       toast.error('Could not open conversation. Try again.')
+      return false
     } finally {
       setCreating(false)
     }

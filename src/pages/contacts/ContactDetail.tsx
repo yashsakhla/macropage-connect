@@ -7,6 +7,7 @@ import { useOpenConversation } from '@/hooks/useContactActions'
 import { ContactAvatar } from '@/components/contacts/ContactCard'
 import ContactTimeline from '@/components/contacts/ContactTimeline'
 import ContactForm from '@/components/contacts/ContactForm'
+import ContactChatPanel from '@/components/contacts/ContactChatPanel'
 import { format } from 'date-fns'
 
 const STATUS_BADGE = {
@@ -23,6 +24,15 @@ export default function ContactDetail() {
   const { openConversation, creating } = useOpenConversation()
   const [showEdit, setShowEdit] = useState(false)
   const [editingTags, setEditingTags] = useState(false)
+  const [showChatPanel, setShowChatPanel] = useState(false)
+
+  const handleSendMessage = async () => {
+    // Only redirect to the inbox if a conversation already exists. For a contact
+    // that has never messaged, open the in-page template flow instead of
+    // silently creating a conversation in the background.
+    const opened = await openConversation(id)
+    if (!opened) setShowChatPanel(true)
+  }
 
   if (isLoading) {
     return (
@@ -70,7 +80,7 @@ export default function ContactDetail() {
           <button
             className="btn btn-primary h-9 gap-2 flex items-center"
             disabled={creating}
-            onClick={() => openConversation(id)}
+            onClick={handleSendMessage}
           >
             {creating ? (
               <><Loader2 size={15} className="animate-spin" /> Opening...</>
@@ -202,7 +212,16 @@ export default function ContactDetail() {
       </div>
 
       {showEdit && (
-        <ContactForm contact={contact} mode="edit" onClose={() => setShowEdit(false)} />
+        <ContactForm
+          contact={contact}
+          mode="edit"
+          onClose={() => setShowEdit(false)}
+          onDeleted={() => navigate('/contacts')}
+        />
+      )}
+
+      {showChatPanel && (
+        <ContactChatPanel contact={contact} onClose={() => setShowChatPanel(false)} />
       )}
     </div>
   )

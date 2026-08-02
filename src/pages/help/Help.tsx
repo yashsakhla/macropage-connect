@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Code2, Users, GitMerge, ArrowRight } from 'lucide-react'
 import StatusBanner from '@/components/help/StatusBanner'
 import HelpHeader from '@/components/help/HelpHeader'
@@ -14,6 +15,7 @@ import { useSystemStatus, useHelpDocs, useHelpFAQs } from '@/hooks/useHelp'
 import type { HelpCategory } from '@/types'
 
 export default function Help() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [ticketOpen, setTicketOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<HelpCategory | null>(null)
@@ -70,68 +72,132 @@ export default function Help() {
 
           {/* Status page */}
           <div className="max-w-5xl mx-auto px-6 mb-10">
-            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
-              <div className="flex items-center mb-5">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">System status</h2>
-                <a
-                  href="https://status.macropage.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#1a5c3a] font-medium ml-auto hover:underline"
-                >
-                  status.macropage.in →
-                </a>
+            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-[0.22em] font-semibold text-gray-400 dark:text-gray-500">Platform health</p>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white mt-1">System status</h2>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] dark:border-emerald-800/40 px-3 py-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#1a5c3a] animate-pulse" />
+                  <span className="text-xs font-semibold text-[#1a5c3a] dark:text-emerald-300">All systems operational</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-5">
-                <span className="w-4 h-4 rounded-full bg-[#1a5c3a] animate-pulse" />
-                <span className="text-base font-semibold text-[#1a5c3a]">All systems operational</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">Last updated: 2 min ago</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <div className="rounded-2xl border border-[#e8ebe8] dark:border-white/10 bg-gray-50 dark:bg-[#0f1724] p-4">
+                  <p className="text-[0.65rem] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Services healthy</p>
+                  <div className="mt-2 flex items-end justify-between">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {((status?.services ?? []).filter(s => s.status === 'operational').length)}
+                    </span>
+                    <span className="text-xs text-[#1a5c3a] font-medium">/ {(status?.services ?? []).length || 0}</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#e8ebe8] dark:border-white/10 bg-gray-50 dark:bg-[#0f1724] p-4">
+                  <p className="text-[0.65rem] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Open incidents</p>
+                  <div className="mt-2 flex items-end justify-between">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{(status?.incidents ?? []).length}</span>
+                    <span className="text-xs text-gray-500">last 30 days</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#e8ebe8] dark:border-white/10 bg-gray-50 dark:bg-[#0f1724] p-4">
+                  <p className="text-[0.65rem] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Last updated</p>
+                  <div className="mt-2 flex items-end justify-between">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {status?.lastUpdated ? new Date(status.lastUpdated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
-                {(status?.services ?? []).map(svc => (
-                  <div key={svc.name} className="flex items-center gap-3 py-2">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 w-44 flex-shrink-0">{svc.name}</span>
-                    <div className="flex gap-0.5 flex-1">
-                      {svc.history.map((h, i) => (
-                        <div
-                          key={i}
-                          className="w-1.5 h-5 rounded-sm flex-shrink-0"
-                          style={{
-                            backgroundColor:
-                              h === 'operational' ? '#1a5c3a'
-                              : h === 'degraded' ? '#f59e0b'
-                              : '#ef4444',
-                          }}
-                        />
+              <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.9fr] gap-4">
+                <div className="rounded-2xl border border-[#e8ebe8] dark:border-white/10 bg-[#f9faf9] dark:bg-[#0f1724] p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Service performance</p>
+                    <span className="text-[0.625rem] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Uptime</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {(status?.services ?? []).map(svc => {
+                      const history = Array.isArray(svc.history) && svc.history.length > 0 ? svc.history : [svc.status]
+                      const uptime = typeof svc.uptime === 'number' ? svc.uptime : 100
+
+                      return (
+                        <div key={svc.name} className="rounded-xl border border-[#edf0ee] dark:border-white/10 bg-white dark:bg-[#0b1220] p-3">
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: svc.status === 'operational' ? '#1a5c3a' : svc.status === 'degraded' ? '#f59e0b' : '#ef4444' }}
+                              />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{svc.name}</span>
+                            </div>
+                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{uptime}%</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {history.map((h, i) => (
+                              <div
+                                key={`${svc.name}-${i}`}
+                                className="h-6 flex-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    h === 'operational' ? '#1a5c3a' :
+                                    h === 'degraded' ? '#f59e0b' : '#ef4444',
+                                  opacity: i === history.length - 1 ? 1 : 0.8,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#e8ebe8] dark:border-white/10 bg-[#f9faf9] dark:bg-[#0f1724] p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Recent incidents</p>
+                    <span className="text-[0.625rem] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Insights</span>
+                  </div>
+
+                  {(status?.incidents ?? []).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-[#dfe5df] dark:border-white/10 bg-white dark:bg-[#0b1220] p-6 text-center">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No incidents in the last 30 days 🎉</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(status?.incidents ?? []).map(inc => (
+                        <div key={inc.id} className="rounded-xl border border-[#edf0ee] dark:border-white/10 bg-white dark:bg-[#0b1220] p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{inc.title}</p>
+                              <p className="text-[0.7rem] text-gray-400 dark:text-gray-500 mt-1">
+                                {new Date(inc.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            <span
+                              className="text-[0.625rem] font-semibold px-2 py-1 rounded-full whitespace-nowrap"
+                              style={{
+                                backgroundColor:
+                                  inc.status === 'resolved' ? '#e8f5ee' :
+                                  inc.status === 'monitoring' ? '#fff7ed' : '#fef2f2',
+                                color:
+                                  inc.status === 'resolved' ? '#1a5c3a' :
+                                  inc.status === 'monitoring' ? '#b45309' : '#b91c1c',
+                              }}
+                            >
+                              {inc.status}
+                            </span>
+                          </div>
+                        </div>
                       ))}
                     </div>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-12 text-right flex-shrink-0">
-                      {svc.uptime}%
-                    </span>
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: svc.status === 'operational' ? '#1a5c3a' : svc.status === 'degraded' ? '#f59e0b' : '#ef4444' }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-[#e8ebe8] dark:border-white/10 mt-5 pt-5">
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Recent incidents</p>
-                {(status?.incidents ?? []).length === 0 ? (
-                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-3">No incidents in the last 30 days 🎉</p>
-                ) : (
-                  (status?.incidents ?? []).map(inc => (
-                    <div key={inc.id} className="flex items-center gap-3 py-2">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">{inc.title}</span>
-                      <span className="text-[0.625rem] bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 rounded-full px-2 py-0.5 ml-auto">
-                        {inc.status}
-                      </span>
-                    </div>
-                  ))
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -139,11 +205,10 @@ export default function Help() {
           {/* Community & resources */}
           <div className="max-w-5xl mx-auto px-6 pb-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a
-                href="https://docs.macropage.in"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all block"
+              <button
+                type="button"
+                onClick={() => navigate('/developers')}
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all block text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center mb-3">
                   <Code2 size={20} className="text-gray-600 dark:text-gray-400" />
@@ -153,7 +218,7 @@ export default function Help() {
                 <p className="text-sm text-[#1a5c3a] font-medium mt-3 flex items-center gap-1">
                   Visit docs <ArrowRight size={14} />
                 </p>
-              </a>
+              </button>
 
               <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center mb-3">

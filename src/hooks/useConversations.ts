@@ -279,11 +279,37 @@ export function useConversationByContact(contactId: string | null) {
   })
 }
 
+export function normalizeTemplateVars(variables: Record<string, string> = {}) {
+  const normalized: Record<string, string> = {}
+
+  Object.entries(variables).forEach(([rawKey, value], index) => {
+    const cleaned = rawKey.replace(/[{}]/g, '').trim()
+    const key = /^\d+$/.test(cleaned) ? cleaned : String(index + 1)
+    if (value !== undefined && value !== null) normalized[key] = String(value)
+  })
+
+  return normalized
+}
+
 export function useCreateConversation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (contactId: string) =>
-      api.post('/conversations/initiate', { contactId }).then(r => r.data.data ?? r.data),
+    mutationFn: ({
+      contactId,
+      templateName,
+      templateVars,
+    }: {
+      contactId: string
+      templateName?: string
+      templateVars?: Record<string, string>
+    }) =>
+      api
+        .post('/conversations/initiate', {
+          contactId,
+          ...(templateName ? { templateName } : {}),
+          ...(templateVars && Object.keys(templateVars).length ? { templateVars } : {}),
+        })
+        .then(r => r.data.data ?? r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] })
     },

@@ -81,6 +81,15 @@ export function downloadCSV(filename: string, rows: string[][]): void {
 /** Sleep helper for loading states in dev */
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+// Matches emoji + pictographs + variation selectors + skin tone modifiers + ZWJ
+// used to join emoji sequences — covers the ranges browsers actually render as emoji.
+const EMOJI_REGEX = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu
+
+/** Strip emoji/pictograph characters from sensitive text inputs (email, password, name fields) */
+export function stripEmojis(value: string): string {
+  return value.replace(EMOJI_REGEX, '')
+}
+
 const CONTACT_SAMPLE_TEMPLATE_ROWS: string[][] = [
   ['name', 'phone', 'email', 'company', 'city', 'tags'],
   ['Rohit Sharma', '+919876543210', 'rohit.sharma@example.com', 'Acme Corp', 'Mumbai', 'VIP,Customer'],
