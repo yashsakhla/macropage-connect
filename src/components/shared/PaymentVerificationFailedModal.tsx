@@ -1,16 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Phone, MessageCircle, Mail, Clock } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 
 const SUPPORT_PHONE = '+91 98765 43210'
 const SUPPORT_WHATSAPP_NUMBER = '919876543210'
-const SUPPORT_EMAIL = 'support@macropage.in'
+const SUPPORT_EMAIL = 'contact@macropageconnect.com'
 
 export default function PaymentVerificationFailedModal() {
   const [closing, setClosing] = useState(false)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const { paymentIssueModalOpen, paymentIssueReferenceId, setPaymentIssueModalOpen } = useUIStore()
 
-  if (!paymentIssueModalOpen && !closing) return null
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
+
+  if ((!paymentIssueModalOpen && !closing) || !portalTarget) return null
 
   function dismiss() {
     setClosing(true)
@@ -20,7 +26,7 @@ export default function PaymentVerificationFailedModal() {
     }, 280)
   }
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4
         transition-opacity duration-300 ${closing ? 'opacity-0' : 'opacity-100'}`}
@@ -110,6 +116,7 @@ export default function PaymentVerificationFailedModal() {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   )
 }

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
 import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
+import { useElementWidth } from '@/hooks/useElementWidth'
 import { cn, stripEmojis } from '@/lib/utils'
 import FormError from '@/components/shared/FormError'
 import { useAuthStore } from '@/store/authStore'
@@ -62,6 +63,7 @@ export default function Register() {
   const [heroImage] = useState(() => signupImages[Math.floor(Math.random() * signupImages.length)])
   const reg = useRegister()
   const googleAuth = useGoogleAuth()
+  const { ref: googleBtnRef, width: googleBtnWidth } = useElementWidth<HTMLDivElement>()
   const { register: r, handleSubmit, watch, formState: { errors, isValid } } = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onChange' })
   const pw = watch('password') || ''
   const score = passwordScore(pw)
@@ -175,56 +177,54 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="w-full lg:w-1/2 bg-white px-12 py-10 flex flex-col justify-between">
-        <div>
-          <img src={logo} alt="Macropage Connect" className="h-9" />
+      <div className="relative w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 lg:px-12 flex flex-col justify-center overflow-y-auto">
+        <div className="mb-4 lg:absolute lg:top-6 lg:left-12 lg:mb-0">
+          <img src={logo} alt="Macropage Connect" className="h-8 sm:h-9" />
         </div>
 
-        <div className="my-6">
-          <h2 className="text-4xl font-black text-gray-900">Create your</h2>
-          <h1 className="text-5xl font-black text-[var(--primary)] mt-1">ACCOUNT</h1>
-          <p className="text-sm text-gray-400 mt-2 mb-8">Start your 14-day free trial. No credit card required.</p>
+        <div>
+          <h2 className="text-2xl font-black text-gray-900">Create your <span className="text-[var(--primary)]">account</span></h2>
+          <p className="text-sm text-gray-400 mt-1 mb-4">Start your 14-day free trial. No credit card required.</p>
 
-          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 max-w-md">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-3 max-w-xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">First name</div>
                 <input {...r('firstName')} maxLength={50}
                   onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.firstName && 'border-red-400')} />
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.firstName && 'border-red-400')} />
                 <FormError message={errors.firstName?.message} />
               </div>
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Last name</div>
                 <input {...r('lastName')} maxLength={50}
                   onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.lastName && 'border-red-400')} />
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.lastName && 'border-red-400')} />
                 <FormError message={errors.lastName?.message} />
               </div>
             </div>
 
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Work email</div>
-              <input {...r('email')} type="email" maxLength={254}
-                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.email && 'border-red-400')} />
-              <p className="text-xs text-gray-500 mt-1">Use your company email for better deliverability</p>
-              <FormError message={errors.email?.message} />
-            </div>
-
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Company / Business name</div>
-              <input {...r('companyName')} maxLength={100}
-                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.companyName && 'border-red-400')} />
-              <p className="text-xs text-gray-500 mt-1">This will appear on your WhatsApp business profile</p>
-              <FormError message={errors.companyName?.message} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Work email</div>
+                <input {...r('email')} type="email" maxLength={254}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.email && 'border-red-400')} />
+                <FormError message={errors.email?.message} />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Company name</div>
+                <input {...r('companyName')} maxLength={100}
+                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.companyName && 'border-red-400')} />
+                <FormError message={errors.companyName?.message} />
+              </div>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Phone number</div>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-2 px-3 py-2 border border-[var(--card-border)] rounded-xl bg-white">🇮🇳 +91</div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 px-2.5 h-10 border border-[var(--card-border)] rounded-xl bg-white text-sm shrink-0">🇮🇳 +91</div>
                 <input
                   {...r('phone')}
                   type="tel"
@@ -232,11 +232,10 @@ export default function Register() {
                   maxLength={10}
                   placeholder="9876543210"
                   onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '').slice(0, 10) }}
-                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl flex-1', errors.phone && 'border-red-400')}
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl flex-1 min-w-0', errors.phone && 'border-red-400')}
                 />
               </div>
               <FormError message={errors.phone?.message} />
-              <p className="text-xs text-gray-500 mt-1">This is not your WhatsApp Business number — enter your business contact number, not the WhatsApp Business number you'll use for messaging</p>
             </div>
 
             <div>
@@ -244,24 +243,8 @@ export default function Register() {
               <div className="relative">
                 <input {...r('password')} type={showPassword ? 'text' : 'password'} maxLength={64}
                   onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                  className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-12', errors.password && 'border-red-400')} />
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-10', errors.password && 'border-red-400')} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-              </div>
-              <div className="mt-2">
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="h-2 flex-1 bg-gray-100 rounded overflow-hidden">
-                    <div style={{ width: `${Math.min(100, (score/5)*100)}%`, height: '100%', background: score <= 2 ? '#ef4444' : score === 3 ? '#f97316' : score === 4 ? '#eab308' : '#22c55e' }} />
-                  </div>
-                  <div className="text-xs text-gray-500 w-20 text-right">{score === 0 ? '' : score <= 2 ? 'Weak' : score === 3 ? 'Fair' : score === 4 ? 'Good' : 'Strong'}</div>
-                </div>
-
-                <div className="mt-3 text-xs text-gray-600 space-y-1">
-                  <div className="flex items-center gap-2"><span className={pw.length >= 8 ? 'text-green-500' : 'text-gray-300'}>{pw.length >= 8 ? '✓' : '•'}</span> Minimum 8 characters</div>
-                  <div className="flex items-center gap-2"><span className={/[A-Z]/.test(pw) ? 'text-green-500' : 'text-gray-300'}>{/[A-Z]/.test(pw) ? '✓' : '•'}</span> At least one uppercase letter</div>
-                  <div className="flex items-center gap-2"><span className={/[a-z]/.test(pw) ? 'text-green-500' : 'text-gray-300'}>{/[a-z]/.test(pw) ? '✓' : '•'}</span> At least one lowercase letter</div>
-                  <div className="flex items-center gap-2"><span className={/\d/.test(pw) ? 'text-green-500' : 'text-gray-300'}>{/\d/.test(pw) ? '✓' : '•'}</span> At least one number</div>
-                  <div className="flex items-center gap-2"><span className={/[^A-Za-z0-9]/.test(pw) ? 'text-green-500' : 'text-gray-300'}>{/[^A-Za-z0-9]/.test(pw) ? '✓' : '•'}</span> At least one special character</div>
-                </div>
               </div>
               <FormError message={errors.password?.message} />
             </div>
@@ -270,48 +253,58 @@ export default function Register() {
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Confirm password</div>
               <input {...r('confirmPassword')} type="password" maxLength={64}
                 onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
-                className={cn('h-11 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
+                className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
               <FormError message={errors.confirmPassword?.message} />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-sm">I agree to the <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Privacy Policy</a></span></label>
-              <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-sm text-gray-600">I'd like to receive product updates and tips via email</span></label>
+            {pw && (
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 flex-1 bg-gray-100 rounded overflow-hidden">
+                  <div style={{ width: `${Math.min(100, (score/5)*100)}%`, height: '100%', background: score <= 2 ? '#ef4444' : score === 3 ? '#f97316' : score === 4 ? '#eab308' : '#22c55e' }} />
+                </div>
+                <div className="text-xs text-gray-500 w-16 text-right">{score <= 2 ? 'Weak' : score === 3 ? 'Fair' : score === 4 ? 'Good' : 'Strong'}</div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-xs">I agree to the <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Privacy Policy</a></span></label>
+              <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-xs text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
 
-            <button type="submit" disabled={reg.isPending || !isValid} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
+            <button type="submit" disabled={reg.isPending || !isValid} className="w-full h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
 
-            <div className="flex items-center gap-3 my-4">
+            <div className="flex items-center gap-3 my-2">
               <div className="flex-1 h-px bg-gray-100" />
               <div className="text-xs text-gray-400 px-3">or</div>
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={(cred) => {
-                  if (cred.credential) googleAuth.mutate(cred.credential)
-                  else toast.error('Google sign-in failed')
-                }}
-                onError={() => toast.error('Google sign-in failed')}
-                width="448"
-                text="signup_with"
-                shape="pill"
-              />
+            <div ref={googleBtnRef} className="flex justify-center w-full">
+              {googleBtnWidth > 0 && (
+                <GoogleLogin
+                  onSuccess={(cred) => {
+                    if (cred.credential) googleAuth.mutate(cred.credential)
+                    else toast.error('Google sign-in failed')
+                  }}
+                  onError={() => toast.error('Google sign-in failed')}
+                  width={String(Math.min(448, Math.floor(googleBtnWidth)))}
+                  text="signup_with"
+                  shape="pill"
+                />
+              )}
             </div>
 
-            <p className="text-center text-sm text-gray-500 mt-6">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
-            <p className="text-center text-xs text-gray-400 mt-2">By continuing you agree to our <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">Privacy</a></p>
+            <p className="text-center text-sm text-gray-500 mt-3">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
           </form>
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-start">
-        <img src={heroImage} alt="Macropage Connect" className="w-full h-auto" />
+      <div className="hidden lg:block lg:w-1/2 relative h-screen overflow-hidden">
+        <img src={heroImage} alt="Macropage Connect" className="w-full h-full object-cover" />
 
-        <div className="p-12 text-center w-full">
-          <h3 className="font-bold text-lg text-gray-900">Reach customers on WhatsApp</h3>
-          <p className="text-gray-500 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-center bg-gradient-to-t from-black/50 to-transparent">
+          <h3 className="font-bold text-lg text-white">Reach customers on WhatsApp</h3>
+          <p className="text-gray-100 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
         </div>
       </div>
     </div>

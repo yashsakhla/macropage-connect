@@ -13,15 +13,17 @@ interface Props {
   onPublish: () => void
   isSaving?: boolean
   lastSaved?: string
+  readOnly?: boolean
 }
 
 export default function FlowToolbar({
   zoom, onZoomIn, onZoomOut, onFit, onBack,
-  onTestFlow, onSaveDraft, onPublish, isSaving, lastSaved,
+  onTestFlow, onSaveDraft, onPublish, isSaving, lastSaved, readOnly,
 }: Props) {
   const { flowName, setFlowName, flowStatus, isDirty, undo, redo } = useFlowStore()
 
   const STATUS_COLORS = { draft: 'badge-gray', active: 'badge-green', paused: 'badge-yellow' }
+  const publishLabel = flowStatus === 'draft' ? 'Publish flow' : 'Update flow'
 
   return (
     <div className="h-13 bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 flex items-center px-4 gap-3 relative z-20 flex-shrink-0" style={{ height: 52 }}>
@@ -31,9 +33,10 @@ export default function FlowToolbar({
       </button>
       <div className="h-6 w-px bg-[#e8ebe8] dark:bg-white/10" />
       <input
-        className="border-0 text-sm font-semibold text-gray-900 dark:text-white bg-transparent focus:outline-none focus:border-b-2 focus:border-[#1a5c3a] w-48 pb-0.5"
+        className="border-0 text-sm font-semibold text-gray-900 dark:text-white bg-transparent focus:outline-none focus:border-b-2 focus:border-[#1a5c3a] w-48 pb-0.5 disabled:opacity-70"
         value={flowName}
         onChange={(e) => setFlowName(e.target.value)}
+        disabled={readOnly}
       />
       <span className={cn('badge text-2xs', STATUS_COLORS[flowStatus])}>{flowStatus}</span>
       <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
@@ -66,8 +69,12 @@ export default function FlowToolbar({
         <button onClick={onTestFlow} className="btn-outline h-8 text-sm flex items-center gap-1.5">
           <Play size={12} /> Test flow
         </button>
-        <button onClick={onSaveDraft} className="btn-outline h-8 text-sm" disabled={isSaving}>Save draft</button>
-        <button onClick={onPublish} className="btn-primary h-8 text-sm">Publish flow</button>
+        {!readOnly && (
+          <>
+            <button onClick={onSaveDraft} className="btn-outline h-8 text-sm" disabled={isSaving}>Save draft</button>
+            <button onClick={onPublish} className="btn-primary h-8 text-sm">{publishLabel}</button>
+          </>
+        )}
       </div>
     </div>
   )

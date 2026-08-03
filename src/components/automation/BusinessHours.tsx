@@ -116,7 +116,7 @@ export default function BusinessHours({ onSave }: Props) {
                 schedule[key].enabled ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10'
               )}
             >
-              <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', schedule[key].enabled ? 'translate-x-4.5' : 'translate-x-0.5')} />
+              <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', schedule[key].enabled ? 'translate-x-[18px]' : 'translate-x-0.5')} />
             </button>
 
             {schedule[key].enabled ? (

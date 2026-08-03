@@ -48,17 +48,17 @@ export default function RuleForm({ rule, onClose, onSave }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
-      <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">{rule ? 'Edit rule' : 'Create auto-reply rule'}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6 bg-black/40">
+      <div className="bg-white dark:bg-[#0b1220] rounded-none sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-w-[700px] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+          <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{rule ? 'Edit rule' : 'Create auto-reply rule'}</h2>
           <button onClick={onClose} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center">
             <X size={16} />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1">
-          <div className="grid lg:grid-cols-2 gap-6 p-6">
+          <div className="grid lg:grid-cols-2 gap-5 sm:gap-6 p-4 sm:p-6">
             {/* LEFT */}
             <div className="space-y-5">
               <div>
@@ -178,7 +178,7 @@ export default function RuleForm({ rule, onClose, onSave }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0 flex-wrap">
           <button className="btn-ghost h-9 text-sm" onClick={onClose}>Cancel</button>
           <button className="btn-outline h-9 text-sm" onClick={() => handleSave(false)}>Save as draft</button>
           <button className="btn-primary h-9 text-sm" onClick={() => handleSave(true)}>Save & activate</button>

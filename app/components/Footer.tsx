@@ -18,7 +18,7 @@ const footerLinks = {
   ],
   Support: [
     { label: "Help Center", href: "#" },
-    { label: "Contact Sales", href: "mailto:hello@macropage.in" },
+    { label: "Contact Sales", href: "mailto:contact@macropageconnect.com" },
     { label: "Status Page", href: "#" },
     { label: "Community", href: "#" },
     { label: "WhatsApp Us", href: "https://wa.me/917000000000" },
@@ -62,9 +62,9 @@ export default function Footer() {
 
             {/* Contact info */}
             <div className="space-y-2.5">
-              <a href="mailto:hello@macropage.in" className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-green transition-colors">
+              <a href="mailto:contact@macropageconnect.com" className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-green transition-colors">
                 <Mail className="w-4 h-4" />
-                hello@macropage.in
+                contact@macropageconnect.com
               </a>
               <a href="tel:+917000000000" className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-green transition-colors">
                 <Phone className="w-4 h-4" />

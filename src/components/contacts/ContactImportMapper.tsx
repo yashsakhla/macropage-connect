@@ -71,34 +71,36 @@ export default function ContactImportMapper({ parsed, mapping, onMappingChange, 
       </div>
 
       {/* mapping table */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-4 gap-0 bg-[#f7f8f6] dark:bg-[#0f1724] px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-[#e8ebe8] dark:border-white/10">
-          <span>CSV Column</span><span>Maps to field</span><span>Sample values</span><span>Status</span>
-        </div>
-        {parsed.headers.map(header => {
-          const mapped = mapping[header] ?? ''
-          const samples = parsed.rows.slice(0, 3).map(r => r[header] ?? '').filter(Boolean)
-          const isPhoneField = mapped === 'phone'
-          return (
-            <div key={header} className="grid grid-cols-4 gap-4 items-center px-4 py-3.5 border-t border-[#f5f5f5]">
-              <span className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-lg px-2.5 py-1.5 font-mono text-xs text-gray-700 dark:text-gray-300 w-fit">{header}</span>
-              <select
-                className={cn('input h-9 text-sm', !hasPhone && isPhoneField === false && mapped === '' && 'border-red-300')}
-                value={mapped}
-                onChange={e => onMappingChange({ ...mapping, [header]: e.target.value })}
-              >
-                {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{samples.join(', ')}</p>
-              <div>
-                {mapped === ''
-                  ? <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><Minus size={12} /> Ignored</span>
-                  : <span className="text-xs text-[#1a5c3a] flex items-center gap-1"><CheckCircle size={12} /> Mapped</span>
-                }
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden overflow-x-auto">
+        <div className="min-w-[640px]">
+          <div className="grid grid-cols-4 gap-0 bg-[#f7f8f6] dark:bg-[#0f1724] px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-[#e8ebe8] dark:border-white/10">
+            <span>CSV Column</span><span>Maps to field</span><span>Sample values</span><span>Status</span>
+          </div>
+          {parsed.headers.map(header => {
+            const mapped = mapping[header] ?? ''
+            const samples = parsed.rows.slice(0, 3).map(r => r[header] ?? '').filter(Boolean)
+            const isPhoneField = mapped === 'phone'
+            return (
+              <div key={header} className="grid grid-cols-4 gap-4 items-center px-4 py-3.5 border-t border-[#f5f5f5]">
+                <span className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-lg px-2.5 py-1.5 font-mono text-xs text-gray-700 dark:text-gray-300 w-fit">{header}</span>
+                <select
+                  className={cn('input h-9 text-sm', !hasPhone && isPhoneField === false && mapped === '' && 'border-red-300')}
+                  value={mapped}
+                  onChange={e => onMappingChange({ ...mapping, [header]: e.target.value })}
+                >
+                  {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{samples.join(', ')}</p>
+                <div>
+                  {mapped === ''
+                    ? <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><Minus size={12} /> Ignored</span>
+                    : <span className="text-xs text-[#1a5c3a] flex items-center gap-1"><CheckCircle size={12} /> Mapped</span>
+                  }
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       {!hasPhone && (
@@ -109,7 +111,7 @@ export default function ContactImportMapper({ parsed, mapping, onMappingChange, 
       )}
 
       {/* duplicate handling */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Duplicate handling</p>
         <div className="space-y-3">
           {DUP_OPTIONS.map(opt => (
@@ -129,7 +131,7 @@ export default function ContactImportMapper({ parsed, mapping, onMappingChange, 
 
       {/* validation preview */}
       {hasPhone && (
-        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Validation preview</p>
           <div className="space-y-2">
             <div className="flex items-center gap-3 bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-xl px-4 py-3">

@@ -28,10 +28,7 @@ export default function Inbox() {
   }, [selectedConversationId])
 
   return (
-    <div
-      className="flex overflow-hidden bg-[#f7f8f6]"
-      style={{ height: 'calc(100vh - 56px)' }}
-    >
+    <div className="flex flex-1 min-h-0 overflow-hidden bg-[#f7f8f6]">
       {/* Panel 1 — Conversation list */}
       <div
         className={cn(

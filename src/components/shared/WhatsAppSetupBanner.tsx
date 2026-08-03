@@ -16,20 +16,21 @@ export default function WhatsAppSetupBanner() {
   if (!user || user.whatsappSetupDone || dismissed) return null
 
   return (
-    <div className="w-full bg-[var(--hero)] text-white px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">WA</div>
-        <div>
-          <div className="font-semibold">Complete your WhatsApp setup</div>
-          <div className="text-sm text-white/90">Connect your WhatsApp Business number to start sending messages</div>
+    <div className="w-full bg-[var(--hero)] text-white px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="w-8 h-8 shrink-0 bg-white/10 rounded-full flex items-center justify-center">WA</div>
+        <div className="min-w-0">
+          <div className="font-semibold truncate">Complete your WhatsApp setup</div>
+          <div className="text-sm text-white/90 sm:truncate">Connect your WhatsApp Business number to start sending messages</div>
         </div>
+        <button className="text-white/80 p-2 shrink-0 sm:hidden ml-auto" onClick={() => { sessionStorage.setItem('wa-setup-dismissed', '1'); setDismissed(true) }}><X size={18} /></button>
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={() => navigate('/setup/whatsapp')} className="btn btn-primary" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
+        <button onClick={() => navigate('/setup/whatsapp')} className="btn btn-primary justify-center whitespace-nowrap" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>
           <Play size={14} className="mr-2" /> Connect WhatsApp
         </button>
-        <button className="btn btn-outline text-white/90 border-white/30">Get support</button>
-        <button className="text-white/80 p-2" onClick={() => { sessionStorage.setItem('wa-setup-dismissed', '1'); setDismissed(true) }}><X /></button>
+        <button className="btn btn-outline text-white/90 border-white/30 justify-center whitespace-nowrap">Get support</button>
+        <button className="hidden sm:flex text-white/80 p-2" onClick={() => { sessionStorage.setItem('wa-setup-dismissed', '1'); setDismissed(true) }}><X /></button>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, Bell, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
@@ -56,6 +56,10 @@ export default function NotificationSettings() {
   const update = useUpdateNotifications()
   const [prefs, setPrefs] = useState<NotificationPreferences>((data as NotificationPreferences | undefined) ?? DEFAULT_PREFS)
 
+  useEffect(() => {
+    if (data) setPrefs(data as NotificationPreferences)
+  }, [data])
+
   function setChannel(key: keyof NotificationPreferences['channels'], val: boolean | string) {
     const updated = { ...prefs, channels: { ...prefs.channels, [key]: val } }
     setPrefs(updated)
@@ -77,20 +81,26 @@ export default function NotificationSettings() {
   return (
     <SettingsSection title="Notifications" subtitle="Choose what you're notified about and how">
       {/* Channels */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Notification channels</p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { key: 'email', icon: Mail, bg: 'bg-blue-50 dark:bg-blue-950/30', color: 'text-blue-600 dark:text-blue-400', label: 'Email', sub: 'Sent to your account email' },
             { key: 'inApp', icon: Bell, bg: 'bg-[#e8f5ee] dark:bg-emerald-950/30', color: 'text-[#1a5c3a]', label: 'In-app', sub: 'Shown in the notification bell' },
-            { key: 'whatsapp', icon: MessageSquare, bg: 'bg-green-50 dark:bg-green-950/30', color: 'text-green-600 dark:text-green-400', label: 'WhatsApp', sub: 'Send alerts to your personal number' },
-          ].map(({ key, icon: Icon, bg, color, label, sub }) => (
-            <div key={key} className="border border-[#e8ebe8] dark:border-white/10 rounded-xl p-4">
+            { key: 'whatsapp', icon: MessageSquare, bg: 'bg-green-50 dark:bg-green-950/30', color: 'text-green-600 dark:text-green-400', label: 'WhatsApp', sub: 'Send alerts to your personal number', comingSoon: true },
+          ].map(({ key, icon: Icon, bg, color, label, sub, comingSoon }) => (
+            <div key={key} className={cn('border border-[#e8ebe8] dark:border-white/10 rounded-xl p-4', comingSoon && 'opacity-70')}>
               <div className="flex items-start justify-between mb-2">
                 <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', bg)}>
                   <Icon size={16} className={color} />
                 </div>
-                <Toggle checked={Boolean(prefs.channels[key as keyof typeof prefs.channels])} onChange={(v) => setChannel(key as keyof typeof prefs.channels, v)} />
+                {comingSoon ? (
+                  <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40">
+                    Coming soon
+                  </span>
+                ) : (
+                  <Toggle checked={Boolean(prefs.channels[key as keyof typeof prefs.channels])} onChange={(v) => setChannel(key as keyof typeof prefs.channels, v)} />
+                )}
               </div>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label} notifications</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{sub}</p>
@@ -100,39 +110,41 @@ export default function NotificationSettings() {
       </div>
 
       {/* Per-event preferences */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden mt-6">
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr] px-5 py-3 border-b border-[#e8ebe8] dark:border-white/10 bg-[#f7f8f6] dark:bg-[#0f1724]">
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Event</span>
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">Email</span>
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">In-app</span>
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">WhatsApp</span>
-        </div>
-        {NOTIFICATION_GROUPS.map(({ group, events }) => (
-          <div key={group}>
-            <div className="px-5 py-2.5 bg-[#fafafa] dark:bg-white/5 border-b border-[#f0f0f0]">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{group}</p>
-            </div>
-            {events.map(({ key, label, desc }) => {
-              const pref = prefs.events[key] ?? { email: false, inApp: true, whatsapp: false }
-              return (
-                <div key={key} className="grid grid-cols-[2fr_1fr_1fr_1fr] px-5 py-3.5 border-b border-[#f5f5f5] items-center last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{label}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{desc}</p>
-                  </div>
-                  <div className="flex justify-center"><Toggle checked={pref.email} onChange={(v) => setEvent(key, 'email', v)} disabled={!prefs.channels.email} /></div>
-                  <div className="flex justify-center"><Toggle checked={pref.inApp} onChange={(v) => setEvent(key, 'inApp', v)} disabled={!prefs.channels.inApp} /></div>
-                  <div className="flex justify-center"><Toggle checked={pref.whatsapp} onChange={(v) => setEvent(key, 'whatsapp', v)} disabled={!prefs.channels.whatsapp} /></div>
-                </div>
-              )
-            })}
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden mt-6 overflow-x-auto">
+        <div className="min-w-[480px]">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr] px-4 sm:px-5 py-3 border-b border-[#e8ebe8] dark:border-white/10 bg-[#f7f8f6] dark:bg-[#0f1724]">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Event</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">Email</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">In-app</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">WhatsApp <span className="text-2xs font-normal">(soon)</span></span>
           </div>
-        ))}
+          {NOTIFICATION_GROUPS.map(({ group, events }) => (
+            <div key={group}>
+              <div className="px-4 sm:px-5 py-2.5 bg-[#fafafa] dark:bg-white/5 border-b border-[#f0f0f0]">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{group}</p>
+              </div>
+              {events.map(({ key, label, desc }) => {
+                const pref = prefs.events[key] ?? { email: false, inApp: true, whatsapp: false }
+                return (
+                  <div key={key} className="grid grid-cols-[2fr_1fr_1fr_1fr] px-4 sm:px-5 py-3.5 border-b border-[#f5f5f5] items-center last:border-0">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{label}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{desc}</p>
+                    </div>
+                    <div className="flex justify-center"><Toggle checked={pref.email} onChange={(v) => setEvent(key, 'email', v)} disabled={!prefs.channels.email} /></div>
+                    <div className="flex justify-center"><Toggle checked={pref.inApp} onChange={(v) => setEvent(key, 'inApp', v)} disabled={!prefs.channels.inApp} /></div>
+                    <div className="flex justify-center"><Toggle checked={false} onChange={() => {}} disabled /></div>
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Quiet hours */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+        <div className="flex items-center justify-between mb-4 gap-3">
           <div>
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Quiet hours</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pause notifications during specified hours</p>
@@ -141,15 +153,15 @@ export default function NotificationSettings() {
         </div>
         {prefs.quietHours.enabled && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <span className="text-sm text-gray-600 dark:text-gray-400">From</span>
               <input type="time" className="input h-9 text-sm w-28" value={prefs.quietHours.from} onChange={(e) => setPrefs(p => ({ ...p, quietHours: { ...p.quietHours, from: e.target.value } }))} />
               <span className="text-sm text-gray-600 dark:text-gray-400">to</span>
               <input type="time" className="input h-9 text-sm w-28" value={prefs.quietHours.to} onChange={(e) => setPrefs(p => ({ ...p, quietHours: { ...p.quietHours, to: e.target.value } }))} />
             </div>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               {DAYS.map((d, i) => (
-                <button key={d} onClick={() => setPrefs(p => ({ ...p, quietHours: { ...p.quietHours, days: p.quietHours.days.includes(i) ? p.quietHours.days.filter(x => x !== i) : [...p.quietHours.days, i] } }))} className={cn('w-10 h-10 rounded-xl text-xs font-medium transition-all', prefs.quietHours.days.includes(i) ? 'bg-[#1a5c3a] text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 hover:bg-[#e8f5ee] dark:hover:bg-emerald-950/30')}>{d}</button>
+                <button key={d} onClick={() => setPrefs(p => ({ ...p, quietHours: { ...p.quietHours, days: p.quietHours.days.includes(i) ? p.quietHours.days.filter(x => x !== i) : [...p.quietHours.days, i] } }))} className={cn('w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-xs font-medium transition-all shrink-0', prefs.quietHours.days.includes(i) ? 'bg-[#1a5c3a] text-white' : 'bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 hover:bg-[#e8f5ee] dark:hover:bg-emerald-950/30')}>{d}</button>
               ))}
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500">Notifications will be queued and delivered when quiet hours end.</p>
@@ -158,7 +170,7 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex justify-end mt-6">
-        <button onClick={() => update.mutate(prefs)} className="btn-primary h-10 text-sm">Save preferences</button>
+        <button onClick={() => update.mutate(prefs)} className="btn-primary h-10 text-sm w-full sm:w-auto">Save preferences</button>
       </div>
     </SettingsSection>
   )

@@ -241,18 +241,18 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-[#0b1220] rounded-2xl w-full max-w-4xl max-h-[calc(100vh-48px)] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6">
+      <div className="bg-white dark:bg-[#0b1220] rounded-none sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[calc(100vh-48px)] flex flex-col overflow-hidden">
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {isLocked ? 'View Template' : templateId ? 'Edit Template' : 'Create Template'}
           </h2>
           <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
         </div>
 
         {isLocked && (
-          <div className="flex items-center gap-2.5 px-6 py-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-medium">
+          <div className="flex items-center gap-2.5 px-4 sm:px-6 py-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-medium">
             <Lock size={13} className="flex-shrink-0" />
             {templateStatus === 'APPROVED'
               ? 'This template has been approved by Meta and can no longer be edited.'
@@ -260,11 +260,11 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
           </div>
         )}
 
-        <form id="template-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-1 overflow-hidden">
+        <form id="template-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden">
           {/* LEFT — form */}
-          <fieldset disabled={isLocked} className="flex-1 min-w-0 overflow-y-auto p-6 space-y-5 border-0">
+          <fieldset disabled={isLocked} className="flex-1 min-w-0 md:overflow-y-auto p-4 sm:p-6 space-y-5 border-0">
             {/* basic info */}
-            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Template name *</label>
                 <input
@@ -279,7 +279,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
               {/* category */}
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category *</label>
-                <div className="grid grid-cols-3 gap-3 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
                   {CATEGORY_CONFIG.map(cat => {
                     const Icon = cat.icon
                     const selected = values.category === cat.value
@@ -316,7 +316,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
             </div>
 
             {/* content */}
-            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
               {/* header toggle */}
               <div>
                 <div className="flex items-center justify-between">
@@ -429,10 +429,10 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                       const isMissing = showVarErrors && varTypes[key] && !(sampleVars[key] ?? '').trim()
                       return (
                         <div key={v}>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                             <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs font-mono rounded px-2 py-0.5 min-w-10 shrink-0">{v}</span>
                             <select
-                              className="input h-7 text-xs w-36 shrink-0"
+                              className="input h-7 text-xs w-full sm:w-36 shrink-0"
                               value={varTypes[key] ?? ''}
                               onChange={(e) => handleVarTypeChange(key, e.target.value)}
                             >
@@ -442,13 +442,13 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                               ))}
                             </select>
                             <input
-                              className={cn('input flex-1 h-7 text-xs', isMissing && 'border-red-500 dark:border-red-400')}
+                              className={cn('input flex-1 min-w-[160px] h-7 text-xs', isMissing && 'border-red-500 dark:border-red-400')}
                               placeholder={`Sample value for ${v} *`}
                               value={sampleVars[key] ?? ''}
                               onChange={(e) => setSampleVars(prev => ({ ...prev, [key]: e.target.value }))}
                             />
                           </div>
-                          {isMissing && <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 ml-12">Sample value is required</p>}
+                          {isMissing && <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 sm:ml-12">Sample value is required</p>}
                         </div>
                       )
                     })}
@@ -514,13 +514,13 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                       <div className="space-y-2">
                         {ctaFields.map((field, i) => (
                           <div key={field.id} className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-3 space-y-2">
-                            <div className="flex gap-2 items-center">
-                              <select {...register(`ctaButtons.${i}.type`)} className="input w-36">
+                            <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                              <select {...register(`ctaButtons.${i}.type`)} className="input w-full sm:w-36 shrink-0">
                                 <option value="URL">Visit website</option>
                                 <option value="PHONE_NUMBER">Call phone</option>
                               </select>
-                              <input {...register(`ctaButtons.${i}.text`)} className="input flex-1" placeholder="Button text" maxLength={20} />
-                              <button type="button" onClick={() => removeCTA(i)} className="w-8 h-8 flex items-center justify-center rounded-xl text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"><Trash2 size={14} /></button>
+                              <input {...register(`ctaButtons.${i}.text`)} className="input flex-1 min-w-[120px]" placeholder="Button text" maxLength={20} />
+                              <button type="button" onClick={() => removeCTA(i)} className="w-8 h-8 flex items-center justify-center rounded-xl text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"><Trash2 size={14} /></button>
                             </div>
                             <input {...register(`ctaButtons.${i}.value`)} className="input" placeholder={values.ctaButtons?.[i]?.type === 'URL' ? 'https://...' : '+91 XXXXXXXXXX'} />
                           </div>
@@ -540,7 +540,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
           </fieldset>
 
           {/* RIGHT — preview */}
-          <div className="w-72 border-l border-[#e8ebe8] dark:border-white/10 p-5 flex flex-col gap-4 overflow-y-auto bg-[#f7f8f6] dark:bg-[#0f1724]">
+          <div className="w-full md:w-72 shrink-0 border-t md:border-t-0 md:border-l border-[#e8ebe8] dark:border-white/10 p-4 sm:p-5 flex flex-col gap-4 md:overflow-y-auto bg-[#f7f8f6] dark:bg-[#0f1724]">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Live preview</p>
             <TemplatePreview template={previewTemplate} />
 
@@ -576,7 +576,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
         </form>
 
         {/* footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 px-4 sm:px-6 py-3 sm:py-4 border-t border-[#e8ebe8] dark:border-white/10">
           <p className="text-xs text-gray-400 dark:text-gray-500">
             {isLocked ? 'Duplicate this template if you need to make changes.' : 'Meta approval typically takes 24–48 hours'}
           </p>
@@ -584,7 +584,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
             {!isLocked && (
               <button
                 type="button"
-                className="btn-outline h-9 px-4"
+                className="btn-outline h-9 px-4 flex-1 sm:flex-none justify-center"
                 disabled={saveDraft.isPending || updateDraft.isPending}
                 onClick={onSaveDraft}
               >
@@ -595,7 +595,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
               <button
                 type="submit"
                 form="template-form"
-                className="btn-primary h-9 px-5"
+                className="btn-primary h-9 px-5 flex-1 sm:flex-none justify-center"
                 disabled={createTemplate.isPending || updateTemplate.isPending}
               >
                 {(createTemplate.isPending || updateTemplate.isPending) ? 'Submitting...' : 'Submit for review'}

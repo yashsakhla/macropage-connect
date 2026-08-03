@@ -44,11 +44,11 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'yes') {
     return (
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-8 text-center">
         <CheckCircle size={20} className="text-[#1a5c3a] mx-auto" />
         <p className="text-base font-semibold text-gray-900 dark:text-white mt-3">Thank you for your feedback!</p>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Glad this article helped you.</p>
-        <div className="flex items-center justify-center gap-3 mt-4">
+        <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
           <button
             onClick={() => {
               const url = window.location.href
@@ -71,7 +71,7 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'no') {
     return (
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-8">
         <p className="text-sm font-semibold text-gray-900 dark:text-white">Sorry to hear that. What could be better?</p>
         <div className="space-y-2 mt-4">
           {REASONS.map(r => (
@@ -95,7 +95,7 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
         />
         <button
           onClick={handleNoSubmit}
-          className="btn-primary h-9 mt-4"
+          className="btn-primary h-9 mt-4 w-full sm:w-auto"
         >
           Submit feedback
         </button>
@@ -105,7 +105,7 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
 
   if (state === 'submitted') {
     return (
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-8 text-center">
         <CheckCircle size={20} className="text-[#1a5c3a] mx-auto" />
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">Thank you for your feedback!</p>
         <button
@@ -119,18 +119,18 @@ export default function ArticleFeedback({ articleId, articleSlug, onNeedHelp }: 
   }
 
   return (
-    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-8 text-center">
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-8 text-center">
       <p className="text-base font-semibold text-gray-900 dark:text-white">Was this article helpful?</p>
-      <div className="flex justify-center gap-4 mt-4">
+      <div className="flex flex-col sm:flex-row sm:justify-center gap-2.5 sm:gap-4 mt-4">
         <button
           onClick={handleYes}
-          className="btn-primary h-10 px-6 flex items-center gap-2"
+          className="btn-primary h-10 px-6 flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <ThumbsUp size={16} /> Yes, it helped
         </button>
         <button
           onClick={() => setState('no')}
-          className="btn-outline h-10 px-6 flex items-center gap-2"
+          className="btn-outline h-10 px-6 flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <ThumbsDown size={16} /> No, I need more help
         </button>

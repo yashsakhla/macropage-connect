@@ -64,18 +64,18 @@ export default function ContactImportProgress({ jobId, totalRows, onClose }: Pro
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{total.toLocaleString()} rows processed</p>
 
         {hasBreakdown ? (
-          <div className="grid grid-cols-3 gap-4 mt-6 w-full max-w-sm">
-            <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-bold text-[#1a5c3a]">{imported.toLocaleString()}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Imported</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-6 w-full max-w-sm">
+            <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 rounded-2xl p-2.5 sm:p-4 text-center">
+              <p className="text-lg sm:text-2xl font-bold text-[#1a5c3a] truncate">{imported.toLocaleString()}</p>
+              <p className="text-2xs sm:text-xs text-gray-600 dark:text-gray-400 mt-0.5">Imported</p>
             </div>
-            <div className="bg-gray-100 dark:bg-white/10 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{skipped.toLocaleString()}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Skipped</p>
+            <div className="bg-gray-100 dark:bg-white/10 rounded-2xl p-2.5 sm:p-4 text-center">
+              <p className="text-lg sm:text-2xl font-bold text-gray-600 dark:text-gray-400 truncate">{skipped.toLocaleString()}</p>
+              <p className="text-2xs sm:text-xs text-gray-600 dark:text-gray-400 mt-0.5">Skipped</p>
             </div>
-            <div className="bg-red-50 dark:bg-red-950/30 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-bold text-red-500 dark:text-red-400">{failed.toLocaleString()}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Failed</p>
+            <div className="bg-red-50 dark:bg-red-950/30 rounded-2xl p-2.5 sm:p-4 text-center">
+              <p className="text-lg sm:text-2xl font-bold text-red-500 dark:text-red-400 truncate">{failed.toLocaleString()}</p>
+              <p className="text-2xs sm:text-xs text-gray-600 dark:text-gray-400 mt-0.5">Failed</p>
             </div>
           </div>
         ) : (

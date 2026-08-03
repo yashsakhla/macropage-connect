@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, CreditCard, Download, Info, Loader2, AlertCircle, Smartphone } from 'lucide-react'
+import { CheckCircle, CreditCard, Download, Info, Loader2, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
@@ -9,6 +9,7 @@ import MessageUsageCard from '@/components/analytics/MessageUsageCard'
 import { useBillingSubscription, useBillingPlans, usePaymentHistory, useBillingPaymentMethod, useCancelSubscription } from '@/hooks/useBilling'
 import { useRazorpay } from '@/hooks/useRazorpay'
 import type { BillingCycle, Invoice } from '@/types'
+import razorpayLogo from '@/assets/icons/razorpay-logo.png'
 
 const PLAN_ORDER: Record<string, number> = { STARTER: 0, GROWTH: 1, BUSINESS: 2, ENTERPRISE: 3 }
 const CYCLE_LABEL: Record<BillingCycle, string> = { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' }
@@ -50,7 +51,7 @@ export default function BillingSettings() {
   const handleSelectPlan = async (planId: string) => {
     const plan = allPlans.find(p => p.id === planId)
     if (plan?.custom) {
-      window.open(plan.ctaHref || 'mailto:sales@macropage.in?subject=Enterprise%20Plan%20Inquiry', '_blank')
+      window.open(plan.ctaHref || 'mailto:contact@macropageconnect.com?subject=Enterprise%20Plan%20Inquiry', '_blank')
       return
     }
 
@@ -79,7 +80,7 @@ export default function BillingSettings() {
     <SettingsSection title="Billing & Plans" subtitle="Manage your subscription and payment details">
       {/* Current plan */}
       <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-        <div className="px-6 py-5 flex items-start justify-between" style={{ background: 'linear-gradient(135deg, #1a3d2b, #1a5c3a)' }}>
+        <div className="px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3" style={{ background: 'linear-gradient(135deg, #1a3d2b, #1a5c3a)' }}>
           <div>
             <p className="text-xl font-bold text-white capitalize">{subscription.planName} Plan</p>
             <p className="text-sm text-white/70 mt-1">
@@ -89,11 +90,11 @@ export default function BillingSettings() {
               }
             </p>
           </div>
-          <button className="bg-white/20 hover:bg-white/30 rounded-xl px-4 h-9 text-sm font-medium text-white transition-colors">Change plan</button>
+          <button className="bg-white/20 hover:bg-white/30 rounded-xl px-4 h-9 text-sm font-medium text-white transition-colors w-full sm:w-auto">Change plan</button>
         </div>
 
-        <div className="px-6 py-5">
-          <div className="grid grid-cols-2 gap-2 mb-6">
+        <div className="px-4 sm:px-6 py-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
             {['10 team members', 'Unlimited WhatsApp messages (Meta charges apply)', 'Unlimited campaigns', 'AI chatbot included', 'WhatsApp flows', 'Priority support'].map(f => (
               <div key={f} className="flex items-center gap-2">
                 <CheckCircle size={13} className="text-[#1a5c3a] flex-shrink-0" />
@@ -108,18 +109,20 @@ export default function BillingSettings() {
               const used = subscription.usage[key as keyof typeof subscription.usage] as number
               const pct = (used / limit) * 100
               return (
-                <div key={key} className="flex items-center gap-4 mb-4">
-                  <span className="text-sm text-gray-600 dark:text-gray-400 w-36 flex-shrink-0">{label}</span>
-                  <div className="flex-1 bg-gray-100 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+                <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mb-4">
+                  <div className="flex items-center justify-between sm:contents">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 sm:w-36 sm:flex-shrink-0">{label}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 sm:w-28 sm:text-right sm:flex-shrink-0 sm:order-3">{used.toLocaleString('en-IN')} / {limit.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex-1 bg-gray-100 dark:bg-white/10 h-2 rounded-full overflow-hidden sm:order-2">
                     <div className={cn('h-2 rounded-full transition-all', pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-amber-500' : 'bg-[#1a5c3a]')} style={{ width: `${Math.min(pct, 100)}%` }} />
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 w-28 text-right flex-shrink-0">{used.toLocaleString('en-IN')} / {limit.toLocaleString('en-IN')}</span>
                 </div>
               )
             })}
           </div>
 
-          <div className="border-t border-[#e8ebe8] dark:border-white/10 pt-5 flex justify-between">
+          <div className="border-t border-[#e8ebe8] dark:border-white/10 pt-5 flex justify-between gap-3">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">{subscription.status === 'trial' ? 'Trial ends' : 'Next billing date'}</p>
               <p className="text-sm font-semibold mt-0.5">
@@ -135,6 +138,16 @@ export default function BillingSettings() {
               <p className="text-xs text-gray-400 dark:text-gray-500">{subscription.cancelAtPeriodEnd ? 'Cancels at period end' : 'Auto-renews'}</p>
             </div>
           </div>
+
+          {subscription.cancelledAt && (
+            <div className="mt-5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl px-4 py-3 flex items-start gap-2.5">
+              <AlertCircle size={15} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                The subscription cancelled at {format(new Date(subscription.cancelledAt), 'dd MMM yyyy, h:mm a')} and will automatically cancel at the end of the current billing period, which is{' '}
+                {subscription.currentPeriodEnd ? format(new Date(subscription.currentPeriodEnd), 'dd MMM yyyy') : '—'}.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -144,17 +157,17 @@ export default function BillingSettings() {
       </div>
 
       {/* Plan comparison */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Available plans</p>
-          <div className="flex gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1">
+          <div className="flex gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1 overflow-x-auto no-scrollbar">
             {(Object.keys(CYCLE_LABEL) as BillingCycle[]).map((cycle) => {
               const savings = allPlans.find(p => !p.custom)?.pricing[cycle]?.savings
               return (
                 <button
                   key={cycle}
                   onClick={() => setBillingCycle(cycle)}
-                  className={cn('px-4 py-1.5 text-xs font-medium rounded-lg transition-all', billingCycle === cycle ? 'bg-white dark:bg-[#0b1220] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400')}
+                  className={cn('px-4 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap shrink-0', billingCycle === cycle ? 'bg-white dark:bg-[#0b1220] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400')}
                 >
                   {CYCLE_LABEL[cycle]} {savings && <span className="text-[#1a5c3a]">{savings}</span>}
                 </button>
@@ -162,7 +175,7 @@ export default function BillingSettings() {
             })}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {allPlans.map((plan, i) => (
             <PlanCard
               key={plan.id}
@@ -184,7 +197,7 @@ export default function BillingSettings() {
 
       {/* Cancel subscription */}
       {subscription.status === 'active' && !subscription.cancelAtPeriodEnd && (
-        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
           {showCancelConfirm ? (
             <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-2xl px-4 py-4">
               <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1 flex items-center gap-1.5">
@@ -222,30 +235,22 @@ export default function BillingSettings() {
       )}
 
       {/* Payment method */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Payment method</p>
         {paymentMethodLoading ? (
           <div className="py-6 text-center text-gray-400 dark:text-gray-500 text-sm">Loading payment method…</div>
         ) : paymentMethod ? (
           <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-5 flex flex-wrap items-center gap-x-8 gap-y-4">
             <div className="flex items-center gap-3.5">
-              <div
-                className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0',
-                  paymentMethod.paymentMethod === 'upi'
-                    ? 'bg-gradient-to-br from-[#f7931e] to-[#1a5c3a]'
-                    : 'bg-gradient-to-br from-[#3395ff] to-[#0527c2]'
-                )}
-              >
-                {paymentMethod.paymentMethod === 'upi' ? <Smartphone size={20} /> : <CreditCard size={20} />}
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white border border-[#e8ebe8] flex-shrink-0 p-2">
+                <img src={razorpayLogo} alt="Razorpay" className="w-full h-full object-contain" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {paymentMethod.paymentMethod === 'upi' ? 'Paid via UPI' : 'Paid via Card'}
                 </p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-2xs text-gray-400 dark:text-gray-500">Powered by</span>
-                  <span className="text-2xs font-bold text-[#0527c2]">Razorpay</span>
+                  <span className="text-2xs text-gray-400 dark:text-gray-500">Powered by Razorpay</span>
                 </div>
               </div>
             </div>
@@ -279,9 +284,9 @@ export default function BillingSettings() {
 
       {/* Invoices */}
       <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden mt-6">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 gap-2">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Invoices</p>
-          <button className="btn-ghost text-sm flex items-center gap-1.5"><Download size={13} /> Export all</button>
+          <button className="btn-ghost text-sm flex items-center gap-1.5 whitespace-nowrap"><Download size={13} /> Export all</button>
         </div>
         <div className="px-2">
           {paymentsLoading ? (

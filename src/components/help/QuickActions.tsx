@@ -10,7 +10,7 @@ interface Props {
 
 export default function QuickActions({ onTicketClick }: Props) {
   return (
-    <div id="quick-actions" className="max-w-6xl mx-auto px-6 py-8">
+    <div id="quick-actions" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Quick actions</p>
         <a href="#contact-support" className="text-xs text-[#1a5c3a] dark:text-emerald-400 font-medium hidden sm:block">
@@ -18,7 +18,7 @@ export default function QuickActions({ onTicketClick }: Props) {
         </a>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Live chat */}
         <div className="bg-[#eafaf0] dark:bg-emerald-950/20 rounded-2xl overflow-hidden opacity-60 cursor-not-allowed flex items-stretch">
           <div className="relative w-28 flex-shrink-0">

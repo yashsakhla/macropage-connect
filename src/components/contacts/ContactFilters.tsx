@@ -86,7 +86,7 @@ export default function ContactFilters({ filters, availableTags, onChange, onClo
   return (
     <>
       <div className="fixed inset-0 bg-black/10 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-screen w-80 bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-80 bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
         {/* header */}
         <div className="flex items-center gap-2 px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
           <p className="text-base font-semibold text-gray-900 dark:text-white flex-1">Filter contacts</p>

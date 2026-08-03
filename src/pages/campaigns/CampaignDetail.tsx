@@ -209,9 +209,9 @@ export default function CampaignDetail() {
     : null
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
-      <div className="relative mb-6">
+      <div className="relative mb-4 sm:mb-6">
         <img
           src={rocketStats} alt=""
           className="pointer-events-none select-none absolute left-1/2 -bottom-10 -translate-x-1/2 z-0 w-80 h-30 object-contain hidden md:block"
@@ -230,39 +230,34 @@ export default function CampaignDetail() {
           </span>
         </div>
 
-        <div className="flex items-start justify-between relative z-20">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{campaign.name}</h1>
-            <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 relative z-20">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{campaign.name}</h1>
+            <div className="flex items-center gap-2.5 sm:gap-4 mt-1.5 flex-wrap">
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <Calendar size={12} /> {format(new Date(campaign.createdAt), 'dd MMM yyyy, h:mm a')}
               </span>
-              <span className="text-gray-300 dark:text-gray-700">·</span>
+              <span className="text-gray-300 dark:text-gray-700 hidden sm:inline">·</span>
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <Send size={12} /> {campaign.scheduledAt ? format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a') : 'Immediate'}
               </span>
-              <span className="text-gray-300 dark:text-gray-700">·</span>
+              <span className="text-gray-300 dark:text-gray-700 hidden sm:inline">·</span>
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <Zap size={12} /> {campaign.sendSpeed.charAt(0).toUpperCase() + campaign.sendSpeed.slice(1)} speed
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {campaign.status === 'running' && (
               <button className="btn-outline h-9 gap-1.5 flex items-center" onClick={() => pause.mutate(campaign.id)}>
                 <Pause size={14} /> Pause
               </button>
             )}
             {campaign.status === 'completed' && (
-              <>
-                <button className="btn-outline h-9 gap-1.5 flex items-center" onClick={() => duplicate.mutate(campaign.id)}>
-                  <Copy size={14} /> Duplicate
-                </button>
-                <button className="btn-outline h-9 gap-1.5 flex items-center" onClick={exportRecipients}>
-                  <Download size={14} /> Export
-                </button>
-              </>
+              <button className="btn-outline h-9 gap-1.5 flex items-center" onClick={exportRecipients}>
+                <Download size={14} /> Export
+              </button>
             )}
             {campaign.status === 'scheduled' && (
               <button className="btn-ghost h-9 px-3 text-sm text-red-500 dark:text-red-400 flex items-center gap-1.5">
@@ -289,12 +284,12 @@ export default function CampaignDetail() {
       </div>
 
       {/* stat pills */}
-      <div className="flex items-stretch gap-3 mb-6 flex-wrap">
+      <div className="grid grid-cols-2 sm:flex sm:items-stretch gap-2.5 sm:gap-3 mb-4 sm:mb-6">
         {statPills.map(p => <StatPill key={p.label} {...p} />)}
       </div>
 
       {/* three-card row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
         {/* delivery funnel */}
         <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Delivery funnel</p>
@@ -328,9 +323,6 @@ export default function CampaignDetail() {
         <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Performance over time</p>
-            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 shrink-0">
-              Daily <ChevronDown size={12} />
-            </span>
           </div>
           <div className="flex items-center gap-3 mb-2">
             {[['Sent', '#3b82f6'], ['Delivered', '#1a5c3a'], ['Read', '#7c3aed']].map(([label, color]) => (
@@ -382,8 +374,8 @@ export default function CampaignDetail() {
               return (
                 <div key={row.label} className="flex items-center gap-3 text-sm">
                   <Icon size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <span className="text-gray-500 dark:text-gray-400 min-w-20">{row.label}</span>
-                  <span className="text-gray-900 dark:text-white font-medium ml-auto text-right">{row.value}</span>
+                  <span className="text-gray-500 dark:text-gray-400 min-w-20 shrink-0">{row.label}</span>
+                  <span className="text-gray-900 dark:text-white font-medium ml-auto text-right truncate">{row.value}</span>
                 </div>
               )
             })}

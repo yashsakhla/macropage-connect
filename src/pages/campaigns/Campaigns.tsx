@@ -11,9 +11,9 @@ import type { Campaign, CampaignStatus } from '@/types'
 import { useCampaigns, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
 import CampaignCard, { LIST_GRID_COLS } from '@/components/campaigns/CampaignCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
-import rocketIcon from '@/assets/campaigns/roccket.svg'
-import messageIcon from '@/assets/campaigns/message.svg'
-import goalIcon from '@/assets/campaigns/goal.svg'
+import rocketIcon from '@/assets/campaigns/roccket.png'
+import messageIcon from '@/assets/campaigns/message.png'
+import goalIcon from '@/assets/campaigns/goal.png'
 
 type DateRange = '7d' | '30d' | '90d' | 'all'
 type SortOrder = 'newest' | 'oldest'
@@ -126,25 +126,25 @@ export default function Campaigns() {
   }
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Campaigns</h1>
           <p className="page-subtitle mt-0.5">Send broadcast messages to your contacts</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="btn btn-outline h-9 gap-2" onClick={() => navigate('/contacts')}>
+        <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:gap-3">
+          <button className="btn btn-outline h-9 gap-2 justify-center whitespace-nowrap" onClick={() => navigate('/contacts')}>
             <Upload size={15} /> Import Contacts
           </button>
-          <button className="btn btn-primary h-9 gap-2" onClick={() => setShowWizard(true)}>
+          <button className="btn btn-primary h-9 gap-2 justify-center whitespace-nowrap" onClick={() => setShowWizard(true)}>
             <Plus size={16} /> New Campaign
           </button>
         </div>
       </div>
 
       {/* promo cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 sm:mb-6">
         <PromoCampaignCard
           badge="Product Launch"
           title={<>Product<br />Launch</>}
@@ -170,8 +170,8 @@ export default function Campaigns() {
           badgeClass="bg-white/70 text-amber-700"
           buttonClass="bg-amber-500 hover:bg-amber-600"
           metrics={promoMetrics}
-          ctaLabel="Create Campaign"
-          onCta={() => setShowWizard(true)}
+          ctaLabel="Track Campaign"
+          onCta={scrollToCampaignRows}
           onSecondary={scrollToCampaignRows}
           secondaryIcon={ArrowDown}
         />
@@ -193,15 +193,15 @@ export default function Campaigns() {
       </div>
 
       {/* filters + search */}
-      <div ref={campaignRowsRef} className="flex items-end justify-between gap-3 mt-6 mb-4 flex-wrap border-b border-[#e8ebe8] dark:border-white/10">
-        {/* status tabs — underline style */}
-        <div className="flex items-center gap-5">
+      <div ref={campaignRowsRef} className="flex flex-col items-stretch gap-3 mt-4 sm:mt-6 mb-4 border-b border-[#e8ebe8] dark:border-white/10">
+        {/* status tabs — underline style, scrolls horizontally on mobile */}
+        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar">
           {STATUS_TABS.map(tab => (
             <button
               key={tab.value}
               onClick={() => setStatusFilter(tab.value)}
               className={cn(
-                'relative pb-3 text-sm font-medium transition-colors flex items-center gap-1.5',
+                'relative pb-3 text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0',
                 statusFilter === tab.value ? 'text-[#1a5c3a]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               )}
             >
@@ -216,14 +216,14 @@ export default function Campaigns() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 pb-3">
+        <div className="flex items-center gap-2 pb-3 flex-wrap">
           {/* search */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input pl-8 w-56 h-9 bg-white dark:bg-[#0b1220]"
+              className="input pl-8 w-full sm:w-56 h-9 bg-white dark:bg-[#0b1220]"
               placeholder="Search campaigns..."
             />
           </div>
@@ -324,28 +324,30 @@ export default function Campaigns() {
       ) : filtered.length === 0 ? (
         <EmptyState onCreateClick={() => setShowWizard(true)} hasFilter={statusFilter !== 'all' || !!search || dateRange !== 'all'} />
       ) : view === 'list' ? (
-        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-          <div
-            className="grid items-center gap-3 px-5 py-3 border-b border-[#eef0ee] dark:border-white/10 bg-[#fafbfa] dark:bg-white/5"
-            style={{ gridTemplateColumns: LIST_GRID_COLS }}
-          >
-            {['Campaign', 'Status', 'Contacts', 'Delivered', 'Open Rate', 'Sent', 'Read', 'Failed', 'Last Updated', ''].map(label => (
-              <span key={label} className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{label}</span>
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden md:overflow-x-auto">
+          <div className="md:min-w-[900px]">
+            <div
+              className="hidden md:grid items-center gap-3 px-5 py-3 border-b border-[#eef0ee] dark:border-white/10 bg-[#fafbfa] dark:bg-white/5"
+              style={{ gridTemplateColumns: LIST_GRID_COLS }}
+            >
+              {['Campaign', 'Status', 'Contacts', 'Delivered', 'Open Rate', 'Sent', 'Read', 'Failed', 'Last Updated', ''].map(label => (
+                <span key={label} className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{label}</span>
+              ))}
+            </div>
+            {filtered.map(c => (
+              <CampaignCard
+                key={c.id}
+                campaign={c}
+                view="list"
+                onClick={(c: Campaign) => navigate(`/campaigns/${c.id}`)}
+                onPause={(c: Campaign) => pause.mutate(c.id)}
+                onDuplicate={(c: Campaign) => duplicate.mutate(c.id)}
+              />
             ))}
           </div>
-          {filtered.map(c => (
-            <CampaignCard
-              key={c.id}
-              campaign={c}
-              view="list"
-              onClick={(c: Campaign) => navigate(`/campaigns/${c.id}`)}
-              onPause={(c: Campaign) => pause.mutate(c.id)}
-              onDuplicate={(c: Campaign) => duplicate.mutate(c.id)}
-            />
-          ))}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(c => (
             <CampaignCard
               key={c.id}

@@ -17,7 +17,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { cn } from '@/lib/utils'
 
-const BASE_URL = 'https://macropage-connect.onrender.com/api/v1'
+const BASE_URL = 'https://api.macropageconnect.com/api/v1'
 
 type Language = 'curl' | 'node' | 'php' | 'python'
 

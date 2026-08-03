@@ -60,12 +60,46 @@ export function useHelpFAQs(category?: string) {
   })
 }
 
+export function normalizeSearchResults(raw: any): SearchResult[] {
+  const payload = raw?.data ?? raw ?? {}
+
+  // Backend returns { docs: HelpArticle[], faqs: FAQ[] } rather than a flat
+  // `data` array, so both lists need to be mapped into SearchResult shape.
+  const faqResults: SearchResult[] = Array.isArray(payload.faqs)
+    ? payload.faqs.map((f: any) => ({
+        id: f._id ?? f.id,
+        type: 'faq' as const,
+        title: f.question,
+        excerpt: f.answer,
+        category: f.category ?? '',
+        url: '/help',
+        relevanceScore: f.score ?? 0,
+        meta: {},
+      }))
+    : []
+
+  const docResults: SearchResult[] = Array.isArray(payload.docs)
+    ? payload.docs.map((d: any) => ({
+        id: d._id ?? d.id,
+        type: 'article' as const,
+        title: d.title,
+        excerpt: d.content?.slice(0, 160) ?? '',
+        category: d.category ?? '',
+        url: `/help/articles/${d.slug}`,
+        relevanceScore: d.score ?? 0,
+        meta: {},
+      }))
+    : []
+
+  return [...faqResults, ...docResults].sort((a, b) => b.relevanceScore - a.relevanceScore)
+}
+
 export function useHelpSearch(query: string) {
   return useQuery<SearchResult[]>({
     queryKey: ['help-search', query],
     queryFn: () =>
       query.length > 2
-        ? api.get('/help/search', { params: { q: query } }).then(r => r.data.data)
+        ? api.get('/help/search', { params: { q: query } }).then(r => normalizeSearchResults(r.data))
         : Promise.resolve([]),
     enabled: query.length > 2,
     placeholderData: keepPreviousData,

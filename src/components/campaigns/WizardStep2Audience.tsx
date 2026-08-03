@@ -130,7 +130,7 @@ export default function WizardStep2Audience({
   return (
     <div className="space-y-5">
       {/* source selection */}
-      <div className={cn('grid gap-3', selectedContacts.length > 0 ? 'grid-cols-4' : 'grid-cols-3')}>
+      <div className={cn('grid grid-cols-2 gap-2.5 sm:gap-3', selectedContacts.length > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3')}>
         {sourceTabs.map(s => {
           const Icon = s.icon
           const isSelected = audienceType === s.id
@@ -139,15 +139,15 @@ export default function WizardStep2Audience({
               key={s.id}
               onClick={() => onAudienceTypeChange(s.id)}
               className={cn(
-                'border-2 rounded-2xl p-5 cursor-pointer transition-all text-center',
+                'border-2 rounded-2xl p-3 sm:p-5 cursor-pointer transition-all text-center',
                 isSelected ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4] hover:bg-[#fafffe] dark:hover:bg-white/5'
               )}
             >
-              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3', isSelected ? 'bg-[#1a5c3a]' : 'bg-[#f7f8f6] dark:bg-[#0f1724]')}>
-                <Icon size={20} className={isSelected ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
+              <div className={cn('w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3', isSelected ? 'bg-[#1a5c3a]' : 'bg-[#f7f8f6] dark:bg-[#0f1724]')}>
+                <Icon size={18} className={isSelected ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
               </div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{s.title}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.subtitle}</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{s.title}</p>
+              <p className="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{s.subtitle}</p>
             </div>
           )
         })}
@@ -311,34 +311,36 @@ export default function WizardStep2Audience({
               </div>
 
               {csvHeaders.length > 0 && (
-                <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+                <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Map CSV columns</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Match your CSV columns to contact fields</p>
-                  <div className="mt-4 space-y-2">
-                    <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 mb-2">
-                      <span>Your CSV column</span>
-                      <span>Maps to</span>
-                      <span>Preview</span>
-                    </div>
-                    {csvHeaders.map(header => {
-                      const mapped = csvMapping[header] ?? ''
-                      return (
-                        <div key={header} className="grid grid-cols-3 gap-3 items-center">
-                          <span className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded px-2 py-1 text-xs font-mono text-gray-700 dark:text-gray-300 truncate">{header}</span>
-                          <div className="flex items-center gap-1">
-                            <select
-                              className="input h-8 text-xs flex-1"
-                              value={mapped}
-                              onChange={e => onCsvMappingChange({ ...csvMapping, [header]: e.target.value })}
-                            >
-                              {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </select>
-                            {mapped === '' && <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">ignored</span>}
+                  <div className="mt-4 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+                    <div className="min-w-[480px] space-y-2">
+                      <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 mb-2">
+                        <span>Your CSV column</span>
+                        <span>Maps to</span>
+                        <span>Preview</span>
+                      </div>
+                      {csvHeaders.map(header => {
+                        const mapped = csvMapping[header] ?? ''
+                        return (
+                          <div key={header} className="grid grid-cols-3 gap-3 items-center">
+                            <span className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded px-2 py-1 text-xs font-mono text-gray-700 dark:text-gray-300 truncate">{header}</span>
+                            <div className="flex items-center gap-1">
+                              <select
+                                className="input h-8 text-xs flex-1"
+                                value={mapped}
+                                onChange={e => onCsvMappingChange({ ...csvMapping, [header]: e.target.value })}
+                              >
+                                {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                              </select>
+                              {mapped === '' && <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">ignored</span>}
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 truncate font-mono">{csvPreviewRows[0]?.[header] ?? '—'}</span>
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate font-mono">{csvPreviewRows[0]?.[header] ?? '—'}</span>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
                   {!Object.values(csvMapping).includes('phone') && (
                     <div className="flex items-center gap-1.5 mt-3 text-xs text-red-500 dark:text-red-400">

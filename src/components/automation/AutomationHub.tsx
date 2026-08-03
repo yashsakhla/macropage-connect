@@ -152,7 +152,7 @@ export default function AutomationHub({ activeTab }: Props) {
                             !canManageAutomation && 'opacity-50 cursor-not-allowed'
                           )}
                         >
-                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', isOn ? 'translate-x-4.5' : 'translate-x-0.5')} />
+                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', isOn ? 'translate-x-[18px]' : 'translate-x-0.5')} />
                         </button>
                         {canManageAutomation && (
                           <button onClick={() => { setEditingRule(rule); setShowRuleForm(true) }} className="btn-ghost h-8 text-xs px-3">Edit</button>
@@ -321,7 +321,7 @@ export default function AutomationHub({ activeTab }: Props) {
                           className="btn-outline text-xs h-7 px-3"
                           onClick={(e) => { e.stopPropagation(); navigate(`/automation/flows/${flow.id}`) }}
                         >
-                          {canManageAutomation ? 'Edit flow' : 'View flow'}
+                          {canManageAutomation && flow.status !== 'active' ? 'Edit flow' : 'View flow'}
                         </button>
                         <button
                           onClick={(e) => {
@@ -336,7 +336,7 @@ export default function AutomationHub({ activeTab }: Props) {
                             !canManageAutomation && 'opacity-50 cursor-not-allowed'
                           )}
                         >
-                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', flow.status === 'active' ? 'translate-x-4.5' : 'translate-x-0.5')} />
+                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform', flow.status === 'active' ? 'translate-x-[18px]' : 'translate-x-0.5')} />
                         </button>
                       </div>
                     </div>

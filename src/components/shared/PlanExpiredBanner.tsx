@@ -15,7 +15,7 @@ export default function PlanExpiredBanner() {
   const planLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase()
 
   return (
-    <div className="w-full bg-red-700 text-white px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+    <div className="w-full bg-red-700 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
       {/* Left */}
       <div className="flex items-center gap-4 min-w-0">
         <div className="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center flex-shrink-0">

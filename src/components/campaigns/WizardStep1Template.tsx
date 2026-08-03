@@ -89,8 +89,8 @@ export default function WizardStep1Template({
       <div>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select a message template *</p>
 
-        <div className="flex items-center gap-3 mb-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 mb-3">
+          <div className="relative flex-1 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               className="input pl-8 h-9"
@@ -99,13 +99,13 @@ export default function WizardStep1Template({
               placeholder="Search templates..."
             />
           </div>
-          <div className="flex items-center gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-1 overflow-x-auto no-scrollbar shrink-0">
             {CATEGORY_TABS.map(tab => (
               <button
                 key={tab}
                 onClick={() => setCategoryTab(tab)}
                 className={cn(
-                  'px-3 h-7 rounded-lg text-xs font-medium transition-all',
+                  'px-3 h-7 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0',
                   categoryTab === tab ? 'bg-white dark:bg-[#0b1220] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
                 )}
               >
@@ -117,7 +117,7 @@ export default function WizardStep1Template({
 
         {/* Loading */}
         {templatesLoading && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-white/10 animate-pulse" />
             ))}
@@ -171,7 +171,7 @@ export default function WizardStep1Template({
 
         {/* Template grid */}
         {!templatesLoading && !templatesError && (templates?.length ?? 0) > 0 && (
-          <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
             {filtered.map(template => {
               const isSelected = selectedTemplate?.id === template.id
               const vars = Array.from(new Set((template.body ?? '').match(/{{[^}]+}}/g) ?? []))
@@ -187,11 +187,11 @@ export default function WizardStep1Template({
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{template.name}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-2 py-0.5">{template.category}</span>
-                        <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] rounded-full px-2 py-0.5">APPROVED</span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-2 py-0.5 whitespace-nowrap">{template.category}</span>
+                        <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[10px] rounded-full px-2 py-0.5 whitespace-nowrap">APPROVED</span>
                       </div>
                     </div>
                     <div className={cn(
@@ -210,10 +210,10 @@ export default function WizardStep1Template({
                     )}
                   </p>
 
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500">🇬🇧 {template.language.toUpperCase()}</span>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">🇬🇧 {template.language.toUpperCase()}</span>
                     {vars.length > 0 && (
-                      <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-1.5 py-0.5">
+                      <span className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-[10px] rounded-full px-1.5 py-0.5 whitespace-nowrap">
                         {vars.length} variable{vars.length !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -222,7 +222,7 @@ export default function WizardStep1Template({
               )
             })}
             {filtered.length === 0 && (
-              <div className="col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">
+              <div className="col-span-1 sm:col-span-2 text-center py-10 text-gray-400 dark:text-gray-500 text-sm">
                 <FileText size={24} className="mx-auto mb-2 opacity-40" />
                 No templates match your search
               </div>
@@ -233,7 +233,7 @@ export default function WizardStep1Template({
 
       {/* variable mapping */}
       {selectedTemplate && detectedVars.length > 0 && (
-        <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
+        <div className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-5">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Map template variables</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tell us where to get each value from your contacts</p>
 
@@ -242,13 +242,13 @@ export default function WizardStep1Template({
               const currentSource = variableMapping[variable] ?? ''
               const isFixed = currentSource.startsWith('fixed:')
               return (
-                <div key={variable} className="flex items-center gap-3">
-                  <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-sm font-mono rounded-lg px-3 py-2 min-w-16 text-center">
+                <div key={variable} className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+                  <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-sm font-mono rounded-lg px-3 py-2 min-w-16 text-center shrink-0">
                     {variable}
                   </span>
-                  <span className="text-gray-400 dark:text-gray-500">→</span>
+                  <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">→</span>
                   <select
-                    className="input flex-1 h-9"
+                    className="input flex-1 h-9 min-w-[140px]"
                     value={isFixed ? 'fixed' : currentSource}
                     onChange={e => {
                       if (e.target.value === 'fixed') {

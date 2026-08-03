@@ -378,7 +378,7 @@ export default function WhatsAppSetup() {
                     </p>
                     <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
                       We're finishing Meta's Tech Provider approval for self-serve setup.
-                      Contact support@macropage.in and we'll connect your account manually.
+                      Contact contact@macropageconnect.com and we'll connect your account manually.
                     </p>
                   </div>
                 )}

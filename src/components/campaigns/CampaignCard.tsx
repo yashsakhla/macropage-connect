@@ -214,7 +214,85 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
         </div>
       )}
 
-      <div className="grid items-center gap-3 px-5 py-4"
+      {/* mobile card layout — replaces the fixed-column grid below md: */}
+      <div className="md:hidden px-4 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex items-center gap-3">
+            <div className={cn('w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0', audience.bg)}>
+              <img src={audience.image} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{campaign.name}</p>
+              <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {format(new Date(campaign.createdAt), 'dd MMM yyyy')}
+              </p>
+            </div>
+          </div>
+          <span className={cn('flex items-center gap-1.5 rounded-full px-2.5 py-1 text-2xs font-medium shrink-0', s.bg, s.text)}>
+            <span className={cn('w-1.5 h-1.5 rounded-full', s.dot, s.pulse && 'animate-pulse')} />
+            {s.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 mt-3">
+          {[
+            { label: 'Contacts', value: campaign.totalContacts.toLocaleString(), color: 'text-gray-800 dark:text-gray-200' },
+            { label: 'Delivered', value: hasResults ? campaign.delivered.toLocaleString() : '—', color: 'text-gray-800 dark:text-gray-200' },
+            { label: 'Read', value: hasResults ? campaign.read.toLocaleString() : '—', color: 'text-blue-600 dark:text-blue-400' },
+            { label: 'Failed', value: hasResults ? campaign.failed.toLocaleString() : '—', color: hasResults && campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-200' },
+          ].map(stat => (
+            <div key={stat.label} className="bg-[#f7f8f6] dark:bg-white/5 rounded-lg py-1.5 text-center min-w-0">
+              <p className={cn('text-xs font-semibold truncate', stat.color)}>{stat.value}</p>
+              <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#f5f5f5] dark:border-white/10">
+          <div className="text-2xs text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0">
+            {campaign.status === 'scheduled'
+              ? <Calendar size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              : <CheckCircle2 size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+            }
+            <span className="truncate">{format(new Date(lastUpdated), 'dd MMM, h:mm a')}</span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+            {campaign.status === 'running' && canLaunchCampaign && (
+              <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>
+                <Pause size={14} />
+              </button>
+            )}
+            {campaign.status === 'draft' && (
+              <button className="btn-ghost w-8 h-8" title="Edit"><Edit2 size={14} /></button>
+            )}
+            {campaign.status === 'completed' && (
+              <button
+                className="btn-outline text-xs h-8 px-3 flex items-center gap-1"
+                onClick={e => { e.stopPropagation(); onClick(campaign) }}
+              >
+                <Eye size={12} /> Report
+              </button>
+            )}
+            <div className="relative" ref={menuRef}>
+              <button className="btn-ghost w-8 h-8" onClick={() => setMenuOpen(v => !v)}>
+                <MoreVertical size={14} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 bottom-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"><Users size={12} /> View recipients</button>
+                  {canDeleteCampaign && (
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* desktop table row */}
+      <div className="hidden md:grid items-center gap-3 px-5 py-4"
         style={{ gridTemplateColumns: LIST_GRID_COLS }}>
         {/* col 1: info */}
         <div className="min-w-0 flex items-center gap-3">

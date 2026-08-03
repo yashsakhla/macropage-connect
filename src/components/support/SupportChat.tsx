@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns'
 import api from '@/lib/axios'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
+import { normalizeSearchResults } from '@/hooks/useHelp'
 import type { SearchResult } from '@/types'
 
 // ── Types ─────────────────────────────────
@@ -25,9 +26,9 @@ interface Message {
 
 // ── Static config ─────────────────────────
 // TODO: swap in real support phone/WhatsApp numbers — no real values
-// exist anywhere else in this codebase yet, only support@macropage.in.
+// exist anywhere else in this codebase yet, only contact@macropageconnect.com.
 const CONTACT_INFO = {
-  email: 'support@macropage.in',
+  email: 'contact@macropageconnect.com',
   hours: 'Mon–Sat, 10AM–6PM IST',
 }
 
@@ -121,7 +122,7 @@ export default function SupportChat() {
 
     try {
       const response = await api.get('/help/search', { params: { q: query } })
-      const results: SearchResult[] = response.data?.data ?? response.data ?? []
+      const results: SearchResult[] = normalizeSearchResults(response.data)
 
       if (results.length > 0) {
         setNoAnswerCount(0)
@@ -208,10 +209,10 @@ export default function SupportChat() {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-h-[600px] bg-white border border-[#e8ebe8] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 w-full h-full sm:w-[380px] sm:h-auto sm:max-h-[600px] bg-white border-0 sm:border border-[#e8ebe8] rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
 
           {/* Header */}
-          <div className="bg-[#1a3d2b] px-5 py-4 flex items-center gap-3 flex-shrink-0">
+          <div className="bg-[#1a3d2b] px-4 sm:px-5 py-4 flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center flex-shrink-0">
               <MessageCircle size={18} className="text-white" />
             </div>

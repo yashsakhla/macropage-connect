@@ -24,7 +24,7 @@ export default function OnboardingChecklist() {
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-6 py-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-4 sm:px-6 py-4 flex items-center justify-between gap-2">
         <div>
           <p className="text-base font-semibold text-white">Get started with Macropage Connect 🚀</p>
           <p className="text-sm text-white/70 mt-0.5">{completed} of {total} steps complete</p>
@@ -54,7 +54,7 @@ export default function OnboardingChecklist() {
         <div
           key={step.id}
           onClick={() => step.active && step.href && (window.location.href = step.href)}
-          className={`flex items-center gap-4 px-6 py-4 border-b border-[#f5f5f5] last:border-0 ${
+          className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 border-b border-[#f5f5f5] last:border-0 ${
             step.active ? 'cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5' : ''
           }`}
         >

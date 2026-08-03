@@ -129,7 +129,7 @@ export default function Plans() {
     if (currentPlanId === planId) return
     const plan = orderedPlans.find(p => p.id === planId)
     if (plan?.custom) {
-      window.open(plan.ctaHref || 'mailto:sales@macropage.in?subject=Enterprise%20Plan%20Inquiry', '_blank')
+      window.open(plan.ctaHref || 'mailto:contact@macropageconnect.com?subject=Enterprise%20Plan%20Inquiry', '_blank')
       return
     }
 
@@ -149,7 +149,7 @@ export default function Plans() {
     <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724]">
 
       {/* Top bar */}
-      <div className="bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 sticky top-0 z-30">
+      <div className="bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 sticky top-0 z-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -177,20 +177,22 @@ export default function Plans() {
         {/* Expired plan alert */}
         {expiredPlanLabel && (
           <div className="mb-6 rounded-2xl overflow-hidden border border-red-200 shadow-sm">
-            <div className="bg-gradient-to-r from-red-700 to-red-600 px-5 py-4 flex items-center gap-4 flex-wrap">
-              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-2xl flex-shrink-0">
-                ⏰
+            <div className="bg-gradient-to-r from-red-700 to-red-600 px-4 sm:px-5 py-4 flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
+                  ⏰
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white leading-tight">
+                    Your <span className="underline decoration-red-300 underline-offset-2">{expiredPlanLabel}</span> has expired
+                  </p>
+                  <p className="text-xs text-red-200 mt-1 leading-relaxed">
+                    Your portal is running in limited mode — only Inbox and Settings are available.
+                    Pick a plan below to restore full access instantly.
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white leading-tight">
-                  Your <span className="underline decoration-red-300 underline-offset-2">{expiredPlanLabel}</span> has expired
-                </p>
-                <p className="text-xs text-red-200 mt-1 leading-relaxed">
-                  Your portal is running in limited mode — only Inbox and Settings are available.
-                  Pick a plan below to restore full access instantly.
-                </p>
-              </div>
-              <div className="flex-shrink-0 flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-3 py-1.5">
+              <div className="flex-shrink-0 flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 w-full sm:w-auto justify-center">
                 <span className="text-base">🔒</span>
                 <span className="text-xs font-semibold text-red-100">Access restricted</span>
               </div>
@@ -200,7 +202,7 @@ export default function Plans() {
 
         {/* Trial status banner */}
         {isTrial && user?.trialEndsAt && (
-          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 flex-wrap">
+          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl px-4 sm:px-5 py-4 mb-8 flex flex-wrap items-center gap-3">
             <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center flex-shrink-0">
               <Sparkles size={18} className="text-white" />
             </div>
@@ -212,15 +214,15 @@ export default function Plans() {
                 Select a plan to continue after that.
               </p>
             </div>
-            <span className="bg-[#1a5c3a] text-white text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0">
+            <span className="bg-[#1a5c3a] text-white text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0 w-full sm:w-auto text-center">
               {useAuthStore.getState().trialDaysLeft()} days left
             </span>
           </div>
         )}
 
         {/* Billing toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-sm">
+        <div className="flex justify-center mb-8 px-4 sm:px-0">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-sm w-full sm:w-auto max-w-full">
             {(Object.keys(CYCLE_LABEL) as BillingCycle[]).map(cycle => {
               const savings = cycleSavings(cycle)
               return (
@@ -228,19 +230,18 @@ export default function Plans() {
                   key={cycle}
                   onClick={() => setBillingCycle(cycle)}
                   className={cn(
-                    'px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2',
+                    'px-2.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 flex-1 whitespace-nowrap min-w-0',
                     billingCycle === cycle ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
                   )}
                 >
-                  {CYCLE_LABEL[cycle]}
-                  {savings && (
-                    <span className={cn(
-                      'text-2xs font-bold px-2 py-0.5 rounded-full',
-                      billingCycle === cycle ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
-                    )}>
-                      {savings}
-                    </span>
-                  )}
+                  <span className="truncate">{CYCLE_LABEL[cycle]}</span>
+                  <span className={cn(
+                    'text-2xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0',
+                    savings ? 'visible' : 'invisible',
+                    billingCycle === cycle ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
+                  )}>
+                    {savings || ' '}
+                  </span>
                 </button>
               )
             })}
@@ -422,8 +423,8 @@ export default function Plans() {
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Questions?{' '}
-            <a href="mailto:support@macropage.in" className="text-[#1a5c3a] underline">
-              support@macropage.in
+            <a href="mailto:contact@macropageconnect.com" className="text-[#1a5c3a] underline">
+              contact@macropageconnect.com
             </a>
             {' '}or{' '}
             <button onClick={() => navigate('/help')} className="text-[#1a5c3a] underline">

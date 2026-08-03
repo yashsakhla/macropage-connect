@@ -26,6 +26,15 @@ interface CreationOption {
 
 const TAB_META: { id: ActiveTab; icon: React.ElementType; label: string; iconBg: string; iconColor: string; activeColor: string; activeBorder: string }[] = [
   {
+    id: 'quickReplies',
+    icon: MessageSquare,
+    label: 'Quick Replies',
+    iconBg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',
+    iconColor: 'text-[#1a5c3a]',
+    activeColor: 'text-[#1a5c3a]',
+    activeBorder: 'border-[#1a5c3a]',
+  },
+  {
     id: 'rules',
     icon: Zap,
     label: 'Rules',
@@ -52,22 +61,13 @@ const TAB_META: { id: ActiveTab; icon: React.ElementType; label: string; iconBg:
     activeColor: 'text-purple-600 dark:text-purple-400',
     activeBorder: 'border-purple-500',
   },
-  {
-    id: 'quickReplies',
-    icon: MessageSquare,
-    label: 'Quick Replies',
-    iconBg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',
-    iconColor: 'text-[#1a5c3a]',
-    activeColor: 'text-[#1a5c3a]',
-    activeBorder: 'border-[#1a5c3a]',
-  },
 ]
 
 export default function Automation() {
   const navigate = useNavigate()
   const [showCreationPicker, setShowCreationPicker] = useState(false)
   const [showRuleForm, setShowRuleForm] = useState(false)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('rules')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('quickReplies')
 
   const { data: statsData } = useAutomationStats()
   const { data: allRules = [] } = useRules()
@@ -125,11 +125,11 @@ export default function Automation() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724] p-6">
+    <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724] p-3 sm:p-6">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Zap size={22} className="text-[#1a5c3a] fill-[#1a5c3a]" /> Automation
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Smart automations to engage, respond and convert – on autopilot.</p>
@@ -139,11 +139,11 @@ export default function Automation() {
           <img src={automationHero} alt="" className="w-full h-full object-cover object-center" />
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <button className="btn-ghost h-9 text-sm flex items-center gap-1.5">
-            <FileText size={14} /> View automation logs
+        <div className="grid grid-cols-2 gap-2 w-full md:flex md:items-center md:gap-3 md:w-auto md:flex-shrink-0">
+          <button className="btn-ghost h-9 text-sm flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <FileText size={14} /> <span className="hidden sm:inline">View automation logs</span><span className="sm:hidden">View logs</span>
           </button>
-          <button onClick={() => setShowCreationPicker(true)} className="btn-primary h-9 text-sm">
+          <button onClick={() => setShowCreationPicker(true)} className="btn-primary h-9 text-sm justify-center whitespace-nowrap">
             + Create automation
           </button>
         </div>
@@ -152,8 +152,8 @@ export default function Automation() {
       <AutomationStats stats={stats} />
 
       {/* ── Section tabs ── */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl mb-5 overflow-hidden">
-        <div className="flex">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl mb-4 sm:mb-5 overflow-hidden">
+        <div className="flex overflow-x-auto no-scrollbar sm:overflow-visible">
           {TAB_META.map((tab, i) => {
             const Icon = tab.icon
             const count = tabCounts[tab.id]
@@ -163,7 +163,7 @@ export default function Automation() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'relative flex-1 flex items-center justify-center gap-2.5 py-4 px-4 transition-all',
+                  'relative flex items-center justify-center gap-2 sm:gap-2.5 py-3 sm:py-4 px-3 sm:px-4 transition-all shrink-0 sm:flex-1 whitespace-nowrap',
                   'border-b-[3px] focus:outline-none',
                   i < TAB_META.length - 1 && 'border-r border-r-[#f0f0f0]',
                   isActive
@@ -173,27 +173,27 @@ export default function Automation() {
               >
                 {/* icon bubble */}
                 <div className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
+                  'w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
                   isActive ? tab.iconBg : 'bg-gray-100 dark:bg-white/10'
                 )}>
-                  <Icon size={16} className={isActive ? tab.iconColor : 'text-gray-400 dark:text-gray-500'} />
+                  <Icon size={15} className={isActive ? tab.iconColor : 'text-gray-400 dark:text-gray-500'} />
                 </div>
 
                 <div className="text-left">
                   <div className={cn(
-                    'text-sm font-semibold leading-tight transition-colors',
+                    'text-xs sm:text-sm font-semibold leading-tight transition-colors',
                     isActive ? tab.activeColor : 'text-gray-500 dark:text-gray-400'
                   )}>
                     {tab.label}
                   </div>
                   {count !== null && (
-                    <div className="text-2xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">
+                    <div className="hidden sm:block text-2xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">
                       {count}{' '}
                       {tab.id === 'rules' ? 'rules' : tab.id === 'flows' ? 'flows' : 'saved'}
                     </div>
                   )}
                   {tab.id === 'ai' && (
-                    <div className="text-2xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">
+                    <div className="hidden sm:block text-2xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">
                       Configured
                     </div>
                   )}
@@ -201,7 +201,7 @@ export default function Automation() {
 
                 {count !== null && count > 0 && (
                   <span className={cn(
-                    'ml-auto text-2xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0',
+                    'text-2xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 sm:ml-auto',
                     isActive ? cn(tab.iconBg, tab.activeColor) : 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500'
                   )}>
                     {count}
@@ -217,8 +217,8 @@ export default function Automation() {
 
       {/* Creation picker modal */}
       {showCreationPicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
-          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40">
+          <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-4 sm:p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">What would you like to create?</h3>
               <button onClick={() => setShowCreationPicker(false)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">

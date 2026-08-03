@@ -82,7 +82,7 @@ export default function IntegrationSettings() {
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(int => (
               <IntegrationCard key={int.id} integration={int} onConnect={connect} onConfigure={() => toast.success('Opening configuration…')} />
             ))}

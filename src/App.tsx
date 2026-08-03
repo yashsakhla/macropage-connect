@@ -15,7 +15,9 @@ const AuthCallback    = lazy(() => import('@/pages/auth/AuthCallback'))
 const Dashboard      = lazy(() => import('@/pages/dashboard/Dashboard'))
 const Automation     = lazy(() => import('@/pages/automation/Automation'))
 const FlowBuilder    = lazy(() => import('@/pages/automation/FlowBuilder'))
-const AISettings     = lazy(() => import('@/pages/automation/AISettings'))
+// AISettings.tsx holds the real AI Chatbot Configuration page. Routing is
+// pointed at AIChatbotComingSoon instead until the feature is ready to ship.
+const AIChatbotComingSoon = lazy(() => import('@/pages/automation/AIChatbotComingSoon'))
 const Inbox          = lazy(() => import('@/pages/inbox/Inbox'))
 const Campaigns      = lazy(() => import('@/pages/campaigns/Campaigns'))
 const CampaignDetail = lazy(() => import('@/pages/campaigns/CampaignDetail'))
@@ -61,11 +63,8 @@ const router = createBrowserRouter([
       {
         path: '/automation/ai',
         element: (
-          <ProtectedRoute
-            feature="ai_chatbot"
-            roles={['OWNER', 'ADMIN', 'MANAGER']}
-          >
-            <AISettings />
+          <ProtectedRoute roles={['OWNER', 'ADMIN', 'MANAGER']}>
+            <AIChatbotComingSoon />
           </ProtectedRoute>
         ),
       },

@@ -53,17 +53,17 @@ export default function Settings() {
 
   return (
     <div
-      className="flex bg-[#f7f8f6] dark:bg-[#0f1724]"
-      style={{ height: `calc(100vh - 56px)` }}
+      className="flex flex-col md:flex-row bg-[#f7f8f6] dark:bg-[#0f1724] md:overflow-hidden"
+      style={{ minHeight: `calc(100vh - 56px)` }}
     >
-      {/* Left sidebar — fixed 240px */}
-      <div className="w-60 flex-shrink-0 h-full">
+      {/* Left sidebar — fixed 240px on desktop; horizontal strip on mobile (rendered inside SettingsSidebar) */}
+      <div className="md:w-60 md:flex-shrink-0 md:h-full">
         <SettingsSidebar activeSection={section} />
       </div>
 
       {/* Right content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-10 py-8">
+      <div className="flex-1 md:overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-5 sm:px-6 sm:py-6 md:px-10 md:py-8">
           {section === 'billing' ? (
             <RequireRole allowedRoles={['OWNER']}>
               <ActiveSection />

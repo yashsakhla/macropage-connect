@@ -16,9 +16,9 @@ interface Props {
 export default function SessionsTable({ sessions, onRevoke, onRevokeAll }: Props) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-4">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Active sessions</p>
-        <button onClick={onRevokeAll} className="text-sm text-red-500 dark:text-red-400 hover:underline">
+        <button onClick={onRevokeAll} className="text-sm text-red-500 dark:text-red-400 hover:underline text-left sm:text-right">
           Sign out all other sessions
         </button>
       </div>

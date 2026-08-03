@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { X, ArrowRight } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 
 export default function WhatsAppRequiredModal() {
   const [closing, setClosing] = useState(false)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const { whatsappRequiredModalOpen, setWhatsappRequiredModalOpen } = useUIStore()
   const navigate = useNavigate()
 
-  if (!whatsappRequiredModalOpen && !closing) return null
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
+
+  if ((!whatsappRequiredModalOpen && !closing) || !portalTarget) return null
 
   function dismiss() {
     setClosing(true)
@@ -23,7 +29,7 @@ export default function WhatsAppRequiredModal() {
     navigate('/setup/whatsapp')
   }
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4
         transition-opacity duration-300 ${closing ? 'opacity-0' : 'opacity-100'}`}
@@ -33,7 +39,7 @@ export default function WhatsAppRequiredModal() {
         className={`bg-white dark:bg-[#0b1220] rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden
           transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       >
-        <div className="relative bg-[#1a3d2b] px-6 pt-7 pb-8 overflow-hidden">
+        <div className="relative bg-[#1a3d2b] px-5 sm:px-6 pt-6 sm:pt-7 pb-7 sm:pb-8 overflow-hidden">
           <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-white/5" />
           <div className="absolute right-4 bottom-0 w-16 h-16 rounded-full bg-white/5" />
 
@@ -59,7 +65,7 @@ export default function WhatsAppRequiredModal() {
           </p>
         </div>
 
-        <div className="px-6 pb-6 pt-5 flex flex-col gap-2.5">
+        <div className="px-5 sm:px-6 pb-6 pt-5 flex flex-col gap-2.5">
           <button
             onClick={connect}
             className="w-full h-12 bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white rounded-2xl
@@ -79,6 +85,7 @@ export default function WhatsAppRequiredModal() {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   )
 }

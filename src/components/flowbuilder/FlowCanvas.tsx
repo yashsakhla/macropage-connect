@@ -49,9 +49,10 @@ interface Props {
   dragNodeConfig?: Record<string, unknown>
   onNodeClick: NodeMouseHandler
   onPaneClick: () => void
+  readOnly?: boolean
 }
 
-export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig, onNodeClick, onPaneClick }: Props) {
+export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig, onNodeClick, onPaneClick, readOnly }: Props) {
   const { nodes, edges, setNodes, setEdges, addNode, pushHistory } = useFlowStore()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
@@ -59,18 +60,23 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
+      if (readOnly) return
       setNodes(applyNodeChanges(changes, nodes) as Node<FlowNodeData>[])
     },
-    [nodes, setNodes]
+    [nodes, setNodes, readOnly]
   )
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges(applyEdgeChanges(changes, edges)),
-    [edges, setEdges]
+    (changes) => {
+      if (readOnly) return
+      setEdges(applyEdgeChanges(changes, edges))
+    },
+    [edges, setEdges, readOnly]
   )
 
   const onConnect = useCallback(
     (params: Connection) => {
+      if (readOnly) return
       pushHistory()
       const edgeColor = params.sourceHandle === 'yes' ? '#1a5c3a' : params.sourceHandle === 'no' ? '#ef4444' : params.sourceHandle === 'replied' ? '#a855f7' : '#94a3b8'
       setEdges(
@@ -87,12 +93,13 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
         )
       )
     },
-    [edges, setEdges, pushHistory]
+    [edges, setEdges, pushHistory, readOnly]
   )
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
+      if (readOnly) return
       const type = (event.dataTransfer.getData('application/reactflow-type') || dragNodeType) as FlowNodeType | null
       if (!type) return
       const label = event.dataTransfer.getData('application/reactflow-label') || dragNodeLabel
@@ -107,7 +114,7 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
       })
       addNode(type, position, { label, config })
     },
-    [dragNodeType, dragNodeLabel, dragNodeConfig, addNode, reactFlowInstance]
+    [dragNodeType, dragNodeLabel, dragNodeConfig, addNode, reactFlowInstance, readOnly]
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -135,7 +142,10 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        deleteKeyCode="Backspace"
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
+        elementsSelectable={!readOnly}
+        deleteKeyCode={readOnly ? null : 'Backspace'}
         snapToGrid
         snapGrid={[8, 8]}
         defaultEdgeOptions={{ type: 'smoothstep', style: { stroke: '#94a3b8', strokeWidth: 2 } }}
@@ -156,7 +166,7 @@ export default function FlowCanvas({ dragNodeType, dragNodeLabel, dragNodeConfig
         <FlowMiniMap />
       </ReactFlow>
 
-      {!hasNodes && (
+      {!hasNodes && !readOnly && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center pointer-events-auto">
             <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">Start building your flow</p>

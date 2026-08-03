@@ -110,50 +110,61 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   const STEPS = ['Upload', 'Map columns', 'Import']
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-[#0b1220] rounded-2xl flex flex-col overflow-hidden" style={{ width: 'min(720px, calc(100vw - 48px))', maxHeight: 'calc(100vh - 48px)' }}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6">
+      <div className="bg-white dark:bg-[#0b1220] rounded-none sm:rounded-2xl flex flex-col overflow-hidden w-full h-full sm:h-auto sm:w-[min(720px,calc(100vw-48px))] sm:max-h-[calc(100vh-48px)]">
         {/* header */}
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
-          <div className="flex-1">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Import Contacts</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Step {step} of 3</p>
-          </div>
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">Import Contacts</p>
+              <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mt-0.5">Step {step} of 3</p>
+            </div>
 
-          <div className="flex items-center gap-2">
-            {STEPS.map((s, i) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className="flex flex-col items-center">
-                  <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold',
-                    i + 1 < step ? 'bg-[#1a5c3a] text-white' : i + 1 === step ? 'bg-[#1a5c3a] text-white ring-4 ring-[#c8e6d4]' : 'bg-white dark:bg-[#0b1220] border-2 border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500')}>
-                    {i + 1 < step ? <Check size={12} /> : i + 1}
+            <div className="hidden md:flex items-center gap-2">
+              {STEPS.map((s, i) => (
+                <div key={s} className="flex items-center gap-2">
+                  <div className="flex flex-col items-center">
+                    <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold',
+                      i + 1 < step ? 'bg-[#1a5c3a] text-white' : i + 1 === step ? 'bg-[#1a5c3a] text-white ring-4 ring-[#c8e6d4]' : 'bg-white dark:bg-[#0b1220] border-2 border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500')}>
+                      {i + 1 < step ? <Check size={12} /> : i + 1}
+                    </div>
+                    <span className={cn('text-[10px] mt-0.5', i + 1 <= step ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>{s}</span>
                   </div>
-                  <span className={cn('text-[10px] mt-0.5', i + 1 <= step ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>{s}</span>
+                  {i < STEPS.length - 1 && <div className={cn('h-px w-8 mb-4', i + 1 < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8] dark:bg-white/10')} />}
                 </div>
-                {i < STEPS.length - 1 && <div className={cn('h-px w-8 mb-4', i + 1 < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8] dark:bg-white/10')} />}
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors shrink-0" onClick={onClose}><X size={16} /></button>
           </div>
 
-          <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={16} /></button>
+          {/* mobile step progress */}
+          <div className="md:hidden mt-2.5">
+            <div className="h-1.5 bg-[#e8ebe8] dark:bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#1a5c3a] rounded-full transition-all duration-300" style={{ width: `${(step / STEPS.length) * 100}%` }} />
+            </div>
+            <p className="text-2xs font-medium text-[#1a5c3a] mt-1.5">{STEPS[step - 1]}</p>
+          </div>
         </div>
 
         {/* body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {step === 1 && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div
                 onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={e => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
                 onClick={() => fileRef.current?.click()}
-                className={cn('border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all', isDragging ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30 scale-[1.01]' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#1a5c3a] hover:bg-[#fafffe] dark:hover:bg-white/5')}
+                className={cn('border-2 border-dashed rounded-2xl p-6 sm:p-12 text-center cursor-pointer transition-all', isDragging ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30 scale-[1.01]' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#1a5c3a] hover:bg-[#fafffe] dark:hover:bg-white/5')}
               >
                 <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-                <UploadCloud size={48} className="text-gray-300 dark:text-gray-600 mx-auto" />
-                <p className="text-base font-medium text-gray-700 dark:text-gray-300 mt-4">Drag & drop your CSV or Excel file</p>
+                <UploadCloud size={40} className="text-gray-300 dark:text-gray-600 mx-auto sm:hidden" />
+                <UploadCloud size={48} className="text-gray-300 dark:text-gray-600 mx-auto hidden sm:block" />
+                <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mt-4">Drag & drop your CSV or Excel file</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 my-3">or</p>
                 <button type="button" className="btn btn-outline h-9 px-6">Browse file</button>
-                <div className="flex items-center justify-center gap-3 mt-4">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 flex-wrap">
                   {['.CSV', '.XLSX', '.XLS'].map(f => (
                     <span key={f} className="bg-[#f7f8f6] dark:bg-[#0f1724] text-gray-500 dark:text-gray-400 text-xs rounded-lg px-3 py-1.5">{f}</span>
                   ))}
@@ -161,30 +172,32 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Up to 100,000 contacts · {UPLOAD_LIMITS.document.label}</p>
               </div>
 
-              <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-xl p-4 flex items-center gap-4">
+              <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
                 <FileDown size={28} className="text-[#1a5c3a] flex-shrink-0" />
-                <div className="flex-1">
+                <div className="flex-1 min-w-[160px]">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Download sample template</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">See the exact format we expect</p>
                 </div>
-                <button className="btn btn-outline h-8 text-xs px-4" onClick={downloadContactSampleTemplate}>Download CSV</button>
+                <button className="btn btn-outline h-8 text-xs px-4 shrink-0" onClick={downloadContactSampleTemplate}>Download CSV</button>
               </div>
 
-              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl overflow-hidden">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-4 py-2 border-b border-[#f5f5f5]">Required and optional columns</p>
-                {[
-                  { col: 'phone',  req: true,  desc: 'WhatsApp number with country code' },
-                  { col: 'name',   req: false, desc: 'Contact full name' },
-                  { col: 'email',  req: false, desc: 'Email address' },
-                  { col: 'tags',   req: false, desc: 'Comma-separated: "VIP,Customer"' },
-                  { col: '[any]',  req: false, desc: 'Saved as custom field' },
-                ].map(r => (
-                  <div key={r.col} className="grid grid-cols-3 gap-4 px-4 py-2.5 text-xs border-t border-[#f5f5f5]">
-                    <span className="font-mono text-gray-700 dark:text-gray-300">{r.col}</span>
-                    <span className={r.req ? 'text-[#1a5c3a] font-medium' : 'text-gray-400 dark:text-gray-500'}>{r.req ? '✓ Required' : 'Optional'}</span>
-                    <span className="text-gray-500 dark:text-gray-400">{r.desc}</span>
-                  </div>
-                ))}
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl overflow-hidden overflow-x-auto">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-4 py-2 border-b border-[#f5f5f5] whitespace-nowrap">Required and optional columns</p>
+                <div className="min-w-[480px]">
+                  {[
+                    { col: 'phone',  req: true,  desc: 'WhatsApp number with country code' },
+                    { col: 'name',   req: false, desc: 'Contact full name' },
+                    { col: 'email',  req: false, desc: 'Email address' },
+                    { col: 'tags',   req: false, desc: 'Comma-separated: "VIP,Customer"' },
+                    { col: '[any]',  req: false, desc: 'Saved as custom field' },
+                  ].map(r => (
+                    <div key={r.col} className="grid grid-cols-3 gap-4 px-4 py-2.5 text-xs border-t border-[#f5f5f5]">
+                      <span className="font-mono text-gray-700 dark:text-gray-300">{r.col}</span>
+                      <span className={r.req ? 'text-[#1a5c3a] font-medium' : 'text-gray-400 dark:text-gray-500'}>{r.req ? '✓ Required' : 'Optional'}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{r.desc}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -211,7 +224,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
 
         {/* footer */}
         {step < 3 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
             <button className="btn btn-ghost h-9 px-4" onClick={() => step > 1 ? setStep(s => s - 1) : onClose()}>
               {step === 1 ? 'Cancel' : '← Back'}
             </button>

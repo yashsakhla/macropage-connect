@@ -66,34 +66,36 @@ export default function PendingInvites() {
             key={invite._id}
             className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl px-4 py-3"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 
-              {/* Email icon */}
-              <div className="w-9 h-9 bg-amber-50 dark:bg-amber-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Mail size={15} className="text-amber-500 dark:text-amber-400" />
-              </div>
-
-              {/* Details */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                    {invite.email}
-                  </p>
-                  <span className="text-2xs bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-full px-2 py-0.5 font-medium flex-shrink-0">
-                    {invite.role}
-                  </span>
+              <div className="flex items-start sm:items-center gap-3 min-w-0">
+                {/* Email icon */}
+                <div className="w-9 h-9 bg-amber-50 dark:bg-amber-950/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Mail size={15} className="text-amber-500 dark:text-amber-400" />
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Clock size={10} className="text-gray-300 dark:text-gray-600" />
-                  <p className="text-2xs text-gray-400 dark:text-gray-500">
-                    Sent {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
-                    {' '}· Expires {formatDistanceToNow(new Date(invite.expiresAt), { addSuffix: true })}
-                  </p>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">
+                      {invite.email}
+                    </p>
+                    <span className="text-2xs bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-full px-2 py-0.5 font-medium flex-shrink-0">
+                      {invite.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Clock size={10} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                    <p className="text-2xs text-gray-400 dark:text-gray-500">
+                      Sent {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
+                      {' '}· Expires {formatDistanceToNow(new Date(invite.expiresAt), { addSuffix: true })}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0 sm:ml-auto">
 
                 {/* Resend */}
                 <button

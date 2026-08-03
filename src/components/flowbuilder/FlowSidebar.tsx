@@ -72,9 +72,10 @@ const VARIABLES = [
 
 interface Props {
   onDragStart: (type: FlowNodeType, label: string, config: Record<string, unknown> | undefined, event: React.DragEvent) => void
+  readOnly?: boolean
 }
 
-export default function FlowSidebar({ onDragStart }: Props) {
+export default function FlowSidebar({ onDragStart, readOnly }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [varsOpen, setVarsOpen] = useState(false)
   const [showLockedPopup, setShowLockedPopup] = useState(false)
@@ -135,9 +136,14 @@ export default function FlowSidebar({ onDragStart }: Props) {
                     return (
                       <div
                         key={`${node.type}-${i}`}
-                        draggable
+                        draggable={!readOnly}
                         onDragStart={(e) => onDragStart(node.type, node.label, node.config, e)}
-                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#e8ebe8] dark:border-white/10 bg-white dark:bg-[#0b1220] hover:border-[#c8e6d4] hover:bg-[#fafffe] dark:hover:bg-white/5 cursor-grab transition-all active:cursor-grabbing active:scale-95"
+                        className={cn(
+                          'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#e8ebe8] dark:border-white/10 bg-white dark:bg-[#0b1220] transition-all',
+                          readOnly
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:border-[#c8e6d4] hover:bg-[#fafffe] dark:hover:bg-white/5 cursor-grab active:cursor-grabbing active:scale-95'
+                        )}
                       >
                         <div className={cn('w-7 h-7 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0', node.iconBg)}>
                           <Icon size={13} className={node.iconColor} />

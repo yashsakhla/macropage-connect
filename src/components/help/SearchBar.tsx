@@ -101,10 +101,10 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
   }
 
   return (
-    <div ref={wrapperRef} className="relative w-full mt-6">
+    <div ref={wrapperRef} className="relative w-full min-w-0 mt-6">
       {/* Input row */}
       <div
-        className={`bg-white dark:bg-[#0b1220] rounded-xl shadow-lg h-11 flex items-center px-3 gap-2 border-2 transition-all ${
+        className={`bg-white dark:bg-[#0b1220] rounded-xl shadow-lg h-11 flex items-center px-2.5 sm:px-3 gap-1.5 sm:gap-2 border-2 transition-all ${
           open ? 'border-[#1a5c3a]' : 'border-transparent'
         }`}
       >
@@ -115,22 +115,22 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
           onChange={e => handleChange(e.target.value)}
           onFocus={() => setOpen(true)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          placeholder="Search for help... e.g. 'connect WhatsApp'"
-          className="flex-1 min-w-0 h-full text-base text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent placeholder:text-gray-400 dark:text-gray-500 truncate"
+          placeholder="Search for help..."
+          className="flex-1 min-w-0 w-full h-full text-sm sm:text-base text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent placeholder:text-gray-400 dark:text-gray-500 truncate"
         />
         {query && (
           <button
             onClick={() => { setQuery(''); setOpen(false) }}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 rounded-xl p-1 mr-1"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 rounded-xl p-1 flex-shrink-0"
           >
             <X size={16} />
           </button>
         )}
         <button
           onClick={handleSubmit}
-          className="bg-[#1a5c3a] text-white rounded-lg h-8 px-4 text-sm font-medium hover:bg-[#2d7a4f] transition-colors flex items-center gap-2 flex-shrink-0"
+          className="bg-[#1a5c3a] text-white rounded-lg h-8 px-2.5 sm:px-4 text-sm font-medium hover:bg-[#2d7a4f] transition-colors flex items-center gap-2 flex-shrink-0"
         >
-          Search
+          <span className="hidden sm:inline">Search</span>
           <Search size={14} />
         </button>
       </div>
@@ -196,18 +196,23 @@ export default function SearchBar({ onSearch, initialQuery = '' }: Props) {
         </div>
       )}
 
-      {/* Popular searches — single line, scrolls horizontally if it doesn't fit */}
-      <div className="mt-3 flex items-center gap-1.5 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      {/* Popular searches — stacks label above chips on mobile so the chip row gets full width to scroll */}
+      <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-1.5">
         <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Popular searches:</span>
-        {POPULAR.map(term => (
-          <button
-            key={term}
-            onClick={() => handlePopular(term)}
-            className="bg-white/70 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2.5 py-1 hover:bg-white transition-colors flex-shrink-0 whitespace-nowrap"
-          >
-            {term}
-          </button>
-        ))}
+        <div className="relative min-w-0 -mr-4 sm:mr-0">
+          <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto pr-4 sm:pr-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {POPULAR.map(term => (
+              <button
+                key={term}
+                onClick={() => handlePopular(term)}
+                className="bg-white/70 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2.5 py-1 hover:bg-white transition-colors flex-shrink-0 whitespace-nowrap"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+          <div className="sm:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-[#eef8f2] dark:from-[#0f1c15] to-transparent" />
+        </div>
       </div>
     </div>
   )

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Plus, X, GripVertical, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useFlows } from '@/hooks/useFlows'
 import type { ActionType } from '@/types/automation'
+import type { ConversationFlow } from '@/types/flow'
 
 const ACTION_OPTIONS: { value: ActionType; label: string }[] = [
   { value: 'send_message', label: 'Send message (text)' },
@@ -26,7 +28,7 @@ interface Props {
   onChange: (actions: ActionItem[]) => void
 }
 
-function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (config: Record<string, unknown>) => void }) {
+function ActionConfig({ action, onUpdate, flows }: { action: ActionItem; onUpdate: (config: Record<string, unknown>) => void; flows?: ConversationFlow[] }) {
   const [btns, setBtns] = useState<string[]>((action.config.buttons as string[]) ?? [])
   const [tags, setTags] = useState<string[]>((action.config.tags as string[]) ?? [])
   const [tagInput, setTagInput] = useState('')
@@ -137,6 +139,28 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
     )
   }
 
+  if (action.type === 'start_flow') {
+    const activeFlows = (flows ?? []).filter((f) => f.status === 'active')
+    return (
+      <div className="mt-3">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Flow to start</label>
+        <select
+          className="input w-full h-9 text-sm"
+          value={(action.config.flowId as string) ?? ''}
+          onChange={(e) => onUpdate({ ...action.config, flowId: e.target.value })}
+        >
+          <option value="">Select flow...</option>
+          {activeFlows.map((f) => (
+            <option key={f.id} value={f.id}>{f.name}</option>
+          ))}
+        </select>
+        {activeFlows.length === 0 && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">No published flows yet — publish a flow in the Flow Builder first.</p>
+        )}
+      </div>
+    )
+  }
+
   if (action.type === 'webhook') {
     return (
       <div className="mt-3 space-y-2">
@@ -153,6 +177,8 @@ function ActionConfig({ action, onUpdate }: { action: ActionItem; onUpdate: (con
 }
 
 export default function ActionBuilder({ value, onChange }: Props) {
+  const { data: flows } = useFlows()
+
   function addAction() {
     onChange([...value, { type: 'send_message', config: {} }])
   }
@@ -182,7 +208,7 @@ export default function ActionBuilder({ value, onChange }: Props) {
             <button onClick={() => removeAction(i)}><X size={14} className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" /></button>
           </div>
 
-          <ActionConfig action={action} onUpdate={(config) => updateAction(i, { config })} />
+          <ActionConfig action={action} onUpdate={(config) => updateAction(i, { config })} flows={flows} />
 
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#f5f5f5]">
             <ChevronDown size={12} className="text-gray-400 dark:text-gray-500" />

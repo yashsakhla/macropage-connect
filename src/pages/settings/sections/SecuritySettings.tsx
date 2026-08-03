@@ -55,7 +55,7 @@ export default function SecuritySettings() {
   return (
     <SettingsSection title="Security" subtitle="Protect your account with additional security">
       {/* Password */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Password</p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md">
           {([
@@ -99,7 +99,7 @@ export default function SecuritySettings() {
       </div>
 
       {/* Sessions */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 mt-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
         <SessionsTable sessions={sessions} onRevoke={id => revokeSession.mutate(id)} onRevokeAll={() => revokeAll.mutate()} />
       </div>
     </SettingsSection>

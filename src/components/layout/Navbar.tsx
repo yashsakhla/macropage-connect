@@ -1,4 +1,4 @@
-import { Bell, Sun, Moon, LogOut, Zap } from 'lucide-react'
+import { Bell, Sun, Moon, LogOut, Zap, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import GlobalSearch from '@/components/search/GlobalSearch'
 
 export default function Navbar() {
-  const { theme, toggleTheme, notificationPanelOpen, toggleNotificationPanel } = useUIStore()
+  const { theme, toggleTheme, notificationPanelOpen, toggleNotificationPanel, toggleMobileSidebar } = useUIStore()
   const { user } = useAuthStore()
   const logout = useLogout()
   const navigate = useNavigate()
@@ -20,25 +20,42 @@ export default function Navbar() {
   return (
     <header
       className={cn(
-        'h-16 shrink-0 flex items-center justify-between px-8 app-navbar',
+        'h-16 shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 md:px-8 app-navbar',
         'bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-20'
       )}
     >
-      {/* Left: greeting */}
-      <div className="flex items-center gap-4">
-        <div>
-          <div className="greeting-title">Welcome Back, {user?.name ?? 'Teddy'}! <span className="ml-1">👋</span></div>
-          <div className="greeting-subtitle">Let's see your current sales work today</div>
+      {/* Left: hamburger (mobile only) + greeting */}
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+        <button
+          onClick={toggleMobileSidebar}
+          className="md:hidden shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+        {user?.companyLogoUrl && (
+          <img
+            src={user.companyLogoUrl}
+            alt={user.companyName ?? 'Company logo'}
+            className="hidden sm:block w-9 h-9 rounded-lg object-contain shrink-0 border border-gray-100 dark:border-gray-800 bg-white"
+          />
+        )}
+        <div className="min-w-0">
+          <div className="greeting-title text-sm sm:text-base">
+            <span className="truncate min-w-0">Welcome Back, {user?.name ?? 'Teddy'}!</span>
+            <span className="shrink-0">👋</span>
+          </div>
+          <div className="greeting-subtitle hidden sm:block truncate">Let's see your current sales work today</div>
         </div>
       </div>
 
       {/* Center: search */}
-      <div className="flex-1 max-w-lg mx-6">
+      <div className="hidden md:block flex-1 max-w-lg mx-6">
         <GlobalSearch />
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 
         {/* Upgrade tag — desktop */}
         {showUpgradeTag && (

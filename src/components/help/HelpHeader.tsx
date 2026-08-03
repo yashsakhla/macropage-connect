@@ -11,8 +11,8 @@ const PANEL_BG = 'bg-[#eef8f2] dark:bg-[#0f1c15]'
 
 export default function HelpHeader({ onSearch, initialQuery }: Props) {
   return (
-    <div className="max-w-6xl mx-auto px-6 pt-6">
-      <div className={`relative rounded-3xl overflow-hidden shadow-xl min-h-[230px] lg:min-h-[240px] ${PANEL_BG}`}>
+    <div className="sm:max-w-6xl sm:mx-auto sm:px-6 sm:pt-6">
+      <div className={`relative overflow-hidden rounded-none sm:rounded-3xl shadow-none sm:shadow-xl sm:min-h-[230px] lg:min-h-[240px] ${PANEL_BG}`}>
         {/* Right photo panel — fixed-width strip on the right, left panel stays plain bg */}
         <div className="absolute inset-y-0 right-0 w-0 lg:w-[60%] overflow-hidden">
           <img
@@ -22,9 +22,9 @@ export default function HelpHeader({ onSearch, initialQuery }: Props) {
           />
         </div>
 
-        <div className="relative grid lg:grid-cols-[60%_40%] gap-6 items-center px-6 sm:px-8 lg:px-10 py-6 lg:py-7">
+        <div className="relative grid lg:grid-cols-[60%_40%] gap-6 items-center px-4 sm:px-8 lg:px-10 py-5 sm:py-6 lg:py-7">
           {/* Left — copy + search */}
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 bg-white/70 dark:bg-white/10 rounded-full px-3 py-1.5 mb-3">
               <Headphones className="w-4 h-4 text-[#1a5c3a] dark:text-emerald-400" />
               <span className="text-xs font-semibold text-[#1a5c3a] dark:text-emerald-400">Help &amp; Support</span>
@@ -76,7 +76,7 @@ export default function HelpHeader({ onSearch, initialQuery }: Props) {
         </div>
 
         {/* "Need immediate help?" strip — mobile only, no room for the floating card there */}
-        <div className="relative flex justify-end px-6 sm:px-8 pb-3 lg:hidden">
+        <div className="relative flex justify-end px-4 sm:px-8 pb-3 lg:hidden">
           <a
             href="#quick-actions"
             className="text-xs text-[#1a5c3a] dark:text-emerald-400 font-medium flex items-center gap-1"

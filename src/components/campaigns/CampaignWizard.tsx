@@ -139,47 +139,59 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6">
       <div
-        className="bg-white dark:bg-[#0b1220] rounded-2xl flex flex-col overflow-hidden"
-        style={{ width: 'min(840px, calc(100vw - 48px))', maxHeight: 'calc(100vh - 48px)' }}
+        className="bg-white dark:bg-[#0b1220] rounded-none sm:rounded-2xl flex flex-col overflow-hidden w-full h-full sm:h-auto sm:w-[min(840px,calc(100vw-48px))] sm:max-h-[calc(100vh-48px)]"
       >
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Campaign</h2>
-            <span className="text-sm text-gray-400 dark:text-gray-500">Step {step + 1} of {STEPS.length}</span>
-          </div>
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">New Campaign</h2>
+              <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 shrink-0">Step {step + 1} of {STEPS.length}</span>
+            </div>
 
-          {/* progress steps */}
-          <div className="flex items-center gap-1">
-            {STEPS.map((s, i) => (
-              <div key={i} className="flex items-center">
-                <div className="flex flex-col items-center">
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative',
-                    i < step ? 'bg-[#1a5c3a] text-white'
-                    : i === step ? 'bg-[#1a5c3a] text-white ring-4 ring-[#c8e6d4]'
-                    : 'bg-white dark:bg-[#0b1220] border-2 border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500'
-                  )}>
-                    {i < step ? <Check size={14} /> : i + 1}
+            {/* progress steps — desktop only, mobile uses the thin bar below */}
+            <div className="hidden md:flex items-center gap-1">
+              {STEPS.map((s, i) => (
+                <div key={i} className="flex items-center">
+                  <div className="flex flex-col items-center">
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative',
+                      i < step ? 'bg-[#1a5c3a] text-white'
+                      : i === step ? 'bg-[#1a5c3a] text-white ring-4 ring-[#c8e6d4]'
+                      : 'bg-white dark:bg-[#0b1220] border-2 border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500'
+                    )}>
+                      {i < step ? <Check size={14} /> : i + 1}
+                    </div>
+                    <span className={cn('text-[10px] mt-1 font-medium', i <= step ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>
+                      {s.label}
+                    </span>
                   </div>
-                  <span className={cn('text-[10px] mt-1 font-medium', i <= step ? 'text-[#1a5c3a]' : 'text-gray-400 dark:text-gray-500')}>
-                    {s.label}
-                  </span>
+                  {i < STEPS.length - 1 && (
+                    <div className={cn('h-px w-10 mx-1 mb-4 transition-colors', i < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8] dark:bg-white/10')} />
+                  )}
                 </div>
-                {i < STEPS.length - 1 && (
-                  <div className={cn('h-px w-10 mx-1 mb-4 transition-colors', i < step ? 'bg-[#1a5c3a]' : 'bg-[#e8ebe8] dark:bg-white/10')} />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors shrink-0" onClick={onClose}><X size={18} /></button>
           </div>
 
-          <button className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
+          {/* mobile step progress — compact bar + current label, no cramped circle row */}
+          <div className="md:hidden mt-2.5">
+            <div className="h-1.5 bg-[#e8ebe8] dark:bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#1a5c3a] rounded-full transition-all duration-300"
+                style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <p className="text-2xs font-medium text-[#1a5c3a] mt-1.5">{STEPS[step].label}</p>
+          </div>
         </div>
 
         {/* body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {step === 0 && (
             <WizardStep1Template
               campaignName={campaignName}
@@ -324,27 +336,29 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
         </div>
 
         {/* footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
-          <div>
-            {step > 0 && (
-              <button className="btn-ghost h-9 px-4 gap-1" onClick={handleBack}>
-                ← Back
-              </button>
-            )}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-between sm:justify-start sm:contents">
+            <div>
+              {step > 0 && (
+                <button className="btn-ghost h-9 px-4 gap-1" onClick={handleBack}>
+                  ← Back
+                </button>
+              )}
+            </div>
+
+            {/* dots */}
+            <div className="flex items-center gap-2">
+              {STEPS.map((_, i) => (
+                <div key={i} className={cn('rounded-full transition-all', i === step ? 'w-4 h-2 bg-[#1a5c3a]' : 'w-2 h-2 bg-[#e8ebe8] dark:bg-white/10')} />
+              ))}
+            </div>
           </div>
 
-          {/* dots */}
           <div className="flex items-center gap-2">
-            {STEPS.map((_, i) => (
-              <div key={i} className={cn('rounded-full transition-all', i === step ? 'w-4 h-2 bg-[#1a5c3a]' : 'w-2 h-2 bg-[#e8ebe8] dark:bg-white/10')} />
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button className="btn-outline h-9 px-4" onClick={onClose}>Cancel</button>
+            <button className="btn-outline h-10 sm:h-9 px-4 flex-1 sm:flex-none justify-center" onClick={onClose}>Cancel</button>
             {step < STEPS.length - 1 ? (
               <button
-                className={cn('btn-primary h-9 px-5 gap-1', !canProceed() && 'opacity-50 cursor-not-allowed')}
+                className={cn('btn-primary h-10 sm:h-9 px-5 gap-1 flex-1 sm:flex-none justify-center', !canProceed() && 'opacity-50 cursor-not-allowed')}
                 onClick={() => canProceed() && setStep(s => s + 1)}
                 disabled={!canProceed()}
               >
@@ -353,7 +367,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
             ) : canLaunchCampaign ? (
               <button
                 className={cn(
-                  'h-12 px-8 rounded-2xl text-base font-semibold flex items-center gap-3 transition-all',
+                  'h-11 sm:h-12 px-5 sm:px-8 rounded-2xl text-sm sm:text-base font-semibold flex items-center justify-center gap-2 sm:gap-3 transition-all flex-1 sm:flex-none',
                   (!confirmed || isPending) ? 'bg-gray-300 text-gray-500 dark:text-gray-400 cursor-not-allowed' : 'bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white active:scale-95'
                 )}
                 onClick={handleLaunch}

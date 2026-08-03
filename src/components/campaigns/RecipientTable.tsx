@@ -74,20 +74,20 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       {/* header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8] dark:border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Recipients</p>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none min-w-0">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="input pl-8 h-8 w-48 text-xs"
+              className="input pl-8 h-8 w-full sm:w-48 text-xs"
               placeholder="Search recipients..."
             />
           </div>
           <button
-            className="btn-outline h-8 px-3 text-xs flex items-center gap-1"
+            className="btn-outline h-8 px-3 text-xs flex items-center gap-1 shrink-0"
             onClick={() => {
               const header = ['Contact', 'Phone', 'Status', 'Delivered At', 'Read At', 'Failure Reason']
               const rows = filtered.map(r => [
@@ -103,13 +103,13 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
       </div>
 
       {/* filter tabs */}
-      <div className="flex items-center gap-1 px-5 py-3 border-b border-[#f7f8f6]">
+      <div className="flex items-center gap-1 px-4 sm:px-5 py-3 border-b border-[#f7f8f6] overflow-x-auto no-scrollbar">
         {STATUS_TABS.map(tab => (
           <button
             key={tab.value}
             onClick={() => { setStatusFilter(tab.value); setPage(1) }}
             className={cn(
-              'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+              'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0',
               statusFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             )}
           >
@@ -125,7 +125,8 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
       {isLoading ? (
         <div className="p-10 text-center text-gray-400 dark:text-gray-500 text-sm">Loading recipients...</div>
       ) : (
-        <table className="data-table w-full">
+        <div className="overflow-x-auto">
+        <table className="data-table w-full min-w-[640px]">
           <thead>
             <tr>
               <th>Contact</th>
@@ -181,11 +182,12 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
             })}
           </tbody>
         </table>
+        </div>
       )}
 
       {/* pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-5 py-3 border-t border-[#f7f8f6]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-5 py-3 border-t border-[#f7f8f6]">
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Showing {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
           </p>

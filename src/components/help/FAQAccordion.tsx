@@ -19,8 +19,8 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
     : allFaqs.filter(f => f.category === activeCategory)
 
   return (
-    <div className="max-w-5xl mx-auto px-6 mb-10">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
 
       {/* Category pills */}
       <div className="flex items-center gap-2 flex-wrap mt-4 mb-6">
@@ -50,7 +50,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
               {/* Question */}
               <button
                 onClick={() => setOpenId(isOpen ? null : faq._id)}
-                className="w-full px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors text-left"
+                className="w-full px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4 cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors text-left"
               >
                 <div
                   className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
@@ -67,7 +67,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
 
               {/* Answer */}
               {isOpen && (
-                <div className="px-6 pb-5 pl-16">
+                <div className="px-4 sm:px-6 pb-5 pl-3 sm:pl-16">
                   <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.answer}</p>
 
                   {/* Feedback row */}

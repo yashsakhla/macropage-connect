@@ -31,7 +31,7 @@ export default function SearchResults({ query, onClear }: Props) {
   const results: SearchResult[] = apiResults ?? []
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Results for '{query}'</h2>

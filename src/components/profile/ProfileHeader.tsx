@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { Camera, Zap, CalendarDays, Clock, AlertTriangle } from 'lucide-react'
+import { Zap, CalendarDays, Clock, AlertTriangle } from 'lucide-react'
 import { format, differenceInDays, differenceInHours } from 'date-fns'
 import type { User, Subscription } from '@/types'
 import avatarMen from '@assets/avatar-men.webp'
@@ -11,8 +10,17 @@ const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner', admin: 'Admin', manager: 'Manager', agent: 'Agent',
 }
 
+// Cover design per plan tier — Starter gets a flat, calm cover; every paid
+// tier above it gets an animated gradient to visually signal "upgraded".
+const COVER_BY_PLAN: Record<string, string> = {
+  starter: 'linear-gradient(135deg, #37503f, #23402f)',
+  growth:  'linear-gradient(120deg, #1a3d2b, #1a5c3a, #2d7a4f, #1a5c3a)',
+  pro:     'linear-gradient(120deg, #1a2e5c, #2d4f9e, #6b3fa0, #2d4f9e)',
+  enterprise: 'linear-gradient(120deg, #3d2b1a, #7a5a2d, #a0783f, #7a5a2d)',
+}
+
 function PlanInfo({ subscription, user }: { subscription: Subscription; user: User }) {
-  const endRaw   = subscription.trialEndsAt ?? subscription.currentPeriodEnd
+  const endRaw   = subscription.currentPeriodEnd
   const startRaw = subscription.currentPeriodStart ?? user.createdAt
 
   if (!endRaw) return null
@@ -31,7 +39,7 @@ function PlanInfo({ subscription, user }: { subscription: Subscription; user: Us
   const isPastDue  = subscription.status === 'past_due'
   const willCancel = subscription.cancelAtPeriodEnd
 
-  const urgency = hoursLeft <= 0 ? 'expired' : daysLeft <= 3 ? 'critical' : daysLeft <= 7 ? 'warning' : 'ok'
+  const urgency = hoursLeft <= 0 ? 'expired' : 'ok'
 
   const planLabel = subscription.planName
     ? subscription.planName.charAt(0).toUpperCase() + subscription.planName.slice(1).toLowerCase()
@@ -51,67 +59,41 @@ function PlanInfo({ subscription, user }: { subscription: Subscription; user: Us
     ? `Access until ${format(end, 'MMM d, yyyy')}`
     : `Renews ${format(end, 'MMM d, yyyy')}`
 
-  const barColor =
-    urgency === 'expired'  ? 'bg-red-400' :
-    urgency === 'critical' ? 'bg-red-400' :
-    urgency === 'warning'  ? 'bg-amber-400' :
-                             'bg-[#1a5c3a]'
-
-  const timeColor =
-    urgency === 'expired'  ? 'text-red-500' :
-    urgency === 'critical' ? 'text-red-500' :
-    urgency === 'warning'  ? 'text-amber-600' :
-                             'text-[#1a5c3a]'
-
-  const clockColor =
-    urgency === 'expired'  ? 'text-red-400' :
-    urgency === 'critical' ? 'text-red-400' :
-    urgency === 'warning'  ? 'text-amber-500' :
-                             'text-[#1a5c3a]'
-
   return (
-    <div className="mt-2.5">
+    <div className="relative w-full sm:w-64">
 
       {/* Row 1: plan name + status badge */}
       <div className="flex items-center gap-2">
-        <Zap size={11} className="text-[#1a5c3a]" />
-        <span className="text-xs font-semibold text-gray-700">{planLabel} Plan</span>
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
+          <Zap size={13} className="text-white/90" /> {planLabel} Plan
+        </span>
         <span className={cn(
-          'text-2xs font-semibold px-1.5 py-0.5 rounded-full',
-          isTrial   ? 'bg-amber-50 text-amber-600 border border-amber-200'   :
-          isActive  ? 'bg-[#e8f5ee] text-[#1a5c3a] border border-[#c8e6d4]' :
-          isPastDue ? 'bg-red-50 text-red-500 border border-red-200'         :
-                      'bg-gray-100 text-gray-500 border border-gray-200'
+          'text-2xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 backdrop-blur',
+          isTrial   ? 'bg-amber-400/20 text-amber-100 border border-amber-200/40'   :
+          isActive  ? 'bg-white/15 text-white border border-white/25' :
+          isPastDue ? 'bg-red-400/20 text-red-100 border border-red-200/40'         :
+                      'bg-white/10 text-white/70 border border-white/20'
         )}>
           {statusLabel}
         </span>
       </div>
 
-      {/* Row 2: date range */}
-      <div className="flex items-center gap-1.5 mt-1">
-        <CalendarDays size={9} className="text-gray-400" />
-        <span className="text-2xs text-gray-400">
-          {format(start, 'MMM d, yyyy')}
-          <span className="mx-1 text-gray-300">→</span>
-          {format(end, 'MMM d, yyyy')}
-        </span>
-      </div>
-
-      {/* Row 3: thin progress bar */}
-      <div className="mt-1.5 h-0.5 w-44 bg-gray-200 rounded-full overflow-hidden">
+      {/* Row 2: thin progress bar */}
+      <div className="mt-2 h-1 w-full bg-white/20 rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all duration-500', barColor)}
+          className="h-full rounded-full bg-white transition-all duration-500"
           style={{ width: `${percentUsed}%` }}
         />
       </div>
 
-      {/* Row 4: time remaining + period label */}
-      <div className="flex items-center gap-1.5 mt-1">
-        <Clock size={9} className={clockColor} />
-        <span className={cn('text-2xs font-semibold', timeColor)}>{timeLeft}</span>
-        <span className="text-gray-300 text-2xs">·</span>
-        <span className="text-2xs text-gray-400 flex items-center gap-1">
-          {willCancel && <AlertTriangle size={9} className="text-amber-500" />}
+      {/* Row 3: time remaining + renewal date */}
+      <div className="flex items-center gap-1.5 mt-2">
+        <Clock size={10} className="text-white/70" />
+        <span className="text-2xs font-semibold text-white">{timeLeft}</span>
+        <span className="text-white/40 text-2xs">·</span>
+        <CalendarDays size={10} className="text-white/70" />
+        <span className="text-2xs text-white/70 flex items-center gap-1">
+          {willCancel && <AlertTriangle size={9} className="text-amber-300" />}
           {periodLabel}
         </span>
       </div>
@@ -123,48 +105,58 @@ function PlanInfo({ subscription, user }: { subscription: Subscription; user: Us
 interface Props { user: User; onEditClick: () => void }
 
 export default function ProfileHeader({ user, onEditClick }: Props) {
-  const coverRef = useRef<HTMLInputElement>(null)
   const defaultAvatar = user.gender === 'female' ? avatarWomen : avatarMen
 
   const { data: subscription } = useBillingSubscription()
 
+  const planKey   = (subscription?.planName ?? 'starter').toLowerCase()
+  const isStarter = planKey === 'starter'
+  const planLabel = subscription?.planName
+    ? subscription.planName.charAt(0).toUpperCase() + subscription.planName.slice(1).toLowerCase()
+    : 'Starter'
+  const cover = COVER_BY_PLAN[planKey] ?? COVER_BY_PLAN.starter
+
   return (
     <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden mb-6">
       {/* Cover */}
-      <div className="relative h-28 group" style={{ background: 'linear-gradient(135deg, #1a3d2b, #1a5c3a, #2d7a4f)' }}>
-        <button
-          onClick={() => coverRef.current?.click()}
-          className="absolute top-3 right-3 bg-white/80 backdrop-blur rounded-xl h-8 px-3 text-xs font-medium text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5"
-        >
-          <Camera size={12} /> Edit cover
-        </button>
-        <input ref={coverRef} type="file" accept="image/*" className="hidden" />
+      <div
+        className={cn('relative h-32 flex items-center justify-end px-6 overflow-hidden', !isStarter && 'animate-gradient-shift bg-[length:200%_200%]')}
+        style={{ background: cover }}
+      >
+        {!isStarter && (
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, white, transparent 40%), radial-gradient(circle at 80% 70%, white, transparent 35%)' }} />
+        )}
+        {subscription ? (
+          <PlanInfo subscription={subscription} user={user} />
+        ) : (
+          <span className="relative text-white/90 text-sm font-semibold tracking-wide flex items-center gap-1.5">
+            <Zap size={13} /> {planLabel} Plan
+          </span>
+        )}
       </div>
 
       {/* Info row */}
       <div className="px-6 pb-5">
-        <div className="relative -mt-10 mb-3 w-20 h-20 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#1a3d2b] flex items-center justify-center group">
+        <div className="relative -mt-10 mb-3 w-20 h-20 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#1a3d2b] flex items-center justify-center">
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
           ) : (
             <img src={defaultAvatar} alt={user.name} className="w-full h-full object-cover" />
           )}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-            <Camera size={16} className="text-white" />
-          </div>
           <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
         </div>
 
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-            <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Identity */}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl font-bold text-gray-900 truncate">{user.name}</h2>
               <span className="text-xs bg-[#e8f5ee] text-[#1a5c3a] rounded-full px-2.5 py-0.5 font-medium capitalize">{ROLE_LABELS[user.role] ?? user.role}</span>
             </div>
-            <p className="text-sm text-gray-400 mt-0.5">{user.email}</p>
-            {subscription && <PlanInfo subscription={subscription} user={user} />}
+            <p className="text-sm text-gray-400 mt-1">{user.email}</p>
           </div>
-          <button onClick={onEditClick} className="btn-outline h-9 text-sm">Edit profile</button>
+
+          <button onClick={onEditClick} className="btn-outline h-9 text-sm flex-shrink-0">Edit profile</button>
         </div>
       </div>
     </div>

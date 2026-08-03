@@ -111,8 +111,38 @@ export default function SettingsSidebar({ activeSection }: Props) {
     return group
   }).filter(group => group.items.length > 0)
 
+  // Flattened, icon-only-friendly list for the mobile horizontal nav strip —
+  // grouping headers don't make sense in a single scrollable row.
+  const flatNav = visibleNav.flatMap(g => g.items)
+
   return (
-    <aside className="bg-white dark:bg-[#0b1220] border-r border-[#e8ebe8] dark:border-white/10 h-full flex flex-col overflow-y-auto">
+    <>
+      {/* Mobile — horizontal scrollable pill strip, replaces the vertical sidebar */}
+      <div className="md:hidden bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-3 py-2.5">
+          {flatNav.map(({ id, icon: Icon, label, danger }) => {
+            const isActive = activeSection === id
+            return (
+              <button
+                key={id}
+                onClick={() => go(id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0',
+                  danger && !isActive && 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30',
+                  !danger && !isActive && 'text-gray-600 dark:text-gray-400 bg-[#f7f8f6] dark:bg-white/5',
+                  isActive && !danger && 'bg-[#1a5c3a] text-white',
+                  isActive && danger && 'bg-red-500 text-white',
+                )}
+              >
+                <Icon size={13} /> {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop — full vertical sidebar */}
+      <aside className="hidden md:flex bg-white dark:bg-[#0b1220] border-r border-[#e8ebe8] dark:border-white/10 h-full flex-col overflow-y-auto">
       {/* Company identity */}
       <div className="px-4 py-4 border-b border-[#e8ebe8] dark:border-white/10">
         <div className="flex items-center gap-3">
@@ -177,6 +207,7 @@ export default function SettingsSidebar({ activeSection }: Props) {
       <div className="border-t border-[#e8ebe8] dark:border-white/10 p-3">
         <p className="text-2xs text-gray-300 dark:text-gray-600 px-3 pt-1">v1.0.0</p>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
