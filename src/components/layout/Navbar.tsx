@@ -33,6 +33,13 @@ export default function Navbar() {
         >
           <Menu size={20} />
         </button>
+        {user?.companyLogoUrl && (
+          <img
+            src={user.companyLogoUrl}
+            alt={user.companyName ?? 'Company logo'}
+            className="hidden sm:block w-9 h-9 rounded-lg object-contain shrink-0 border border-gray-100 dark:border-gray-800 bg-white"
+          />
+        )}
         <div className="min-w-0">
           <div className="greeting-title text-sm sm:text-base">
             <span className="truncate min-w-0">Welcome Back, {user?.name ?? 'Teddy'}!</span>

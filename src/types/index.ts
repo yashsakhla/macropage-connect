@@ -43,6 +43,7 @@ export interface User {
   avatarUrl?: string
   companyId?: string
   companyName?: string
+  companyLogoUrl?: string
   wabaId?: string
   phone?: string
   whatsappSetupDone?: boolean
