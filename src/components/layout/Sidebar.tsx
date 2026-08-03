@@ -2,7 +2,8 @@ import { NavLink, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Megaphone, FileText,
   Users, Users2, Settings, ChevronLeft, ChevronRight,
-  HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock, BookOpen,
+  HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock, BookOpen, X,
+  PhoneCall,
 } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -52,7 +53,7 @@ function Logo({ collapsed }: { collapsed: boolean }) {
 }
 
 export default function Sidebar() {
-  const { sidebarOpen, toggleSidebar, setPlanExpiredModalOpen } = useUIStore()
+  const { sidebarOpen, toggleSidebar, setPlanExpiredModalOpen, mobileSidebarOpen, setMobileSidebarOpen } = useUIStore()
   const location = useLocation()
   const collapsed = !sidebarOpen
   const { user, isInTrial, trialDaysLeft } = useAuthStore()
@@ -82,32 +83,76 @@ export default function Sidebar() {
   const trialUrgent = daysLeft <= 7
 
   return (
-    <aside className={cn(
-      'fixed top-0 left-0 h-screen z-30 flex flex-col overflow-hidden',
-      'sidebar-aurora',
-      'transition-all duration-200',
-      collapsed ? 'w-16' : 'w-60'
-    )}>
+    <>
+      {/* Mobile backdrop — tap to close the drawer */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={cn(
+        'fixed top-0 left-0 h-screen z-30 flex flex-col overflow-hidden',
+        'sidebar-aurora',
+        'transition-all duration-200',
+        // Mobile: full-width drawer that slides in/out; desktop: collapsible rail
+        'w-64 md:w-60',
+        collapsed && 'md:w-16',
+        mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}>
       {/* Blurred colour-blend blobs behind everything */}
       <div className="sidebar-aurora-blob b1" />
       <div className="sidebar-aurora-blob b2" />
       <div className="sidebar-aurora-blob b3" />
 
       {/* Logo row */}
-      <div className="relative z-10 flex items-center h-14 px-4 border-b border-black/5 shrink-0">
+      <div className={cn(
+        'relative z-10 flex items-center px-4 border-b border-black/5 shrink-0',
+        collapsed ? 'flex-col justify-center gap-1.5 py-2.5 md:py-2.5 md:px-2' : 'h-14'
+      )}>
         <Logo collapsed={collapsed} />
-        {!collapsed && (
-          <button
-            onClick={toggleSidebar}
-            className="ml-auto p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-black/5 transition-colors"
-          >
-            <ChevronLeft size={15} />
-          </button>
-        )}
+        <button
+          onClick={() => setMobileSidebarOpen(false)}
+          title="Close menu"
+          className="ml-auto p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-black/5 transition-colors md:hidden"
+        >
+          <X size={18} />
+        </button>
+        <button
+          onClick={toggleSidebar}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(
+            'hidden md:block p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-black/5 transition-colors',
+            !collapsed && 'ml-auto'
+          )}
+        >
+          {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+        </button>
       </div>
 
       {/* Nav */}
       <nav className="relative z-10 flex-1 overflow-y-auto py-3 px-2 thin-scrollbar">
+        {!user?.whatsappSetupDone && (
+          <div className="px-1 mb-3">
+            <Link
+              to="/setup/whatsapp"
+              title={collapsed ? 'Setup WhatsApp' : undefined}
+              onClick={() => setMobileSidebarOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-semibold transition-colors',
+                'bg-[#25D366]/10 text-[#1a5c3a] hover:bg-[#25D366]/20 border border-[#25D366]/30',
+                collapsed && 'justify-center px-2'
+              )}
+            >
+              <PhoneCall size={18} className="shrink-0" />
+              {!collapsed && <span className="flex-1">Setup WhatsApp</span>}
+              {!collapsed && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse flex-shrink-0" />
+              )}
+            </Link>
+          </div>
+        )}
         {!collapsed && <div className="text-2xs text-gray-400 uppercase tracking-wider px-3 mb-2">Menu</div>}
         <div className="space-y-0.5">
           {NAV_ITEMS.map(({ to, label, Icon, permission, feature }) => {
@@ -141,6 +186,7 @@ export default function Sidebar() {
                 key={to}
                 to={to}
                 title={collapsed ? label : undefined}
+                onClick={() => setMobileSidebarOpen(false)}
                 className={cn(
                   'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4 border-transparent',
                   active && 'active border-l-[#2d7a4f] font-semibold',
@@ -158,14 +204,17 @@ export default function Sidebar() {
         </div>
 
         {!collapsed && <div className="text-2xs text-gray-400 uppercase tracking-wider px-3 mt-4 mb-2">General</div>}
-        <div className="space-y-0.5 px-1">
+        <div className="space-y-0.5">
           <NavLink
             to="/settings"
+            title={collapsed ? 'Settings' : undefined}
+            onClick={() => setMobileSidebarOpen(false)}
             // Billing gets its own dedicated (golden) nav entry below, so the
             // gear icon should light up for every /settings/* sub-page except that one.
             className={cn(
               'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4 border-transparent',
-              location.pathname.startsWith('/settings') && !location.pathname.startsWith('/settings/billing') && 'active border-l-[#2d7a4f] font-semibold'
+              location.pathname.startsWith('/settings') && !location.pathname.startsWith('/settings/billing') && 'active border-l-[#2d7a4f] font-semibold',
+              collapsed && 'justify-center px-2'
             )}
           >
             <Settings size={18} className="shrink-0" />
@@ -176,12 +225,14 @@ export default function Sidebar() {
           <NavLink
             to="/settings/billing"
             title={collapsed ? 'Billing' : undefined}
+            onClick={() => setMobileSidebarOpen(false)}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors border-l-4',
                 isActive
                   ? 'bg-amber-50 text-amber-700 border-l-amber-500 font-semibold'
-                  : 'border-transparent text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                  : 'border-transparent text-amber-600 hover:bg-amber-50 hover:text-amber-700',
+                collapsed && 'justify-center px-2'
               )
             }
           >
@@ -193,12 +244,14 @@ export default function Sidebar() {
           <NavLink
             to="/plans"
             title={collapsed ? 'Upgrade Plan' : undefined}
+            onClick={() => setMobileSidebarOpen(false)}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-amber-50 text-amber-700 border-l-4 border-l-amber-500 font-semibold'
-                  : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                  : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700',
+                collapsed && 'justify-center px-2'
               )
             }
           >
@@ -220,7 +273,12 @@ export default function Sidebar() {
 
           <Link
             to="/help"
-            className="sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors"
+            title={collapsed ? 'Help & Support' : undefined}
+            onClick={() => setMobileSidebarOpen(false)}
+            className={cn(
+              'sidebar-nav-item flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+              collapsed && 'justify-center px-2'
+            )}
           >
             <HelpCircle size={18} className="shrink-0" />
             {!collapsed && <span>Help & Support</span>}
@@ -288,7 +346,7 @@ export default function Sidebar() {
                         </div>
                         <div className="text-right">
                           <div className="opacity-80">Company</div>
-                          <div className="text-sm font-medium mt-0.5 truncate text-gray-800">{user?.companyName ?? '—'}</div>
+                          <div className="text-2xs font-medium mt-0.5 leading-tight line-clamp-2 break-words text-gray-800">{user?.companyName?.trim() || 'Not registered'}</div>
                         </div>
                       </div>
 
@@ -319,6 +377,7 @@ export default function Sidebar() {
                       <div className="mt-3">
                         <Link
                           to="/settings"
+                          onClick={() => setMobileSidebarOpen(false)}
                           className="inline-flex items-center gap-2 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary-light)]"
                         >
                           View details <ArrowRight size={14} />
@@ -330,15 +389,27 @@ export default function Sidebar() {
               </div>
             </div>
           ) : (
-            <button
-              onClick={toggleSidebar}
-              className="w-full flex justify-center py-1.5 text-gray-400 hover:text-gray-700 hover:bg-black/5 rounded-lg transition-colors"
+            <Link
+              to="/settings"
+              title={user?.name ?? 'Settings'}
+              onClick={() => setMobileSidebarOpen(false)}
+              className={cn(
+                'w-9 h-9 mx-auto rounded-full flex items-center justify-center text-xs font-semibold text-white ring-2 ring-white overflow-hidden',
+                planExpired
+                  ? 'bg-gradient-to-tr from-red-600 to-red-400'
+                  : 'bg-gradient-to-tr from-[var(--primary)] via-blue-500 to-violet-500'
+              )}
             >
-              <ChevronRight size={15} />
-            </button>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={user?.name ?? 'Profile'} className="w-full h-full object-cover" />
+              ) : (
+                <span>{initials}</span>
+              )}
+            </Link>
           )}
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }

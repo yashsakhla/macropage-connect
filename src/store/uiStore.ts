@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 interface UIState {
   sidebarOpen: boolean
+  mobileSidebarOpen: boolean
   theme: 'light' | 'dark'
   notificationPanelOpen: boolean
   planExpiredModalOpen: boolean
@@ -18,8 +19,14 @@ interface UIState {
   // lets the dashboard show a one-time post-login promo banner, then gets cleared
   justLoggedIn: boolean
 
+  // true while the onboarding WelcomePopup (free trial / connect WhatsApp) is
+  // on screen — AdBanner waits for this to go false before showing its own popup
+  welcomePopupOpen: boolean
+
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
+  toggleMobileSidebar: () => void
+  setMobileSidebarOpen: (open: boolean) => void
   toggleTheme: () => void
   setFullLoader: (v: boolean) => void
   toggleNotificationPanel: () => void
@@ -31,12 +38,14 @@ interface UIState {
   setHelpWidgetOpen: (v: boolean) => void
   openHelpChat: () => void
   setJustLoggedIn: (v: boolean) => void
+  setWelcomePopupOpen: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
       sidebarOpen: true,
+      mobileSidebarOpen: false,
       theme: 'light',
       notificationPanelOpen: false,
       planExpiredModalOpen: false,
@@ -46,9 +55,12 @@ export const useUIStore = create<UIState>()(
       helpWidgetOpen: false,
       fullLoader: false,
       justLoggedIn: false,
+      welcomePopupOpen: false,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleMobileSidebar: () => set({ mobileSidebarOpen: !get().mobileSidebarOpen }),
+      setMobileSidebarOpen: (open) => set({ mobileSidebarOpen: open }),
 
       toggleTheme: () => {
         const next = get().theme === 'light' ? 'dark' : 'light'
@@ -66,6 +78,7 @@ export const useUIStore = create<UIState>()(
       setHelpWidgetOpen: (v) => set({ helpWidgetOpen: v }),
       openHelpChat: () => set({ helpWidgetOpen: true }),
       setJustLoggedIn: (v) => set({ justLoggedIn: v }),
+      setWelcomePopupOpen: (v) => set({ welcomePopupOpen: v }),
     }),
     {
       name: 'macropage-ui',

@@ -31,6 +31,7 @@ export default function MainLayout() {
   useAuthGuard()
   const location = useLocation()
   const navigate = useNavigate()
+  const isInboxRoute = location.pathname.startsWith('/inbox')
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -64,13 +65,13 @@ export default function MainLayout() {
       {/* Main area */}
       <div
         className={cn(
-          'flex flex-col flex-1 overflow-hidden transition-all duration-200',
-          sidebarOpen ? 'ml-60' : 'ml-16'
+          'flex flex-col flex-1 overflow-hidden transition-all duration-200 min-w-0',
+          sidebarOpen ? 'md:ml-60' : 'md:ml-16'
         )}
       >
         <FullPageLoader />
         <Navbar />
-        <div className="flex-1 overflow-y-auto flex flex-col">
+        <div className={cn('flex-1 flex flex-col', isInboxRoute ? 'overflow-hidden' : 'overflow-y-auto')}>
 
           {/* Priority banner stack — only the highest-priority one renders */}
           {activeBanner === 'planExpired' && (
@@ -98,7 +99,7 @@ export default function MainLayout() {
           )}
 
           <Suspense fallback={<PageLoader />}>
-            <main className="p-6">
+            <main className={isInboxRoute ? 'flex-1 min-h-0 flex flex-col overflow-hidden' : 'p-3 sm:p-4 md:p-6'}>
               <Outlet />
             </main>
           </Suspense>

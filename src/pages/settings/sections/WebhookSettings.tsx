@@ -38,7 +38,7 @@ export default function WebhookSettings() {
   return (
     <SettingsSection title="Webhooks" subtitle="Send real-time events to your server when things happen in Macropage Connect">
       {/* Add webhook */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Add webhook endpoint</p>
         <div className="space-y-4 max-w-xl">
           <div>

@@ -93,7 +93,7 @@ export default function ContactForm({ contact, onClose, mode, onDeleted }: Conta
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-screen w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
         <div className="flex items-center gap-2 px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
           <p className="text-base font-semibold text-gray-900 dark:text-white flex-1">
             {mode === 'add' ? 'Add contact' : 'Edit contact'}

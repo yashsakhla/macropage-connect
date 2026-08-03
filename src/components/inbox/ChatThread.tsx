@@ -114,7 +114,7 @@ function ChatHeader({
     'w-8 h-8 rounded-xl hover:bg-[#f7f8f6] dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors'
 
   return (
-    <div className="h-14 bg-white dark:bg-gray-900 border-b border-[#e8ebe8] dark:border-gray-700 flex items-center px-4 gap-3 flex-shrink-0">
+    <div className="h-14 bg-white dark:bg-gray-900 border-b border-[#e8ebe8] dark:border-gray-700 flex items-center px-2 sm:px-4 gap-2 sm:gap-3 flex-shrink-0">
       {/* Mobile back */}
       {onBack && (
         <button onClick={onBack} className={btnBase}>
@@ -142,10 +142,10 @@ function ChatHeader({
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
           {conv.contact?.name ?? 'Unknown'}
         </p>
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
           <span
             className={cn(
-              'text-2xs font-medium rounded-full px-2 py-0.5 leading-none',
+              'text-2xs font-medium rounded-full px-2 py-0.5 leading-none shrink-0',
               conv.status === 'open'
                 ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                 : conv.status === 'pending'
@@ -155,8 +155,8 @@ function ChatHeader({
           >
             {conv.status.charAt(0).toUpperCase() + conv.status.slice(1)}
           </span>
-          <span className="text-2xs text-gray-400 dark:text-gray-500">·</span>
-          <span className="text-2xs text-gray-400 dark:text-gray-500">
+          <span className="text-2xs text-gray-400 dark:text-gray-500 shrink-0">·</span>
+          <span className="text-2xs text-gray-400 dark:text-gray-500 truncate">
             {isOnline
               ? 'Online'
               : conv.contact?.lastSeenAt
@@ -167,7 +167,7 @@ function ChatHeader({
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
         <button
           onClick={onSearchToggle}
           className={cn(btnBase, searchActive && 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a]')}
@@ -184,32 +184,32 @@ function ChatHeader({
             <Phone size={15} />
           </a>
         ) : (
-          <button className={btnBase} title="No phone number" disabled>
+          <button className={cn(btnBase, 'hidden sm:flex')} title="No phone number" disabled>
             <Phone size={15} className="opacity-40" />
           </button>
         )}
 
-        {/* Assign button */}
+        {/* Assign button — icon-only on mobile, name label from sm: up */}
         {canAssignConversation && (
           <button
             onClick={onAssign}
-            className="flex items-center gap-1.5 text-xs font-medium h-8 px-3 rounded-xl bg-white border border-[#e8ebe8] text-gray-600 hover:text-[#1a5c3a] hover:border-[#c8e6d4] transition-all"
+            title={conv.assignedTo ? conv.assignedTo.name : 'Assign'}
+            className="flex items-center gap-1.5 text-xs font-medium h-8 px-2 sm:px-3 rounded-xl bg-white border border-[#e8ebe8] text-gray-600 hover:text-[#1a5c3a] hover:border-[#c8e6d4] transition-all"
           >
             <UserPlus size={13} />
-            {conv.assignedTo
-              ? `${conv.assignedTo.name}`
-              : 'Assign'
-            }
+            <span className="hidden sm:inline max-w-[100px] truncate">
+              {conv.assignedTo ? conv.assignedTo.name : 'Assign'}
+            </span>
           </button>
         )}
 
-        {/* Status dropdown */}
+        {/* Status dropdown — dot-only on mobile, label from sm: up */}
         <div ref={statusRef} className="relative">
           <button
             onClick={() => { setStatusOpen((v) => !v); setMoreOpen(false) }}
             disabled={isUpdating}
             className={cn(
-              'flex items-center gap-1.5 rounded-xl px-3 h-8 text-xs font-medium text-white transition-colors disabled:opacity-60',
+              'flex items-center gap-1.5 rounded-xl px-2 sm:px-3 h-8 text-xs font-medium text-white transition-colors disabled:opacity-60',
               conv.status === 'open'
                 ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f]'
                 : conv.status === 'pending'
@@ -218,7 +218,7 @@ function ChatHeader({
             )}
           >
             <StatusDot status={conv.status} />
-            {conv.status.charAt(0).toUpperCase() + conv.status.slice(1)}
+            <span className="hidden sm:inline">{conv.status.charAt(0).toUpperCase() + conv.status.slice(1)}</span>
           </button>
           {statusOpen && (
             <div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-gray-800 border border-[#e8ebe8] dark:border-gray-700 rounded-xl shadow-lg overflow-hidden z-50 animate-fade-in">

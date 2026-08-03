@@ -65,7 +65,7 @@ export default function SampleTemplateCard({ starter, existing, canUse, isSubmit
           <MetaIcon size={10} className={meta.pulse ? 'animate-pulse' : ''} />
           {meta.label}
         </span>
-        <img src={catImage} alt="" className="w-24 h-24 object-contain" />
+        <img src={catImage} alt="" width={96} height={96} decoding="async" className="w-24 h-24 object-contain" />
       </div>
 
       <div className="p-5">

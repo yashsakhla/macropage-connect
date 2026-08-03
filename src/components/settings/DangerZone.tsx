@@ -73,14 +73,14 @@ export default function DangerZone() {
     <>
       <div className="border-2 border-red-200 rounded-2xl overflow-hidden">
         {ACTIONS.map((action, i) => (
-          <div key={i} className={cn('flex items-center justify-between px-5 py-4', i < ACTIONS.length - 1 && 'border-b border-red-100')}>
+          <div key={i} className={cn('flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-4', i < ACTIONS.length - 1 && 'border-b border-red-100')}>
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{action.title}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{action.desc}</p>
             </div>
             <button
               onClick={() => action.confirm ? openAction(action) : undefined}
-              className="btn-outline h-9 text-sm border-red-300 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400 flex-shrink-0 ml-4"
+              className="btn-outline h-9 text-sm border-red-300 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400 flex-shrink-0 sm:ml-4 w-full sm:w-auto"
             >
               {action.btnLabel}
             </button>
@@ -89,7 +89,7 @@ export default function DangerZone() {
       </div>
 
       {activeAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40">
           <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10">
               <h3 className="text-base font-bold text-red-600 dark:text-red-400">{activeAction.title}</h3>

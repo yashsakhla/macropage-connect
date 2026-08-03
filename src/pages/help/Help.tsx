@@ -46,7 +46,7 @@ export default function Help() {
           />
 
           {/* Onboarding checklist */}
-          <div className="max-w-5xl mx-auto px-6 mb-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-8">
             <OnboardingChecklist />
           </div>
 
@@ -71,8 +71,8 @@ export default function Help() {
           />
 
           {/* Status page */}
-          <div className="max-w-5xl mx-auto px-6 mb-10">
-            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 shadow-sm">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
+            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                   <p className="text-[0.65rem] uppercase tracking-[0.22em] font-semibold text-gray-400 dark:text-gray-500">Platform health</p>
@@ -203,12 +203,12 @@ export default function Help() {
           </div>
 
           {/* Community & resources */}
-          <div className="max-w-5xl mx-auto px-6 pb-12">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
                 type="button"
                 onClick={() => navigate('/developers')}
-                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all block text-left"
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all block text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center mb-3">
                   <Code2 size={20} className="text-gray-600 dark:text-gray-400" />
@@ -220,7 +220,7 @@ export default function Help() {
                 </p>
               </button>
 
-              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center mb-3">
                   <Users size={20} className="text-purple-600 dark:text-purple-400" />
                 </div>
@@ -231,7 +231,7 @@ export default function Help() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
+              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3">
                   <GitMerge size={20} className="text-blue-600 dark:text-blue-400" />
                 </div>

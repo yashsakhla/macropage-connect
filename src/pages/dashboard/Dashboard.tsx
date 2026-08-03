@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format, subDays } from 'date-fns'
 import {
   TrendingUp, MessageSquare, Send, Eye, AlertTriangle,
   ArrowUpRight, CheckCircle2, Circle, ExternalLink,
@@ -10,6 +10,7 @@ import {
   CartesianGrid, PieChart, Pie, Cell,
 } from 'recharts'
 import { cn, formatIndian } from '@/lib/utils'
+import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
 import type {
   DashboardStatsData, DashboardHealthData, DashboardRecentItem,
@@ -18,6 +19,8 @@ import type {
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
 import PromoBanner from '@/components/dashboard/PromoBanner'
+import WhatsAppQRCard from '@/components/dashboard/WhatsAppQRCard'
+import AdBanner, { type AdItem } from '@/components/dashboard/AdBanner'
 import dashboardBanner from '@/assets/dashboard/dashboard-banner.svg'
 import msgIcon from '@/assets/dashboard/msg-icon.png'
 import rocketIcon from '@/assets/dashboard/rocket-icon.png'
@@ -32,6 +35,13 @@ import {
   useDashboardStats, useDashboardChart, useDashboardRecent,
   useDashboardHealth, useOnboardingChecklist,
 } from '@/hooks/useAnalytics'
+
+function buildEmptyChartPoints(): ChartDataPoint[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = format(subDays(new Date(), 6 - i), 'MMM d')
+    return { date, inbound: 0, outbound: 0, total: 0, delivered: 0, read: 0, failed: 0 }
+  })
+}
 
 function formatAxisTick(v: number): string {
   if (v >= 1000) {
@@ -52,30 +62,30 @@ function StatCard({ label, value, iconImg, trend, hero }: {
 }) {
   return (
     <div
-      className={cn('relative p-5', hero ? 'rounded-2xl shadow-card' : 'card p-5')}
+      className={cn('relative p-3.5 sm:p-5 overflow-hidden', hero ? 'rounded-2xl shadow-card' : 'card p-3.5 sm:p-5')}
       style={hero ? { background: '#1a5c3a', color: '#fff' } : undefined}
     >
-      <div className="absolute top-3 right-3 text-sm rounded-full bg-white/10 px-2 py-1 flex items-center gap-1">
+      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 text-sm rounded-full bg-white/10 px-2 py-1 flex items-center gap-1">
         <ArrowUpRight size={14} />
       </div>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className={cn('text-sm font-medium', hero ? 'text-white/90' : 'text-gray-500 dark:text-gray-400')}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className={cn('text-xs sm:text-sm font-medium truncate', hero ? 'text-white/90' : 'text-gray-500 dark:text-gray-400')}>
             {label}
           </p>
-          <p className={cn('text-3xl font-bold mt-2', hero ? 'text-white' : 'text-gray-900 dark:text-white')}>
+          <p className={cn('text-xl sm:text-3xl font-bold mt-1.5 sm:mt-2 truncate', hero ? 'text-white' : 'text-gray-900 dark:text-white')}>
             {typeof value === 'number' ? formatIndian(value) : value}
           </p>
           {trend && (
-            <div className="flex items-center gap-2 mt-3">
-              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-2xs sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shrink-0">
                 <TrendingUp size={12} /> {Math.abs(trend.value)}%
               </span>
-              <span className="text-xs text-gray-500">vs last month</span>
+              <span className="hidden sm:inline text-xs text-gray-500">vs last month</span>
             </div>
           )}
         </div>
-        <div className="w-24 h-24 rounded-xl flex items-center justify-center shrink-0 -mt-1 -mr-1">
+        <div className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl flex items-center justify-center shrink-0 sm:-mt-1 sm:-mr-1">
           <img src={iconImg} alt="" className="w-full h-full object-contain drop-shadow-md" />
         </div>
       </div>
@@ -94,11 +104,11 @@ function AccountHealthBanner({ health }: { health: import('@/types').DashboardHe
   const tier = health.messagingTier?.replace('TIER_', '').replace('K', 'K').replace('UNLIMITED', '∞') ?? ''
 
   return (
-    <div className={cn('rounded-xl border px-4 py-3 flex items-center gap-3 flex-wrap', config.bg, config.border)}>
+    <div className={cn('rounded-xl border px-4 py-3 flex items-center gap-3', config.bg, config.border)}>
       <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', config.dot)} />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
         <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{config.label} · </span>
-        <span className="text-sm text-gray-600 dark:text-gray-400">{config.desc}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">{config.desc}</span>
       </div>
       {tier && (
         <span className="text-xs font-medium text-gray-700 dark:text-gray-300 shrink-0">Tier: {tier}</span>
@@ -158,13 +168,14 @@ function MiniStat({ label, value, icon: Icon, tone }: {
     red:   'bg-red-50 text-red-600 dark:bg-red-950/30',
   }
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2.5">
-      <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', toneMap[tone])}>
-        <Icon size={16} />
+    <div className="flex items-center gap-2 sm:gap-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 px-2 sm:px-3 py-2 sm:py-2.5 min-w-0">
+      <div className={cn('w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0', toneMap[tone])}>
+        <Icon size={14} className="sm:hidden" />
+        <Icon size={16} className="hidden sm:block" />
       </div>
       <div className="min-w-0">
         <p className="text-2xs text-gray-500 dark:text-gray-400 truncate">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{formatIndian(value)}</p>
+        <p className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight truncate">{formatIndian(value)}</p>
       </div>
     </div>
   )
@@ -249,11 +260,22 @@ export default function Dashboard() {
     isFetching: checklistFetching,
   } = useOnboardingChecklist()
 
+  const [ads, setAds] = useState<AdItem[]>([])
+
+  useEffect(() => {
+    api.get('/ads')
+      .then((res) => {
+        const payload = res.data?.data ?? res.data ?? []
+        setAds(Array.isArray(payload) ? payload : payload ? [payload] : [])
+      })
+      .catch(() => {})
+  }, [])
+
   const stats = statsData as DashboardStatsData | undefined
   const health = healthData as DashboardHealthData | undefined
   const recent = recentData as DashboardRecentItem[] | undefined
   const checklist = checklistData as ChecklistData | undefined
-  const chartPoints: ChartDataPoint[] = chartData ?? []
+  const chartPoints: ChartDataPoint[] = chartData?.length ? chartData : buildEmptyChartPoints()
 
   const totalSent = chartPoints.reduce((sum, p) => sum + p.outbound, 0)
   const totalDelivered = chartPoints.reduce((sum, p) => sum + (p.delivered ?? 0), 0)
@@ -262,11 +284,13 @@ export default function Dashboard() {
   const deliveredOnly = Math.max(totalDelivered - totalRead, 0)
   const pending = Math.max(totalSent - totalDelivered - totalFailed, 0)
 
-  const donutData = [
+  const donutData = totalSent > 0 ? [
     { name: 'Delivered', value: deliveredOnly, color: '#4ade80' },
     { name: 'Read', value: totalRead, color: '#3b82f6' },
     { name: 'Failed', value: totalFailed, color: '#ef4444' },
     { name: 'Pending', value: pending, color: '#d1d5db' },
+  ] : [
+    { name: 'No data', value: 1, color: '#e5e7eb' },
   ]
   const pct = (v: number) => (totalSent > 0 ? `${((v / totalSent) * 100).toFixed(1)}%` : '0%')
 
@@ -275,31 +299,37 @@ export default function Dashboard() {
       <PromoBanner />
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage and monitor your WhatsApp campaigns</p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary flex-1 sm:flex-none justify-center"
             style={{ background: '#1a5c3a', borderColor: '#1a5c3a' }}
             onClick={() => setShowWizard(true)}
           >
             + New Campaign
           </button>
-          <button className="btn btn-outline" onClick={() => navigate('/contacts?import=true')}>Import Contacts</button>
+          <button className="btn btn-outline flex-1 sm:flex-none justify-center" onClick={() => navigate('/contacts?import=true')}>Import Contacts</button>
         </div>
       </div>
 
-      {/* Hero Banner */}
-      <div className="relative rounded-2xl overflow-hidden shadow-xl">
-        <img src={dashboardBanner} alt="" className="w-full aspect-[12/2] object-cover object-center" />
-        <div className="absolute inset-0 flex flex-col justify-center pl-6 sm:pl-10 max-w-[55%] sm:max-w-xs">
-          <h2 className="text-base sm:text-2xl font-bold text-[#123724] leading-tight">
+      {/* Hero Banner — mobile gets a taller aspect ratio (the wide desktop crop
+          leaves almost no height at 12:2 on narrow screens) but still shows the
+          banner image, with a light scrim behind the text for legibility */}
+      <div
+        className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9] sm:aspect-[12/2]"
+        style={{ background: 'linear-gradient(135deg, #d7f5e3 0%, #bdeccf 100%)' }}
+      >
+        <img src={dashboardBanner} alt="" className="w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#d7f5e3]/90 via-[#d7f5e3]/50 to-transparent sm:hidden" />
+        <div className="absolute inset-0 flex flex-col justify-center px-5 sm:pl-10 max-w-[70%] sm:max-w-xs">
+          <h2 className="text-lg sm:text-2xl font-bold text-[#123724] leading-tight">
             Grow your business on WhatsApp
           </h2>
-          <p className="hidden sm:block text-sm text-[#1a5c3a]/80 mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#1a5c3a]/80 mt-2 leading-relaxed">
             Reach customers instantly, run campaigns, and track results — all in one place.
           </p>
         </div>
@@ -392,7 +422,7 @@ export default function Dashboard() {
                 <div className="text-xs text-gray-500">Last 7 days</div>
               </div>
 
-              <div className="grid grid-cols-4 gap-3 mb-5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
                 <MiniStat label="Total Sent" value={totalSent} icon={Send} tone="green" />
                 <MiniStat label="Delivered" value={totalDelivered} icon={CheckCircle2} tone="green" />
                 <MiniStat label="Read" value={totalRead} icon={Eye} tone="blue" />
@@ -426,33 +456,35 @@ export default function Dashboard() {
                 {/* Delivery funnel donut */}
                 <div className="sm:col-span-2 flex flex-col items-center">
                   <div className="relative w-full" style={{ height: 150 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={donutData}
-                          dataKey="value"
-                          nameKey="name"
-                          innerRadius="68%"
-                          outerRadius="100%"
-                          paddingAngle={2}
-                          startAngle={90}
-                          endAngle={-270}
-                          animationDuration={600}
-                        >
-                          {donutData.map(seg => (
-                            <Cell key={seg.name} fill={seg.color} stroke="none" />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(v: number) => formatIndian(v)} contentStyle={{ borderRadius: 8 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div className="relative z-10 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={donutData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius="68%"
+                            outerRadius="100%"
+                            paddingAngle={2}
+                            startAngle={90}
+                            endAngle={-270}
+                            animationDuration={600}
+                          >
+                            {donutData.map(seg => (
+                              <Cell key={seg.name} fill={seg.color} stroke="none" />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v: number) => formatIndian(v)} contentStyle={{ borderRadius: 8 }} wrapperStyle={{ zIndex: 50 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none">
                       <span className="text-xl font-bold text-gray-900">{formatIndian(totalSent)}</span>
                       <span className="text-2xs text-gray-500">Total Sent</span>
                     </div>
                   </div>
                   <div className="w-full space-y-1 mt-2">
-                    {donutData.map(seg => (
+                    {totalSent > 0 ? donutData.map(seg => (
                       <div key={seg.name} className="flex items-center justify-between text-2xs">
                         <span className="flex items-center gap-1.5 text-gray-600">
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: seg.color }} />
@@ -462,7 +494,9 @@ export default function Dashboard() {
                           {formatIndian(seg.name === 'Delivered' ? totalDelivered : seg.value)} ({pct(seg.name === 'Delivered' ? totalDelivered : seg.value)})
                         </span>
                       </div>
-                    ))}
+                    )) : (
+                      <p className="text-center text-2xs text-gray-400">No messages sent yet</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -474,6 +508,8 @@ export default function Dashboard() {
 
         {/* Recent Activity */}
         <div className="space-y-4">
+          <WhatsAppQRCard health={health} />
+
           {recentLoading ? (
             <ActivitySkeleton />
           ) : recentError ? (
@@ -554,6 +590,7 @@ export default function Dashboard() {
 
       {showWizard && <CampaignWizard onClose={() => setShowWizard(false)} />}
       <WelcomePopup />
+      <AdBanner ads={ads} />
     </div>
   )
 }

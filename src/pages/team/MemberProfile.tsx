@@ -35,6 +35,7 @@ const TYPE_CHIP: Record<string, { bg: string; text: string }> = {
   team:         { bg: 'bg-rose-50',   text: 'text-rose-600'   },
   settings:     { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400'   },
 }
+const DEFAULT_TYPE_CHIP = { bg: 'bg-gray-100 dark:bg-white/10', text: 'text-gray-500 dark:text-gray-400' }
 
 export default function MemberProfile() {
   const { memberId = '' } = useParams<{ memberId: string }>()
@@ -64,23 +65,23 @@ export default function MemberProfile() {
   ]
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
-      <div className="flex items-center justify-between mb-6">
-        <button className="btn-ghost h-8 px-3 text-sm flex items-center gap-1" onClick={() => navigate('/team')}>
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2">
+        <button className="btn-ghost h-8 px-3 text-sm flex items-center gap-1 shrink-0" onClick={() => navigate('/team')}>
           <ArrowLeft size={15} /> Team
         </button>
         <div className="flex items-center gap-2">
           <button className="btn btn-outline h-9 gap-2" onClick={() => setShowEdit(true)}>
-            <Edit2 size={14} /> Edit member
+            <Edit2 size={14} /> <span className="hidden sm:inline">Edit member</span><span className="sm:hidden">Edit</span>
           </button>
-          <button className="btn-ghost w-9 h-9"><MoreVertical size={16} /></button>
+          <button className="btn-ghost w-9 h-9 shrink-0"><MoreVertical size={16} /></button>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* LEFT */}
-        <div className="col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4">
           {/* profile card */}
           <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 text-center">
             <div className="flex justify-center">
@@ -154,7 +155,7 @@ export default function MemberProfile() {
         </div>
 
         {/* RIGHT */}
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
           {/* performance chart */}
           <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
@@ -215,7 +216,7 @@ export default function MemberProfile() {
               {memberActivity.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No recent activity</p>
               ) : (memberActivity as import('@/types').ActivityLog[]).map(log => {
-                const ts = TYPE_CHIP[log.actionType as keyof typeof TYPE_CHIP]
+                const ts = TYPE_CHIP[log.actionType as keyof typeof TYPE_CHIP] ?? DEFAULT_TYPE_CHIP
                 return (
                   <div key={log.id} className="flex items-start gap-4 px-5 py-3.5 hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                     <div className={cn('mt-0.5 text-[10px] rounded-full px-2 py-0.5 font-medium flex-shrink-0', ts.bg, ts.text)}>{log.actionType}</div>

@@ -83,9 +83,9 @@ export default function WizardStep4Review({
         : 'CSV upload'
 
   return (
-    <div className="grid grid-cols-5 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-5">
       {/* LEFT — summary cards */}
-      <div className="col-span-3 space-y-4">
+      <div className="lg:col-span-3 space-y-4">
         {/* campaign details */}
         <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 space-y-2.5">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Campaign details</p>
@@ -196,7 +196,7 @@ export default function WizardStep4Review({
       </div>
 
       {/* RIGHT — sticky preview + cost */}
-      <div className="col-span-2 space-y-4 sticky top-0">
+      <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-0">
         <div>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">Message preview</p>
           {selectedTemplate ? (

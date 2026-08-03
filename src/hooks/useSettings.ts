@@ -3,9 +3,6 @@ import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { AccountSettings, IntegrationPlatform, NotificationPreferences, Webhook } from '@/types'
 
-// integration-platforms lives under /api/, not the /api/v1 prefix the rest of the API uses
-const INTEGRATION_PLATFORMS_BASE = (api.defaults.baseURL ?? '').replace(/\/api\/v\d+\/?$/, '/api')
-
 function normalizeIntegrationPlatform(raw: any): IntegrationPlatform {
   return {
     id: raw._id ?? raw.id,
@@ -185,7 +182,7 @@ export function useUpdateNotifications() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: Partial<NotificationPreferences>) =>
-      api.patch('/notifications/preferences', data).then((r) => r.data),
+      api.put('/notifications/preferences', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notification-preferences'] })
       toast.success('Preferences saved')
@@ -200,7 +197,7 @@ export function useIntegrationPlatforms() {
     queryKey: ['integration-platforms'],
     queryFn: () =>
       api
-        .get('/macropage-connect/integration-platforms', { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .get('/integration-platforms')
         .then((r) => {
           const body = r.data?.data ?? r.data
           const list: any[] = Array.isArray(body) ? body : (body?.platforms ?? [])
@@ -215,7 +212,7 @@ export function useIntegrationPlatform(id: string) {
     enabled: !!id,
     queryFn: () =>
       api
-        .get(`/macropage-connect/integration-platforms/${id}`, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .get(`/integration-platforms/${id}`)
         .then((r) => normalizeIntegrationPlatform(r.data?.data ?? r.data)),
   })
 }
@@ -225,7 +222,7 @@ export function useCreateIntegrationPlatform() {
   return useMutation({
     mutationFn: (data: Partial<IntegrationPlatform>) =>
       api
-        .post('/macropage-connect/integration-platforms', data, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .post('/integration-platforms', data)
         .then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['integration-platforms'] })
@@ -241,7 +238,7 @@ export function useUpdateIntegrationPlatform() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<IntegrationPlatform> }) =>
       api
-        .put(`/macropage-connect/integration-platforms/${id}`, data, { baseURL: INTEGRATION_PLATFORMS_BASE })
+        .put(`/integration-platforms/${id}`, data)
         .then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['integration-platforms'] })

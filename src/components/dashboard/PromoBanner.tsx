@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { X, Sparkles, MessageCircle, Zap, ArrowRight } from 'lucide-react'
+import { X, Sparkles, Zap, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
+import rocketIcon from '@/assets/dashboard/rocket-icon.png'
 
 // Shown once, right after a successful login/sign-in, the first time the
 // user lands on the dashboard. useUIStore.justLoggedIn is set by useAuth
@@ -44,11 +45,11 @@ export default function PromoBanner() {
         <div className="pointer-events-none absolute right-24 -bottom-10 w-24 h-24 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute left-1/3 -top-6 w-16 h-16 rounded-full bg-white/5" />
 
-        {/* "Image" — illustrated icon composition */}
+        {/* "Image" — rocket illustration */}
         <div className="group relative shrink-0 w-16 h-16 sm:w-20 sm:h-20">
           <div className="absolute inset-0 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm rotate-6 transition-transform duration-500 group-hover:rotate-0" />
-          <div className="absolute inset-0 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
-            <MessageCircle size={28} className="text-white" />
+          <div className="absolute inset-0 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden p-2">
+            <img src={rocketIcon} alt="" className="w-full h-full object-contain" />
           </div>
           <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#ffd166] flex items-center justify-center shadow-lg animate-bounce-once">
             <Sparkles size={13} className="text-[#123724]" />

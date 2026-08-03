@@ -111,14 +111,14 @@ function StatCard({ label, value, iconImg, progressPercent, progressLabel }: {
   progressPercent?: number; progressLabel?: string
 }) {
   return (
-    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 flex items-center gap-4">
-      <img src={iconImg} alt="" className="w-20 h-20 object-contain shrink-0" />
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-4 overflow-hidden">
+      <img src={iconImg} alt="" className="w-12 h-12 sm:w-20 sm:h-20 object-contain shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+        <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+        <p className="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{label}</p>
         {progressPercent != null && (
-          <div className="mt-2">
-            <p className="text-2xs text-gray-500 dark:text-gray-400 mb-1">{progressLabel}</p>
+          <div className="mt-2 hidden sm:block">
+            <p className="text-2xs text-gray-500 dark:text-gray-400 mb-1 truncate">{progressLabel}</p>
             <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
               <div className="h-full bg-[#1a5c3a] rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
             </div>
@@ -319,27 +319,27 @@ export default function Contacts() {
   const closeTags = () => { setTagAction(null); setTagsToApply([]); setTagInput('') }
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       <div className="page-header">
         <div>
           <h1 className="page-title">Contacts</h1>
           <p className="page-subtitle mt-0.5">Manage your WhatsApp audience</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="btn btn-outline h-9 gap-2" onClick={downloadContactSampleTemplate}><FileDown size={15} /> Download Template</button>
-          <button className="btn btn-outline h-9 gap-2" onClick={handleExportAll}><Download size={15} /> Export</button>
-          <button className="btn btn-outline h-9 gap-2" onClick={() => setShowImport(true)}><Upload size={15} /> Import</button>
-          <button className="btn btn-primary h-9 gap-2" onClick={() => setShowForm(true)}><Plus size={16} /> Add contact</button>
+        <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:gap-3 sm:flex-wrap">
+          <button className="btn btn-outline h-9 gap-2 justify-center whitespace-nowrap" onClick={downloadContactSampleTemplate}><FileDown size={15} /> <span className="hidden sm:inline">Download Template</span><span className="sm:hidden">Template</span></button>
+          <button className="btn btn-outline h-9 gap-2 justify-center whitespace-nowrap" onClick={handleExportAll}><Download size={15} /> Export</button>
+          <button className="btn btn-outline h-9 gap-2 justify-center whitespace-nowrap" onClick={() => setShowImport(true)}><Upload size={15} /> Import</button>
+          <button className="btn btn-primary h-9 gap-2 justify-center whitespace-nowrap" onClick={() => setShowForm(true)}><Plus size={16} /> Add contact</button>
         </div>
       </div>
 
       {/* banner */}
-      <div className="relative rounded-2xl overflow-hidden shadow-card mb-6">
+      <div className="relative rounded-2xl overflow-hidden shadow-card mb-4 sm:mb-6">
         <img src={contactBanner} alt="" className="w-full aspect-[320/63] object-cover" />
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <StatCard label="Total contacts" value={stats.total} iconImg={peoplesIcon} />
         <StatCard
           label="Active" value={stats.active}
@@ -356,8 +356,8 @@ export default function Contacts() {
         <StatCard label="Added this month" value={stats.addedThisMonth} iconImg={peoplePlusIcon} />
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
-        <div className="col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="lg:col-span-1">
           <ContactSegments
             activeSegmentId={activeSegmentId}
             onSegmentChange={handleSegmentChange}
@@ -371,15 +371,15 @@ export default function Contacts() {
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="lg:col-span-3 min-w-0">
           {/* toolbar */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-80">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 mb-4">
+            <div className="relative flex-1 sm:max-w-80 min-w-0">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 value={filters.search ?? ''}
                 onChange={e => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
-                className="input pl-8 bg-white dark:bg-[#0b1220] h-9 pr-8"
+                className="input pl-8 bg-white dark:bg-[#0b1220] h-9 pr-8 w-full"
                 placeholder="Search by name or phone..."
               />
               {filters.search && (
@@ -389,21 +389,21 @@ export default function Contacts() {
               )}
             </div>
 
-            <button
-              className="relative bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:border-[#c8e6d4] transition-colors"
-              onClick={() => setShowFilters(true)}
-            >
-              <SlidersHorizontal size={14} /> Filter
-              {filterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1a5c3a] text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                  {filterCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                className="relative bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:border-[#c8e6d4] transition-colors"
+                onClick={() => setShowFilters(true)}
+              >
+                <SlidersHorizontal size={14} /> Filter
+                {filterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1a5c3a] text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {filterCount}
+                  </span>
+                )}
+              </button>
 
-            <div className="ml-auto flex items-center gap-2">
               <select
-                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 text-sm text-gray-600 dark:text-gray-400 focus:outline-none"
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl h-9 px-3 text-sm text-gray-600 dark:text-gray-400 focus:outline-none min-w-0"
                 value={`${filters.sortBy ?? 'name'}-${filters.sortOrder ?? 'asc'}`}
                 onChange={e => {
                   const [by, order] = e.target.value.split('-')
@@ -416,7 +416,7 @@ export default function Contacts() {
                 <option value="createdAt-asc">Oldest first</option>
                 <option value="lastSeenAt-desc">Last messaged</option>
               </select>
-              <div className="flex items-center bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
+              <div className="flex items-center bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 shrink-0">
                 {([['list', LayoutList], ['grid', LayoutGrid]] as const).map(([v, Icon]) => (
                   <button key={v} onClick={() => setView(v)} className={cn('w-7 h-7 flex items-center justify-center rounded-lg transition-all', view === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-400 dark:text-gray-500')}>
                     <Icon size={14} />
@@ -474,7 +474,7 @@ export default function Contacts() {
               totalCount={contacts.length}
             />
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {contacts.map(c => (
                 <ContactCard
                   key={c.id} contact={c}
@@ -486,7 +486,7 @@ export default function Contacts() {
                 />
               ))}
               {contacts.length === 0 && (
-                <div className="col-span-3 text-center py-16 text-gray-400 dark:text-gray-500">
+                <div className="col-span-1 sm:col-span-2 xl:col-span-3 text-center py-16 text-gray-400 dark:text-gray-500">
                   <Users size={32} className="mx-auto mb-2 opacity-40" />
                   <p className="text-sm">No contacts match the current filters</p>
                 </div>

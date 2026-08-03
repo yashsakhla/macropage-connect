@@ -178,7 +178,7 @@ export default function Pricing() {
             High-volume businesses, custom integrations, white-label, and dedicated infrastructure — we've got you covered.
           </p>
           <a
-            href="mailto:hello@macropage.in"
+            href="mailto:contact@macropageconnect.com"
             className="inline-flex items-center gap-2 px-6 py-3 border-2 border-brand-green text-brand-dark font-semibold text-sm rounded-2xl hover:bg-green-50 transition-colors"
           >
             Talk to Our Team →

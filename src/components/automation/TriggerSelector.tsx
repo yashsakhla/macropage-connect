@@ -164,7 +164,7 @@ export default function TriggerSelector({ value, onChange }: Props) {
               onClick={() => onChange({ ...value, firstMessageOnly: !value.firstMessageOnly })}
               className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', value.firstMessageOnly ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-white/10')}
             >
-              <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', value.firstMessageOnly ? 'translate-x-4.5' : 'translate-x-0.5')} />
+              <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', value.firstMessageOnly ? 'translate-x-[18px]' : 'translate-x-0.5')} />
             </button>
             <span className="text-xs text-gray-700 dark:text-gray-300">Only trigger on contact's first message</span>
           </label>

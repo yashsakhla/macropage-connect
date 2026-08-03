@@ -69,6 +69,10 @@ export interface User {
   onboardingStep?: number
   provider?: 'email' | 'google'
   gender?: 'male' | 'female' | 'other'
+  bio?: string
+  city?: string
+  department?: string
+  jobTitle?: string
 }
 
 // ─── WhatsApp / WABA ─────────────────────────────────────────────────────────
@@ -603,6 +607,7 @@ export interface Subscription {
   currentPeriodStart: string
   currentPeriodEnd: string
   cancelAtPeriodEnd: boolean
+  cancelledAt?: string
   trialEndsAt?: string
   // Matches one of a BillingPlan's `razorpayPlanIds[cycle]` values — the
   // authoritative way to tell which plan AND which billing cycle is active.

@@ -69,7 +69,7 @@ function DetailSidebar({ template, onClose, onEdit, onUseInCampaign, onDelete, c
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-screen w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 shadow-2xl flex flex-col overflow-y-auto">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 shadow-2xl flex flex-col overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-[#0b1220] px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex items-center justify-between z-10">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate pr-4">{template.name}</h3>
           <button className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
@@ -166,7 +166,7 @@ function SampleDetailSidebar({ starter, existing, canUse, isSubmitting, onClose,
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-screen w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 shadow-2xl flex flex-col overflow-y-auto">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-[400px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 shadow-2xl flex flex-col overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-[#0b1220] px-6 py-4 border-b border-[#e8ebe8] dark:border-white/10 flex items-center justify-between z-10">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate pr-4">{starter.title}</h3>
           <button className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors" onClick={onClose}><X size={18} /></button>
@@ -369,17 +369,17 @@ export default function Templates() {
   }, [templates, statusFilter, categoryFilter, search, sortOrder])
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen relative">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen relative">
       {/* header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Templates</h1>
           <p className="page-subtitle mt-0.5">Create, manage and sync your WhatsApp message templates. Sync with Meta and launch campaigns in seconds.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           {view === 'mine' && (
             <button
-              className="btn btn-outline h-9 gap-2"
+              className="btn btn-outline h-9 gap-2 w-full sm:w-auto justify-center"
               onClick={() => syncTemplates.refetch()}
               disabled={syncTemplates.isFetching}
             >
@@ -401,22 +401,22 @@ export default function Templates() {
 
       {/* create template banner */}
       {canCreateTemplate && (
-        <div className="relative rounded-2xl border border-[#d9f0e2] dark:border-emerald-900/30 bg-gradient-to-br from-[#eefaf3] via-[#f6fbf8] to-white dark:from-emerald-950/20 dark:via-[#0b1220] dark:to-[#0b1220] p-6 mb-6">
+        <div className="relative rounded-2xl border border-[#d9f0e2] dark:border-emerald-900/30 bg-gradient-to-br from-[#eefaf3] via-[#f6fbf8] to-white dark:from-emerald-950/20 dark:via-[#0b1220] dark:to-[#0b1220] p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="relative max-w-2xl">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Create template</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Create template</h2>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               <button className="font-semibold text-[#1a5c3a] hover:underline" onClick={() => openCreateForm('MARKETING')}>
                 Start from scratch
               </button>
               {' '}or choose a category to create a new WhatsApp template.
             </p>
           </div>
-          <div className="relative mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="relative mt-4 sm:mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
             {CREATE_CARDS.map(card => {
               const catConf = CATEGORY_CONFIG[card.category]
               return (
                 <div key={card.key} className={cn('border rounded-xl p-3 flex items-center gap-3', card.cardBg, card.cardBorder)}>
-                  <img src={card.icon} alt="" className="w-20 h-20 object-contain flex-shrink-0" />
+                  <img src={card.icon} alt="" width={80} height={80} decoding="async" className="w-14 h-14 sm:w-20 sm:h-20 object-contain flex-shrink-0" />
                   <div className="min-w-0 flex flex-col">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{card.label}</p>
                     <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 leading-snug">{card.desc}</p>
@@ -438,26 +438,26 @@ export default function Templates() {
       )}
 
       {/* stats — also act as status filters */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-5 flex items-center gap-0 mb-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-3 sm:p-5 grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-6">
         {statCards.map((s, i) => (
-          <div key={s.key} className="flex items-center gap-0 flex-1">
+          <div key={s.key} className="flex items-center gap-0 sm:flex-1 min-w-0">
             <button
               onClick={() => setStatusFilter(s.key)}
               className={cn(
-                'flex items-center gap-4 flex-1 rounded-xl px-2 py-1 -mx-2 transition-colors text-left border-2',
+                'flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0 rounded-xl px-2 py-1 sm:-mx-2 transition-colors text-left border-2',
                 statusFilter === s.key
                   ? 'border-[#1a5c3a]/50 dark:border-emerald-400/50 shadow-sm'
                   : 'border-transparent hover:bg-[#f7f8f6] dark:hover:bg-white/5'
               )}
             >
-              <img src={s.icon} alt="" className="w-11 h-11 object-contain flex-shrink-0" />
-              <div>
-                <p className={cn('text-2xl font-bold', statusFilter === s.key ? 'text-[#1a5c3a] dark:text-emerald-400' : 'text-gray-900 dark:text-white')}>{s.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">{s.sub}</p>
+              <img src={s.icon} alt="" width={44} height={44} decoding="async" className="w-8 h-8 sm:w-11 sm:h-11 object-contain flex-shrink-0" />
+              <div className="min-w-0">
+                <p className={cn('text-lg sm:text-2xl font-bold truncate', statusFilter === s.key ? 'text-[#1a5c3a] dark:text-emerald-400' : 'text-gray-900 dark:text-white')}>{s.value}</p>
+                <p className="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{s.label}</p>
+                <p className="hidden sm:block text-[10px] text-gray-400 dark:text-gray-500 truncate">{s.sub}</p>
               </div>
             </button>
-            {i < statCards.length - 1 && <div className="h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
+            {i < statCards.length - 1 && <div className="hidden sm:block h-10 w-px bg-[#e8ebe8] dark:bg-white/10 mx-4" />}
           </div>
         ))}
       </div>
@@ -492,13 +492,13 @@ export default function Templates() {
           </p>
 
           {/* category filter */}
-          <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 mb-5 w-fit">
+          <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 mb-5 w-fit overflow-x-auto no-scrollbar max-w-full">
             {CATEGORY_TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => setCategoryFilter(tab.value)}
                 className={cn(
-                  'px-3 h-7 rounded-lg text-xs font-medium transition-all',
+                  'px-3 h-7 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0',
                   categoryFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 )}
               >
@@ -508,7 +508,7 @@ export default function Templates() {
           </div>
 
           {samplesLoading ? (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl h-48 animate-pulse" />
               ))}
@@ -521,7 +521,7 @@ export default function Templates() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {sampleTemplates.map(starter => (
                 <SampleTemplateCard
                   key={starter.id}
@@ -541,7 +541,7 @@ export default function Templates() {
       <>
       {/* pending review notice */}
       {counts.PENDING > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-2xl px-4 py-3 mb-6 flex items-center gap-3 flex-wrap">
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-2xl px-4 py-3 mb-4 sm:mb-6 flex items-center gap-3 flex-wrap">
           <Clock size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
           <p className="text-sm text-amber-700 dark:text-amber-400 flex-1 min-w-[200px]">
             {counts.PENDING} template{counts.PENDING !== 1 ? 's are' : ' is'} still pending Meta's review. Try syncing to check for the latest status.
@@ -558,15 +558,15 @@ export default function Templates() {
       )}
 
       {/* filters */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 mb-5">
         {/* category filter */}
-        <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 overflow-x-auto no-scrollbar max-w-full">
           {CATEGORY_TABS.map(tab => (
             <button
               key={tab.value}
               onClick={() => setCategoryFilter(tab.value)}
               className={cn(
-                'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+                'px-3 h-7 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0',
                 categoryFilter === tab.value ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               )}
             >
@@ -579,17 +579,17 @@ export default function Templates() {
         </div>
 
         {/* search + sort */}
-        <div className="ml-auto flex items-center gap-3">
-          <div className="relative">
+        <div className="sm:ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="relative flex-1 sm:flex-none min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input pl-8 w-56 h-9"
+              className="input pl-8 w-full sm:w-56 h-9"
               placeholder="Search templates..."
             />
           </div>
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={sortOrder}
               onChange={e => setSortOrder(e.target.value as 'desc' | 'asc')}
@@ -605,7 +605,7 @@ export default function Templates() {
 
       {/* grid */}
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1,2,3,4,5,6].map(i => (
             <div key={i} className="bg-white dark:bg-[#0b1220] rounded-2xl h-64 animate-pulse" />
           ))}
@@ -624,7 +624,7 @@ export default function Templates() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(t => (
             <TemplateCard
               key={t.id}

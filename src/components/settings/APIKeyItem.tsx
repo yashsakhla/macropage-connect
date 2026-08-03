@@ -31,9 +31,9 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
   }
 
   return (
-    <div className="px-5 py-4 border-b border-[#f5f5f5] last:border-0">
-      <div className="flex items-start justify-between">
-        <div>
+    <div className="px-4 sm:px-5 py-4 border-b border-[#f5f5f5] last:border-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">{apiKey.name}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             Created {formatDistanceToNow(new Date(apiKey.createdAt), { addSuffix: true })}
@@ -58,7 +58,7 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
         </div>
       </div>
 
-      <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl px-4 py-2.5 mt-3 flex items-center gap-3">
+      <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl px-4 py-2.5 mt-3 flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
         <code className="font-mono text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
           {revealed && apiKey.key ? apiKey.key : apiKey.keyPreview}
         </code>

@@ -64,16 +64,18 @@ export default function Team() {
   }, [filtered, search])
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header banner */}
-      <div className="relative rounded-3xl overflow-hidden mb-6">
-        <img src={teamHero} alt="" className="w-full aspect-[2200/500] object-cover object-center" />
-        <div className="absolute inset-0 flex items-center justify-between px-10 py-8">
+      <div className="relative rounded-3xl overflow-hidden mb-4 sm:mb-6">
+        <img src={teamHero} alt="" className="hidden sm:block w-full aspect-[2200/500] object-cover object-center" />
+        <div
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-10 py-5 sm:py-8 sm:absolute sm:inset-0 bg-gradient-to-br from-[#d7f5e3] to-[#bdeccf] sm:bg-none"
+        >
           <div>
             <h1 className="page-title">Team</h1>
             <p className="page-subtitle mt-0.5">Manage who can access your Macropage Connect account</p>
           </div>
-          <button className="btn btn-primary h-11 px-6 gap-2 rounded-full flex-shrink-0" onClick={() => setShowInvite(true)}>
+          <button className="btn btn-primary h-10 sm:h-11 px-5 sm:px-6 gap-2 rounded-full flex-shrink-0 w-full sm:w-auto justify-center" onClick={() => setShowInvite(true)}>
             <Plus size={16} /> Invite member
           </button>
         </div>
@@ -89,10 +91,10 @@ export default function Team() {
       />
 
       {/* tab navigation */}
-      <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 w-fit mb-5">
+      <div className="flex items-center gap-1 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-1 w-full sm:w-fit mb-4 sm:mb-5 overflow-x-auto no-scrollbar">
         {([['members', 'Members'], ['performance', 'Performance'], ['permissions', 'Permissions']] as const).map(([v, l]) => (
           <button key={v} onClick={() => setActiveTab(v)}
-            className={cn('px-4 h-8 rounded-lg text-sm font-medium transition-all', activeTab === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
+            className={cn('px-3 sm:px-4 h-8 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none', activeTab === v ? 'bg-[#1a5c3a] text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
             {l}
           </button>
         ))}
@@ -103,7 +105,7 @@ export default function Team() {
           {activeTab === 'members' && (
             <>
               {/* role filter tabs + search */}
-              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="flex items-center gap-1 flex-wrap">
                   {([
                     ['all',     'All members'],
@@ -124,13 +126,13 @@ export default function Team() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="relative">
+                  <div className="relative flex-1 sm:flex-none min-w-0">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
                     <input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search members..."
-                      className="input h-9 pl-9 w-56 text-sm"
+                      className="input h-9 pl-9 w-full sm:w-56 text-sm"
                     />
                   </div>
                   <button className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-[#c8e6d4] transition-colors flex-shrink-0">
@@ -140,8 +142,8 @@ export default function Team() {
               </div>
 
               <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-                {/* table header */}
-                <div className="grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                {/* table header — desktop only, mobile uses stacked cards (see TeamMemberCard) */}
+                <div className="hidden sm:grid bg-[#f7f8f6] dark:bg-[#0f1724] border-b border-[#e8ebe8] dark:border-white/10 px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                   style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 1fr 80px' }}>
                   <span>Member</span>
                   <span>Role</span>

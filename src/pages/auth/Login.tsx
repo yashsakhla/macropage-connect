@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
 import { useLogin, useGoogleAuth } from '@/hooks/useAuth'
+import { useElementWidth } from '@/hooks/useElementWidth'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { useRememberMeStore } from '@/store/rememberMeStore'
@@ -31,6 +32,7 @@ export default function Login() {
   const login = useLogin()
   const googleAuth = useGoogleAuth()
   const { rememberedEmail, setRememberedEmail } = useRememberMeStore()
+  const { ref: googleBtnRef, width: googleBtnWidth } = useElementWidth<HTMLDivElement>()
   const { register, handleSubmit, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: 'onChange',
@@ -42,15 +44,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left panel - form */}
-      <div className="w-full lg:w-1/2 bg-white px-12 py-10 flex flex-col justify-between">
+      <div className="w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 flex flex-col justify-between">
         <div>
-          <img src={logo} alt="Macropage Connect" className="h-9" />
+          <img src={logo} alt="Macropage Connect" className="h-8 sm:h-9" />
         </div>
 
-        <div className="my-6">
-          <h2 className="text-4xl font-black text-gray-900">Welcome to</h2>
-          <h1 className="text-5xl font-black text-[var(--primary)] mt-1">MACROPAGE CONNECT</h1>
-          <p className="text-sm text-gray-400 mt-2 mb-8">Sign in to your account to continue</p>
+        <div className="my-4 sm:my-6">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">Welcome to</h2>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--primary)] mt-1">MACROPAGE CONNECT</h1>
+          <p className="text-sm text-gray-400 mt-2 mb-5 sm:mb-8">Sign in to your account to continue</p>
 
           <form onSubmit={handleSubmit((d) => {
             setRememberedEmail(d.remember ? d.email : null)
@@ -79,7 +81,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-xs text-gray-500">
-                <input {...register('remember')} type="checkbox" className="w-4 h-4 rounded border-gray-300" />
+                <input {...register('remember')} type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-[var(--primary)]" />
                 Remember me
               </label>
               <Link to="/forgot-password" className="text-xs text-[var(--primary)] font-medium hover:underline">Forgot password?</Link>
@@ -95,17 +97,19 @@ export default function Login() {
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={(cred) => {
-                  if (cred.credential) googleAuth.mutate(cred.credential)
-                  else toast.error('Google sign-in failed')
-                }}
-                onError={() => toast.error('Google sign-in failed')}
-                width="448"
-                text="continue_with"
-                shape="pill"
-              />
+            <div ref={googleBtnRef} className="flex justify-center w-full">
+              {googleBtnWidth > 0 && (
+                <GoogleLogin
+                  onSuccess={(cred) => {
+                    if (cred.credential) googleAuth.mutate(cred.credential)
+                    else toast.error('Google sign-in failed')
+                  }}
+                  onError={() => toast.error('Google sign-in failed')}
+                  width={String(Math.min(448, Math.floor(googleBtnWidth)))}
+                  text="continue_with"
+                  shape="pill"
+                />
+              )}
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">Don't have an account? <Link to="/register" className="text-[var(--primary)] font-semibold">Create your free account →</Link></p>
@@ -136,7 +140,7 @@ export default function Login() {
             <div className="text-white font-semibold text-base">made simple for your business</div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
-            <div className="px-3 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs text-white/80">support@macropage.in</div>
+            <div className="px-3 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs text-white/80">contact@macropageconnect.com</div>
             <div className="px-3 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs text-white/80">+91 98765 43210</div>
           </div>
         </div>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { X, ArrowRight, Zap, MessageSquare, Users, BarChart2, Send } from 'lucide-react'
+import { ChevronRight, X, ArrowRight, Zap, Clock, Lock, MessageSquare, Users, BarChart2, Send } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import popupBanner from '@/assets/popups/POPUP.svg'
 
 const MISSING_FEATURES = [
   { icon: MessageSquare, label: 'Live chat inbox & conversations' },
@@ -13,9 +15,14 @@ const MISSING_FEATURES = [
 
 export default function PlanExpiredModal() {
   const [closing, setClosing] = useState(false)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const { isAuthenticated, user, isPlanExpired, isInTrial, trialDaysLeft, effectivePlan } = useAuthStore()
   const { planExpiredModalOpen, setPlanExpiredModalOpen } = useUIStore()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   // Show automatically whenever the user lands on the portal with an expired plan.
   // Watching isAuthenticated + plan-related fields means this re-fires on every
@@ -28,7 +35,7 @@ export default function PlanExpiredModal() {
   }, [isAuthenticated, user?.plan, user?.subscriptionActive, user?.trialEndsAt])
 
   // planExpiredModalOpen is the single source of truth for visibility
-  if (!planExpiredModalOpen && !closing) return null
+  if ((!planExpiredModalOpen && !closing) || !portalTarget) return null
 
   const isTrialExpiry = isInTrial() && trialDaysLeft() <= 0
   const planLabel = isTrialExpiry ? 'Free Trial' : (effectivePlan() || 'Plan')
@@ -47,7 +54,7 @@ export default function PlanExpiredModal() {
     navigate('/plans')
   }
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4
         transition-opacity duration-300 ${closing ? 'opacity-0' : 'opacity-100'}`}
@@ -58,71 +65,66 @@ export default function PlanExpiredModal() {
           transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
         style={{ animation: closing ? undefined : 'planExpiredIn 0.32s cubic-bezier(0.34,1.56,0.64,1)' }}
       >
-        {/* Header */}
-        <div className="relative bg-[#1a3d2b] px-6 pt-7 pb-8 overflow-hidden">
-          <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-white/5" />
-          <div className="absolute right-4 bottom-0 w-16 h-16 rounded-full bg-white/5" />
-          <div className="absolute -left-4 bottom-2 w-20 h-20 rounded-full bg-white/3" />
-
+        {/* Banner */}
+        <div
+          className="relative px-5 sm:px-6 pt-5 sm:pt-7 pb-5 sm:pb-7 min-h-[9.5rem] sm:min-h-0 overflow-hidden bg-gradient-to-br from-[#eafbf1] to-[#dcf5e6] dark:from-[#0f2a1c] dark:to-[#0b1f15]"
+          style={{ backgroundImage: `url(${popupBanner})`, backgroundSize: 'cover', backgroundPosition: 'left center' }}
+        >
           <button
             onClick={dismiss}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20
-              transition-colors flex items-center justify-center"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/70 hover:bg-white
+              backdrop-blur-sm transition-colors flex items-center justify-center shadow-sm"
           >
-            <X size={14} className="text-white" />
+            <X size={14} className="text-gray-700" />
           </button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/20
-                bg-white/10 text-2xl"
-              style={{ animation: 'expiredIconPulse 2s ease-in-out infinite' }}
-            >
-              ⏰
+          <div className="relative ml-auto w-[70%] sm:w-3/5 text-right">
+            <div className="inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm border border-brand-300/30
+              rounded-full px-2.5 sm:px-3 py-1 mb-2 sm:mb-3">
+              <Clock size={11} className="text-brand-300" />
+              <span className="text-[0.6rem] sm:text-[0.65rem] font-bold text-brand-300 uppercase tracking-wide">
+                {displayLabel} Expired
+              </span>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center
-              shadow-lg shadow-red-500/40 text-lg">
-              🔒
+
+            <h2 className="text-lg sm:text-2xl font-black text-gray-900 leading-tight">
+              Your {displayLabel} has <span className="text-brand-300">Expired</span>
+            </h2>
+            <p className="hidden sm:block text-gray-600 text-xs mt-2 leading-relaxed">
+              Access to key features is paused. Upgrade your plan to get back to running your
+              WhatsApp business at full speed.
+            </p>
+
+            <div className="mt-2 sm:mt-4 inline-flex items-center gap-1.5 sm:gap-2 bg-[#1a5c3a] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5">
+              <Lock size={11} className="text-white" />
+              <span className="text-[0.65rem] sm:text-xs font-semibold text-white">Portal access is restricted</span>
             </div>
-          </div>
-
-          <h2 className="text-xl font-black text-white leading-tight">
-            Your {displayLabel} has expired
-          </h2>
-          <p className="text-white/70 text-xs mt-2 leading-relaxed">
-            Access to key features is paused. Upgrade your plan to get back to running your
-            WhatsApp business at full speed.
-          </p>
-
-          <div className="mt-4 inline-flex items-center gap-2 bg-red-500/20 border border-red-400/30
-            rounded-xl px-3 py-1.5">
-            <span className="text-base">🚫</span>
-            <span className="text-xs font-semibold text-red-200">Portal access is restricted</span>
           </div>
         </div>
 
         {/* What you're missing */}
-        <div className="px-6 py-5">
-          <p className="text-[0.7rem] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
-            What you're missing 👇
+        <div className="px-5 sm:px-6 py-5">
+          <p className="text-[0.7rem] font-bold text-brand-300 uppercase tracking-widest mb-3">
+            What you're missing
           </p>
-          <ul className="space-y-2.5">
+          <ul className="space-y-2">
             {MISSING_FEATURES.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center flex-shrink-0">
-                  <Icon size={13} className="text-red-400" />
+              <li key={label} className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-300/10 flex items-center justify-center flex-shrink-0">
+                  <Icon size={16} className="text-brand-300" />
                 </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">{label}</span>
+                <ChevronRight size={15} className="text-gray-300 dark:text-gray-600" />
               </li>
             ))}
           </ul>
         </div>
 
         {/* CTAs */}
-        <div className="px-6 pb-6 flex flex-col gap-2.5">
+        <div className="px-5 sm:px-6 pb-6 flex flex-col gap-2">
           <button
             onClick={upgrade}
-            className="w-full h-12 bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white rounded-2xl
+            className="w-full h-12 bg-gradient-to-r from-[#1a5c3a] to-[#2d7a4f] hover:brightness-110 text-white rounded-2xl
               font-bold text-sm transition-all flex items-center justify-center gap-2
               shadow-lg shadow-[#1a5c3a]/30 hover:shadow-xl hover:shadow-[#1a5c3a]/40 hover:-translate-y-0.5"
           >
@@ -151,6 +153,7 @@ export default function PlanExpiredModal() {
           50%       { transform: scale(1.12); }
         }
       `}</style>
-    </div>
+    </div>,
+    portalTarget
   )
 }

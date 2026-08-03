@@ -21,10 +21,10 @@ interface Props {
 export default function VideoTutorials({ videos = [] }: Props) {
 
   return (
-    <div className="max-w-5xl mx-auto px-6 mb-10">
-      <div className="flex items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Video tutorials</h2>
-        <button className="text-sm text-[#1a5c3a] font-medium ml-auto hover:underline">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
+      <div className="flex items-center mb-6 gap-2">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Video tutorials</h2>
+        <button className="text-sm text-[#1a5c3a] font-medium ml-auto hover:underline whitespace-nowrap">
           View all videos →
         </button>
       </div>

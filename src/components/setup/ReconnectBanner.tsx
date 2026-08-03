@@ -25,15 +25,17 @@ export default function ReconnectBanner({ reason = 'expired' }: ReconnectBannerP
   const { title, desc } = MESSAGES[reason]
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-center gap-4">
-      <AlertTriangle size={18} className="text-amber-600 flex-shrink-0" />
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-amber-800">{title}</p>
-        <p className="text-xs text-amber-700 mt-0.5">{desc}</p>
+    <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <div className="flex items-start sm:items-center gap-3 min-w-0">
+        <AlertTriangle size={18} className="text-amber-600 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-amber-800">{title}</p>
+          <p className="text-xs text-amber-700 mt-0.5">{desc}</p>
+        </div>
       </div>
       <button
         onClick={() => navigate('/setup/whatsapp?step=2')}
-        className="btn-primary h-9 px-4 text-xs flex-shrink-0 flex items-center gap-2
+        className="btn-primary h-9 px-4 text-xs flex-shrink-0 flex items-center justify-center gap-2 w-full sm:w-auto
                    bg-amber-600 hover:bg-amber-700"
       >
         <RefreshCw size={13} />

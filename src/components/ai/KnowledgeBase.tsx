@@ -112,7 +112,7 @@ export default function KnowledgeBase() {
                     onClick={() => toggleItem.mutate({ id: item.id, enabled: !item.isEnabled })}
                     className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', item.isEnabled ? 'bg-[#1a5c3a]' : 'bg-gray-200')}
                   >
-                    <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', item.isEnabled ? 'translate-x-4.5' : 'translate-x-0.5')} />
+                    <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', item.isEnabled ? 'translate-x-[18px]' : 'translate-x-0.5')} />
                   </button>
                   <div className="relative">
                     <button onClick={() => setMenuOpen(menuOpen === item.id ? null : item.id)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f7f8f6]">

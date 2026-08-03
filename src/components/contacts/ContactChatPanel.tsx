@@ -101,7 +101,7 @@ export default function ContactChatPanel({ contact, onClose, onConversationStart
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-screen w-[440px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-[440px] bg-white dark:bg-[#0b1220] border-l border-[#e8ebe8] dark:border-white/10 z-40 flex flex-col shadow-2xl">
         {/* Header */}
         <div className="h-14 flex items-center px-4 gap-3 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
           <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center text-sm font-semibold text-white flex-shrink-0', avatarGradient(contact.name))}>

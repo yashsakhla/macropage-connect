@@ -92,7 +92,7 @@ export default function AIPersonality({ config, onChange }: Props) {
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-xs text-gray-700">Use emojis in responses</span>
           <button onClick={() => onChange({ useEmoji: !config.useEmoji })} className={cn('relative inline-flex h-5 w-9 rounded-full transition-colors', config.useEmoji ? 'bg-[#1a5c3a]' : 'bg-gray-200')}>
-            <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', config.useEmoji ? 'translate-x-4.5' : 'translate-x-0.5')} />
+            <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', config.useEmoji ? 'translate-x-[18px]' : 'translate-x-0.5')} />
           </button>
         </label>
 

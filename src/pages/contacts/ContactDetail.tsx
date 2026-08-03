@@ -68,39 +68,40 @@ export default function ContactDetail() {
   ].filter(Boolean) as { icon: React.ElementType; label: string; value: string }[]
 
   return (
-    <div className="p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#f7f8f6] dark:bg-[#0f1724] min-h-screen">
       {/* header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between sm:justify-start gap-3">
           <button className="btn-ghost h-8 px-3 text-sm flex items-center gap-1" onClick={() => navigate('/contacts')}>
             <ArrowLeft size={15} /> Contacts
           </button>
+          <button className="btn-ghost w-9 h-9 shrink-0 sm:hidden"><MoreVertical size={16} /></button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
           <button
-            className="btn btn-primary h-9 gap-2 flex items-center"
+            className="btn btn-primary h-9 gap-1.5 sm:gap-2 flex items-center justify-center text-xs sm:text-sm px-2 sm:px-4"
             disabled={creating}
             onClick={handleSendMessage}
           >
             {creating ? (
-              <><Loader2 size={15} className="animate-spin" /> Opening...</>
+              <><Loader2 size={15} className="animate-spin shrink-0" /> <span className="truncate">Opening...</span></>
             ) : (
-              <><MessageSquare size={15} /> Send message</>
+              <><MessageSquare size={15} className="shrink-0" /> <span className="truncate">Send message</span></>
             )}
           </button>
           <button
-            className="btn btn-outline h-9 gap-2 flex items-center"
+            className="btn btn-outline h-9 gap-1.5 sm:gap-2 flex items-center justify-center text-xs sm:text-sm px-2 sm:px-4"
             onClick={() => navigate('/campaigns', { state: { openWizard: true } })}
           >
-            <Megaphone size={15} /> Add to campaign
+            <Megaphone size={15} className="shrink-0" /> <span className="truncate">Add to campaign</span>
           </button>
-          <button className="btn-ghost w-9 h-9"><MoreVertical size={16} /></button>
+          <button className="btn-ghost w-9 h-9 shrink-0 hidden sm:flex"><MoreVertical size={16} /></button>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* LEFT */}
-        <div className="col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4">
           {/* profile card */}
           <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6 text-center">
             <div className="flex justify-center">
@@ -185,7 +186,7 @@ export default function ContactDetail() {
         </div>
 
         {/* RIGHT */}
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
           <ContactTimeline contact={contact} />
 
           {/* campaigns */}

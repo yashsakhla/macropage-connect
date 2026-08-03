@@ -58,7 +58,8 @@ export default function ContactsTable({
 
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
-      <table className="data-table w-full">
+      <div className="overflow-x-auto">
+      <table className="data-table w-full min-w-[720px]">
         <thead>
           <tr>
             <th className="w-12 px-4">
@@ -164,9 +165,10 @@ export default function ContactsTable({
           })}
         </tbody>
       </table>
+      </div>
 
       {/* footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-[#e8ebe8] dark:border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 px-4 py-3 border-t border-[#e8ebe8] dark:border-white/10">
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-500 dark:text-gray-400">
             Showing {Math.min((page - 1) * limit + 1, totalCount)}–{Math.min(page * limit, totalCount)} of {totalCount.toLocaleString()}
@@ -180,8 +182,8 @@ export default function ContactsTable({
           </select>
         </div>
 
-        <div className="flex items-center gap-1">
-          <button className="btn-ghost h-8 px-2 text-sm disabled:opacity-40" disabled={page <= 1}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          <button className="btn-ghost h-8 px-2 text-sm disabled:opacity-40 shrink-0" disabled={page <= 1}
             onClick={() => onFiltersChange({ ...filters, page: page - 1 })}>
             <ChevronLeft size={14} /> Prev
           </button>
@@ -189,13 +191,13 @@ export default function ContactsTable({
             const p = i + 1
             return (
               <button key={p} onClick={() => onFiltersChange({ ...filters, page: p })}
-                className={cn('w-8 h-8 rounded-lg text-sm', page === p ? 'bg-[#1a5c3a] text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5')}>
+                className={cn('w-8 h-8 rounded-lg text-sm shrink-0', page === p ? 'bg-[#1a5c3a] text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5')}>
                 {p}
               </button>
             )
           })}
-          {totalPages > 5 && <span className="text-gray-400 dark:text-gray-500 px-1">...</span>}
-          <button className="btn-ghost h-8 px-2 text-sm disabled:opacity-40" disabled={page >= totalPages}
+          {totalPages > 5 && <span className="text-gray-400 dark:text-gray-500 px-1 shrink-0">...</span>}
+          <button className="btn-ghost h-8 px-2 text-sm disabled:opacity-40 shrink-0" disabled={page >= totalPages}
             onClick={() => onFiltersChange({ ...filters, page: page + 1 })}>
             Next <ChevronRight size={14} />
           </button>

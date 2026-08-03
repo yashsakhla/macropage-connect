@@ -33,8 +33,8 @@ export default function CategoryGrid({ docs, docsLoading, activeCategory, onCate
   const { data: categories = [] as HelpCategory[] } = useHelpCategories()
 
   return (
-    <div className="max-w-6xl mx-auto px-6 mb-10">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Browse documentation</h2>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-10">
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-6">Browse documentation</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {categories.map((cat: HelpCategory) => (

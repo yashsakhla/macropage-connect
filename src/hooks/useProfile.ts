@@ -68,7 +68,7 @@ export function useChangePassword() {
 export function useActiveSessions() {
   return useQuery({
     queryKey: ['sessions'],
-    queryFn: () => api.get('/auth/sessions').then((r) => r.data.data),
+    queryFn: () => api.get('/auth/sessions').then((r) => r.data.data ?? []),
   })
 }
 

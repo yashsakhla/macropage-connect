@@ -40,7 +40,7 @@ export function useSaveFlow() {
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: FlowPayload }) =>
       id
-        ? api.patch(`/automation/flows/${id}`, data).then((r) => r.data)
+        ? api.put(`/automation/flows/${id}`, data).then((r) => r.data)
         : api.post('/automation/flows', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['flows'] })
@@ -83,7 +83,7 @@ export function useToggleFlow() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      api.patch(`/automation/flows/${id}/toggle`, { enabled }).then((r) => r.data),
+      api.put(`/automation/flows/${id}/toggle`, { enabled }).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['flows'] }),
     onError: (err: any) =>
       toast.error(err.response?.data?.message ?? 'Failed to toggle flow'),

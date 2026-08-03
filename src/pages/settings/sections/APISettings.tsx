@@ -101,7 +101,7 @@ export default function APISettings() {
       </div>
 
       {/* Create form */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6">
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Create new API key</p>
         <div className="space-y-5 max-w-xl">
           <div>

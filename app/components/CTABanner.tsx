@@ -41,7 +41,7 @@ export default function CTABanner() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </a>
               <a
-                href="mailto:hello@macropage.in"
+                href="mailto:contact@macropageconnect.com"
                 className="flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold text-base rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-200"
               >
                 Talk to Sales
