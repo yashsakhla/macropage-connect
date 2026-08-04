@@ -8,6 +8,16 @@ import type { APIKey } from '@/types'
 import toast from 'react-hot-toast'
 import { markApiKeyRecentlyCreated } from '@/lib/apiKeys'
 
+interface CreateAPIKeyResponse {
+  key?: string
+  record?: { id?: string; _id?: string }
+  data?: {
+    key?: string
+    record?: { id?: string; _id?: string }
+    data?: { key?: string; record?: { id?: string; _id?: string } }
+  }
+}
+
 const PERMISSIONS = [
   { id: 'read_conversations', label: 'Read conversations', desc: 'List and read conversation messages' },
   { id: 'send_messages', label: 'Send messages', desc: 'Send WhatsApp messages via API' },
@@ -24,7 +34,8 @@ export default function APISettings() {
   const createKey = useCreateAPIKey()
   const revokeKey = useRevokeAPIKey()
 
-  const keys = ((keysData as any)?.data ?? keysData ?? []) as APIKey[]
+  const keysResult = keysData as { data?: APIKey[] } | APIKey[] | undefined
+  const keys: APIKey[] = (Array.isArray(keysResult) ? keysResult : keysResult?.data) ?? []
   const [keyName, setKeyName] = useState('')
   const [selectedPerms, setSelectedPerms] = useState<string[]>(['read_conversations', 'send_messages', 'read_contacts'])
   const [expiry, setExpiry] = useState('never')
@@ -51,7 +62,7 @@ export default function APISettings() {
     createKey.mutate(
       { name: keyName.trim(), permissions: selectedPerms, expiresIn: expiry === 'never' ? undefined : expiry },
       {
-        onSuccess: (res: any) => {
+        onSuccess: (res: CreateAPIKeyResponse) => {
           const key = res?.data?.key ?? res?.data?.data?.key ?? res?.key
           const record = res?.data?.record ?? res?.data?.data?.record ?? res?.record
           const recordId = record?.id ?? record?._id

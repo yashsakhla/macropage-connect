@@ -128,7 +128,7 @@ export default function WelcomePopup() {
                   Your free trial is now active! 🎉
                 </h2>
 
-                <p className="text-gray-500 text-xs mt-1.5 leading-relaxed">
+                <p className="text-gray-900 text-xs mt-1.5 leading-relaxed">
                   Welcome to Macropage Connect, {user.name?.split(' ')[0] ?? 'there'}!
                   You now have full access to all Growth features.
                 </p>
@@ -290,16 +290,6 @@ export default function WelcomePopup() {
             </div>
           </>
         )}
-
-        {/* Step indicator dots */}
-        <div className="flex justify-center gap-1.5 pb-3">
-          {([1, 2] as const).map(s => (
-            <div key={s} className={cn(
-              'rounded-full transition-all',
-              s === step ? 'w-4 h-1.5 bg-[#1a5c3a]' : 'w-1.5 h-1.5 bg-gray-200'
-            )} />
-          ))}
-        </div>
 
       </div>
     </div>,

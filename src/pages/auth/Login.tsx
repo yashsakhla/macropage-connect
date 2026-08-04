@@ -2,10 +2,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, Navigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
+import type { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
 import { useLogin, useGoogleAuth } from '@/hooks/useAuth'
 import { useElementWidth } from '@/hooks/useElementWidth'
 import { useAuthStore } from '@/store/authStore'
@@ -13,9 +15,10 @@ import { useUIStore } from '@/store/uiStore'
 import { useRememberMeStore } from '@/store/rememberMeStore'
 import { stripEmojis } from '@/lib/utils'
 import FormError from '@/components/shared/FormError'
-import blackLogo from '@assets/macropage-connect-black-icon.svg'
-import whiteLogo from '@assets/macropage-connect-white-icon.svg'
+import blackLogo from '@assets/macropage-connect-black.svg'
+import whiteLogo from '@assets/macropage-connect-white.svg'
 import loginVideo from '@/assets/login/marketing.mp4'
+import metaTechProvider from '@/assets/icons/meta-tech-provider.svg'
 
 const schema = z.object({
   email:    z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email'),
@@ -29,6 +32,7 @@ export default function Login() {
   const { theme } = useUIStore()
   const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [showPassword, setShowPassword] = useState(false)
+  const [loginError, setLoginError] = useState('')
   const login = useLogin()
   const googleAuth = useGoogleAuth()
   const { rememberedEmail, setRememberedEmail } = useRememberMeStore()
@@ -45,8 +49,12 @@ export default function Login() {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left panel - form */}
       <div className="w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 flex flex-col justify-between">
-        <div>
+        <div className="flex items-center justify-between gap-4">
           <img src={logo} alt="Macropage Connect" className="h-8 sm:h-9" />
+          <div className="relative flex flex-col items-center leading-none">
+            <img src={metaTechProvider} alt="Meta Tech Provider" className="h-11 sm:h-16 object-contain" />
+            <span className="absolute bottom-2 text-xs sm:text-sm font-extrabold text-gray-800 tracking-tight -mt-1.5 sm:-mt-2 -mb-1.5 sm:-mb-2">Tech Provider</span>
+          </div>
         </div>
 
         <div className="my-4 sm:my-6">
@@ -55,13 +63,26 @@ export default function Login() {
           <p className="text-sm text-gray-400 mt-2 mb-5 sm:mb-8">Sign in to your account to continue</p>
 
           <form onSubmit={handleSubmit((d) => {
+            setLoginError('')
             setRememberedEmail(d.remember ? d.email : null)
-            login.mutate({ email: d.email, password: d.password })
+            login.mutate({ email: d.email, password: d.password }, {
+              onError: (err: AxiosError<ApiErrorResponse>) => {
+                const code = err.response?.data?.code ?? err.response?.data?.error?.code
+                if (code === 'EMAIL_NOT_VERIFIED') return
+                setLoginError(
+                  code === 'TWO_FACTOR_REQUIRED'
+                    ? '🔐 Two-factor authentication required to continue.'
+                    : code === 'ACCOUNT_LOCKED'
+                    ? '🔒 Your account is locked. Please try again later.'
+                    : `😕 ${err.response?.data?.message ?? 'Incorrect email or password. Please try again.'}`
+                )
+              },
+            })
           })} className="space-y-4 max-w-md">
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Email address</div>
               <input {...register('email')} type="email" placeholder="you@company.com" autoComplete="email" maxLength={254}
-                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                 className="h-11 px-4 text-sm bg-[var(--page-bg)] border-0 rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-white transition-all placeholder:text-gray-300 w-full" />
               <FormError message={errors.email?.message} />
             </div>
@@ -72,7 +93,7 @@ export default function Login() {
               </div>
               <div className="relative">
                 <input {...register('password')} type={showPassword ? 'text' : 'password'} placeholder="Enter your password" maxLength={64}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className="h-11 px-4 text-sm bg-[var(--page-bg)] border-0 rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-white transition-all placeholder:text-gray-300 w-full pr-12" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
@@ -90,6 +111,13 @@ export default function Login() {
             <button type="submit" disabled={login.isPending || !isValid} className="w-full h-11 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--primary-light)] active:scale-[0.98] transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed">
               {login.isPending ? <><Loader2 className="animate-spin mr-2" />Signing in…</> : 'Sign in'}
             </button>
+
+            {loginError && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5 -mt-1">
+                <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700 leading-snug">{loginError}</p>
+              </div>
+            )}
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-100" />
@@ -117,9 +145,7 @@ export default function Login() {
           </form>
         </div>
 
-        <div className="text-center">
-          {/* bottom small text handled above inside form area for alignment */}
-        </div>
+        <div />
       </div>
 
       {/* Right panel - marketing video (hidden on mobile) */}

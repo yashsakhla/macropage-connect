@@ -10,7 +10,7 @@ import {
 } from 'recharts'
 import { cn, formatIndian, formatPhone, downloadCSV } from '@/lib/utils'
 import { useCampaign, useCampaigns, useCampaignRecipients, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
-import type { Campaign } from '@/types'
+import type { Campaign, CampaignRecipient } from '@/types'
 import RecipientTable from '@/components/campaigns/RecipientTable'
 import { format } from 'date-fns'
 import rocketStats from '@/assets/campaign-detail/rocket-stats.png'
@@ -118,10 +118,10 @@ export default function CampaignDetail() {
   const menuRef = useRef<HTMLDivElement>(null)
 
   const { data: campaign, isLoading } = useCampaign(id)
-  const { data: recipientsData } = useCampaignRecipients(id ?? '')
-  const recipients = (recipientsData as any)?.data ?? []
+  const { data: recipientsData, refetch: refetchRecipients, isFetching: recipientsFetching } = useCampaignRecipients(id ?? '')
+  const recipients = (recipientsData as { data?: CampaignRecipient[] } | undefined)?.data ?? []
   const { data: allCampaignsData } = useCampaigns()
-  const allCampaigns: Campaign[] = (allCampaignsData as any)?.data ?? []
+  const allCampaigns: Campaign[] = (allCampaignsData as { data?: Campaign[] } | undefined)?.data ?? []
   const pause = usePauseCampaign()
   const duplicate = useDuplicateCampaign()
 
@@ -146,7 +146,7 @@ export default function CampaignDetail() {
 
   const exportRecipients = () => {
     const header = ['Contact', 'Phone', 'Status', 'Delivered At', 'Read At', 'Failure Reason']
-    const rows = recipients.map((r: any) => [
+    const rows = recipients.map((r: CampaignRecipient) => [
       r.contactName, formatPhone(r.phone), r.status,
       r.deliveredAt ?? '', r.readAt ?? '', r.failureReason ?? '',
     ])
@@ -355,6 +355,8 @@ export default function CampaignDetail() {
               sent: campaign.sent, delivered: campaign.delivered, read: campaign.read,
               replied: campaign.replied, failed: campaign.failed,
             }}
+            onRefresh={() => refetchRecipients()}
+            isRefreshing={recipientsFetching}
           />
         </div>
 

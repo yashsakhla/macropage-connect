@@ -4,7 +4,7 @@ import { MessageSquare, Image, MousePointer2, List, FileText, GitBranch, Hourgla
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { FlowNodeType } from '@/types/flow'
-import { usePlanFeature } from '@/lib/permissions'
+import { usePlanFeature } from '@/lib/permissionsConstants'
 import LockedFeaturePopup from '@/components/plans/LockedFeaturePopup'
 
 interface NodeDef {

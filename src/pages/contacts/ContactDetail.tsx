@@ -165,7 +165,7 @@ export default function ContactDetail() {
                   </span>
                 ))}
                 {editingTags && (
-                  <input className="input h-7 w-28 text-xs" placeholder="Add tag..." onKeyDown={e => { if (e.key === 'Enter') {} }} />
+                  <input className="input h-7 w-28 text-xs" placeholder="Add tag..." onKeyDown={e => { if (e.key === 'Enter') { /* add-tag not yet wired up */ } }} />
                 )}
               </div>
             )}

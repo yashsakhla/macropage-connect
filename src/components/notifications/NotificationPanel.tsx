@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
-import type { AppNotification, NotificationKind } from '@/types'
+import type { AppNotification, NotificationKind, RawNotificationDTO } from '@/types'
 import {
   useNotifications,
   useMarkAsRead,
@@ -26,9 +26,9 @@ function toKind(type: string): NotificationKind {
   return 'system'
 }
 
-function toAppNotification(raw: any): AppNotification {
+function toAppNotification(raw: RawNotificationDTO): AppNotification {
   return {
-    id:        raw._id ?? raw.id,
+    id:        raw._id ?? raw.id ?? '',
     kind:      toKind(raw.type ?? raw.kind ?? ''),
     title:     raw.title ?? '',
     body:      raw.body ?? raw.message ?? '',
@@ -47,6 +47,20 @@ function kindMeta(kind: NotificationKind): { Icon: React.ElementType; bg: string
     case 'team':      return { Icon: Users,         bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-500' }
     case 'billing':   return { Icon: CreditCard,    bg: 'bg-amber-50 dark:bg-amber-900/20',   color: 'text-amber-500' }
     case 'system':    return { Icon: Settings,      bg: 'bg-gray-100 dark:bg-gray-800',        color: 'text-gray-500' }
+  }
+}
+
+// Notifications don't always carry an actionUrl from the backend — fall back
+// to a sensible section based on the notification's kind so every click
+// still takes the user somewhere relevant.
+function inferNotifUrl(kind: NotificationKind): string {
+  switch (kind) {
+    case 'message':  return '/inbox'
+    case 'campaign': return '/campaigns'
+    case 'template': return '/templates'
+    case 'team':     return '/team'
+    case 'billing':  return '/settings/billing'
+    case 'system':   return '/settings'
   }
 }
 
@@ -92,9 +106,10 @@ export default function NotificationPanel() {
   const { mutate: markAllRead, isPending: markingAll }   = useMarkAllAsRead()
   const { mutate: deleteNotif }                          = useDeleteNotification()
 
-  const rawList: any[]           = notifData?.data ?? []
+  const notifResult = notifData as { data?: RawNotificationDTO[]; unread?: number } | undefined
+  const rawList: RawNotificationDTO[] = notifResult?.data ?? []
   const mapped: AppNotification[] = rawList.map(toAppNotification)
-  const unreadCount: number      = notifData?.unread ?? mapped.filter(n => !n.isRead).length
+  const unreadCount: number      = notifResult?.unread ?? mapped.filter(n => !n.isRead).length
 
   const visible = filter === 'unread' ? mapped.filter(n => !n.isRead) : mapped
   const groups  = groupByDay(visible)
@@ -122,10 +137,8 @@ export default function NotificationPanel() {
 
   function handleRead(notif: AppNotification) {
     if (!notif.isRead) markRead(notif.id)
-    if (notif.actionUrl) {
-      navigate(notif.actionUrl)
-      setNotificationPanelOpen(false)
-    }
+    navigate(notif.actionUrl || inferNotifUrl(notif.kind))
+    setNotificationPanelOpen(false)
   }
 
   return (
@@ -324,9 +337,9 @@ function NotificationItem({
         </p>
       </div>
 
-      {/* Unread dot */}
+      {/* Unread dot — hidden on hover so it doesn't collide with the delete button */}
       {!n.isRead && (
-        <div className="w-2 h-2 rounded-full bg-[var(--primary)] shrink-0 mt-2" />
+        <div className="w-2 h-2 rounded-full bg-[var(--primary)] shrink-0 mt-2 group-hover:opacity-0 transition-opacity" />
       )}
 
       {/* Delete button — visible on hover */}

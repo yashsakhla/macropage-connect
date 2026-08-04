@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { X, Paperclip, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
+import { X, Paperclip, CheckCircle, Loader2, AlertCircle, Ticket, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useSubmitTicket } from '@/hooks/useHelp'
 import { useUploadImage, useUploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
@@ -45,6 +46,7 @@ interface AttachmentFile {
 }
 
 export default function SupportTicketForm({ onClose }: Props) {
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const { mutateAsync, isPending } = useSubmitTicket()
   const uploadImage = useUploadImage()
@@ -121,8 +123,15 @@ export default function SupportTicketForm({ onClose }: Props) {
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           We'll reply to {user?.email} within 2 hours
         </p>
-        <button className="btn-outline mt-4 w-full">View your tickets</button>
-        <button onClick={onClose} className="btn-ghost mt-2 w-full">Done</button>
+        <button
+          onClick={() => { onClose(); navigate('/help/tickets') }}
+          className="btn-primary mt-5 w-full h-11 flex items-center justify-center gap-2 group"
+        >
+          <Ticket size={16} />
+          View your tickets
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        </button>
+        <button onClick={onClose} className="btn-ghost mt-2 w-full h-10">Done</button>
       </div>
     )
   }

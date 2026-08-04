@@ -1,30 +1,40 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { Contact, ContactFilters, ContactSegment, CreateContactPayload, ImportPayload } from '@/types'
+import type {
+  ApiErrorResponse,
+  Contact,
+  ContactFilters,
+  ContactSegment,
+  CreateContactPayload,
+  ImportPayload,
+  RawContactDTO,
+  RawContactSegmentDTO,
+} from '@/types'
 
-function normalizeSegment(raw: any): ContactSegment {
+function normalizeSegment(raw: RawContactSegmentDTO): ContactSegment {
   return {
-    id: raw.id ?? raw._id,
-    name: raw.name,
+    id: raw.id ?? raw._id ?? '',
+    name: raw.name ?? '',
     color: raw.color ?? '#1a5c3a',
-    filters: raw.filters ?? {},
+    filters: (raw.filters ?? {}) as ContactFilters,
     contactIds: raw.contactIds,
     contactCount: raw.count ?? raw.contactCount ?? 0,
     isBuiltIn: raw.type ? raw.type !== 'custom' : (raw.isBuiltIn ?? false),
-    createdAt: raw.createdAt,
+    createdAt: raw.createdAt ?? '',
   }
 }
 
-function normaliseContact(raw: any): Contact {
-  if (!raw) return raw
+function normaliseContact(raw: RawContactDTO): Contact {
+  if (!raw) return raw as unknown as Contact
   return {
     ...raw,
-    id: raw._id ?? raw.id,
-    status: raw.status ?? 'active',
-    customFields: raw.customFields ?? {},
+    id: raw._id ?? raw.id ?? '',
+    status: (raw.status ?? 'active') as Contact['status'],
+    customFields: (raw.customFields ?? {}) as Record<string, string>,
     tags: raw.tags ?? [],
-  }
+  } as Contact
 }
 
 export function useContacts(filters?: ContactFilters) {
@@ -67,14 +77,14 @@ export function useCreateContact() {
       qc.invalidateQueries({ queryKey: ['contact-tags'] })
       toast.success('Contact added')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to add contact'),
   })
 }
 
 export function useUpdateContact() {
   const qc = useQueryClient()
-  return useMutation<unknown, Error, { id: string; data: Partial<Contact> }>({
+  return useMutation<unknown, AxiosError<ApiErrorResponse>, { id: string; data: Partial<Contact> }>({
     mutationFn: ({ id, data }) =>
       api.patch(`/contacts/${id}`, data).then((r) => r.data),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
@@ -85,7 +95,7 @@ export function useUpdateContact() {
       qc.invalidateQueries({ queryKey: ['conversation'] })
       toast.success('Contact updated')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to update contact'),
   })
 }
@@ -99,7 +109,7 @@ export function useDeleteContact() {
       qc.invalidateQueries({ queryKey: ['contact-tags'] })
       toast.success('Contact deleted')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to delete contact'),
   })
 }
@@ -121,7 +131,7 @@ export function useBulkTagContacts() {
       qc.invalidateQueries({ queryKey: ['contact-tags'] })
       toast.success('Tags updated')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to update tags'),
   })
 }
@@ -136,7 +146,7 @@ export function useDeleteContactTag() {
       qc.invalidateQueries({ queryKey: ['contact-tags'] })
       toast.success('Tag removed from all contacts')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to remove tag'),
   })
 }
@@ -150,7 +160,7 @@ export function useBulkDeleteContacts() {
       qc.invalidateQueries({ queryKey: ['contacts'] })
       toast.success('Contacts deleted')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to delete contacts'),
   })
 }
@@ -161,7 +171,7 @@ export function useSegments() {
     queryFn: () =>
       api.get('/contacts/segments').then((r) => {
         const body = r.data?.data ?? r.data
-        const list: any[] = Array.isArray(body) ? body : (body?.segments ?? [])
+        const list: RawContactSegmentDTO[] = Array.isArray(body) ? body : (body?.segments ?? [])
         // The API also returns "predefined" (all/subscribed/unsubscribed) and "tag"
         // segments — those duplicate what the built-in segment list and the tags
         // cloud already show, so only user-created ("custom") segments are kept here.
@@ -178,7 +188,7 @@ export function useAddContactsToSegment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['segments'] })
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to add contacts to segment'),
   })
 }
@@ -192,7 +202,7 @@ export function useCreateSegment() {
       qc.invalidateQueries({ queryKey: ['segments'] })
       toast.success('Segment created')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to create segment'),
   })
 }
@@ -201,7 +211,7 @@ export function useImportContacts() {
   return useMutation({
     mutationFn: (payload: ImportPayload) =>
       api.post('/contacts/import', payload).then((r) => r.data?.data ?? r.data),
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Import failed'),
   })
 }

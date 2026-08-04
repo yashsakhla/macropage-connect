@@ -7,6 +7,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Extracts the video ID from a youtube.com/watch, youtu.be, /embed/, or /shorts/ URL. */
+export function getYouTubeVideoId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/)
+  return match?.[1] ?? null
+}
+
+/** Best-effort thumbnail for a YouTube URL; falls back to null for non-YouTube links. */
+export function getYouTubeThumbnail(url: string): string | null {
+  const id = getYouTubeVideoId(url)
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
+}
+
 /**
  * Reduce a #hex color to a translucent rgba tint of itself, so a chip that's
  * meant to sit on either a white or dark navy card stays a soft tint on both
@@ -83,7 +95,7 @@ export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 // Matches emoji + pictographs + variation selectors + skin tone modifiers + ZWJ
 // used to join emoji sequences — covers the ranges browsers actually render as emoji.
-const EMOJI_REGEX = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu
+const EMOJI_REGEX = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}]|\u{FE0F}|\u{200D}/gu
 
 /** Strip emoji/pictograph characters from sensitive text inputs (email, password, name fields) */
 export function stripEmojis(value: string): string {

@@ -1,39 +1,54 @@
 import { useQuery, useQueryClient, useMutation, keepPreviousData } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { Conversation, ConversationStatus, Message } from '@/types'
+import type {
+  ApiErrorResponse,
+  Contact,
+  Conversation,
+  ConversationStatus,
+  Message,
+  RawContactDTO,
+  RawConversationDTO,
+} from '@/types'
 import { useAuthStore } from '@/store/authStore'
 
-function normalizeContact(raw: any) {
+interface MessagesPage {
+  data?: Message[]
+  total?: number
+  [key: string]: unknown
+}
+
+function normalizeContact(raw: RawContactDTO | undefined | null) {
   if (!raw) return raw
   return {
     ...raw,
-    id: raw._id ?? raw.id,
+    id: raw._id ?? raw.id ?? '',
     tags: raw.tags ?? [],
     customFields: raw.customFields ?? {},
     status: raw.status ?? 'active',
   }
 }
 
-function normalizeConversation(raw: any): Conversation {
+function normalizeConversation(raw: RawConversationDTO): Conversation {
   const rawContact = raw.contact
-  const contact = rawContact
+  const contact = (rawContact
     ? normalizeContact(rawContact)
-    : { id: raw.contactId, name: raw.contactName ?? 'Unknown', phone: raw.contactPhone ?? '', tags: [], customFields: {}, status: 'active' as const }
+    : { id: raw.contactId ?? '', name: raw.contactName ?? 'Unknown', phone: raw.contactPhone ?? '', tags: [], customFields: {}, status: 'active' as const }) as Contact
 
   return {
-    id: raw._id ?? raw.id,
+    id: raw._id ?? raw.id ?? '',
     contact,
     status: ((raw.status ?? 'open') as string).toLowerCase() as ConversationStatus,
     assignedTo: raw.assignedAgent
-      ? { id: raw.assignedAgent._id ?? raw.assignedAgent.id, name: raw.assignedAgent.name, avatarUrl: raw.assignedAgent.avatarUrl }
+      ? { id: raw.assignedAgent._id ?? raw.assignedAgent.id ?? '', name: raw.assignedAgent.name ?? '', avatarUrl: raw.assignedAgent.avatarUrl }
       : undefined,
     labels: raw.labels ?? [],
-    lastMessage: raw.lastMessage,
+    lastMessage: raw.lastMessage as Message | undefined,
     unreadCount: raw.unreadCount ?? 0,
     isBot: raw.botActive ?? raw.isBot ?? false,
-    createdAt: raw.createdAt,
-    updatedAt: raw.updatedAt,
+    createdAt: raw.createdAt ?? '',
+    updatedAt: raw.updatedAt ?? '',
   }
 }
 
@@ -43,7 +58,7 @@ export function useConversations(filters?: Record<string, string | undefined>) {
     queryFn: () =>
       api.get('/conversations', { params: filters }).then((r) => {
         const raw = r.data
-        const list: any[] = raw.data ?? raw
+        const list: RawConversationDTO[] = raw.data ?? raw
         return {
           ...raw,
           data: Array.isArray(list) ? list.map(normalizeConversation) : [],
@@ -137,13 +152,13 @@ export function useSendMessage() {
         agentName: user?.name,
         createdAt: new Date().toISOString(),
       }
-      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+      qc.setQueryData(['messages', conversationId, 1], (old: MessagesPage | undefined) => {
         if (!old) return old
         return { ...old, data: [...(old.data ?? []), optimisticMsg] }
       })
       return { tempId, templateData: optimisticMsg.templateData }
     },
-    onSuccess: (realMsg: Message, { conversationId }, context: any) => {
+    onSuccess: (realMsg: Message, { conversationId }, context: { tempId: string; templateData?: Message['templateData'] } | undefined) => {
       if (!realMsg) {
         qc.invalidateQueries({ queryKey: ['messages', conversationId] })
         qc.invalidateQueries({ queryKey: ['conversations'] })
@@ -156,13 +171,13 @@ export function useSendMessage() {
       if (!realMsg.templateData && context?.templateData) {
         realMsg = { ...realMsg, templateData: context.templateData }
       }
-      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+      qc.setQueryData(['messages', conversationId, 1], (old: MessagesPage | undefined) => {
         if (!old) return old
-        const filtered = (old.data ?? []).filter((m: any) => m && m.id !== context?.tempId)
+        const filtered = (old.data ?? []).filter((m) => m && m.id !== context?.tempId)
         const alreadyPresent = filtered.some(
-          (m: any) =>
+          (m) =>
             (realMsg.metaMessageId && m.metaMessageId === realMsg.metaMessageId) ||
-            ((realMsg as any)._id && m._id === (realMsg as any)._id) ||
+            (realMsg._id && m._id === realMsg._id) ||
             (realMsg.id && m.id === realMsg.id)
         )
         return { ...old, data: alreadyPresent ? filtered : [...filtered, realMsg] }
@@ -170,10 +185,10 @@ export function useSendMessage() {
       qc.invalidateQueries({ queryKey: ['conversations'] })
       qc.invalidateQueries({ queryKey: ['message-usage'] })
     },
-    onError: (_err, { conversationId }, context: any) => {
+    onError: (_err, { conversationId }, context: { tempId: string } | undefined) => {
       // Keep the bubble visible marked as failed (with its template design intact)
       // instead of silently discarding it — the agent needs to see the send failed.
-      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+      qc.setQueryData(['messages', conversationId, 1], (old: MessagesPage | undefined) => {
         if (!old) return old
         return {
           ...old,
@@ -201,7 +216,7 @@ export function useAddNote() {
       api
         .post(`/conversations/${conversationId}/notes`, { content })
         .then((r) => r.data.data),
-    onSuccess: (note: any, { conversationId }) => {
+    onSuccess: (note: Message & { _id?: string } | undefined, { conversationId }) => {
       if (!note) {
         qc.invalidateQueries({ queryKey: ['messages', conversationId] })
         return
@@ -209,20 +224,20 @@ export function useAddNote() {
       // Directly inject the note into the cache instead of invalidating.
       // The messages API endpoint does not return internal notes, so a refetch
       // would wipe any note the socket handler already added to the cache.
-      const normalized = {
+      const normalized: Message = {
         ...note,
-        id: note.id ?? note._id,
+        id: note.id ?? note._id ?? '',
         type: 'note',
         direction: 'outbound',
         content: note.content ?? '',
         agentName: note.agentName ?? user?.name,
         createdAt: note.createdAt ?? new Date().toISOString(),
       }
-      qc.setQueryData(['messages', conversationId, 1], (old: any) => {
+      qc.setQueryData(['messages', conversationId, 1], (old: MessagesPage | undefined) => {
         const base = old ?? { data: [], total: 0 }
-        const data: any[] = base.data ?? []
+        const data: Message[] = base.data ?? []
         const alreadyExists = data.some(
-          (m: any) =>
+          (m) =>
             (normalized._id && m._id === normalized._id) ||
             (normalized.id && m.id === normalized.id)
         )
@@ -269,7 +284,7 @@ export function useConversationByContact(contactId: string | null) {
           // Don't trust the contactId filter blindly — if the backend ignores it
           // and just returns the most recently active conversation, list[0] can
           // belong to a different contact entirely. Match on the contact id ourselves.
-          return candidates.find((c: any) => {
+          return candidates.find((c: RawConversationDTO) => {
             const cId = c.contact?._id ?? c.contact?.id ?? c.contactId
             return cId === contactId
           }) ?? null
@@ -331,7 +346,7 @@ export function useAssignConversation() {
       qc.invalidateQueries({ queryKey: ['conversation'] })
       toast.success(data?.message ?? 'Conversation assigned')
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError<ApiErrorResponse>) => {
       toast.error(
         err?.response?.data?.message ??
         err?.response?.data?.error?.message ??
@@ -351,7 +366,7 @@ export function useUnassignConversation() {
       qc.invalidateQueries({ queryKey: ['conversation'] })
       toast.success('Conversation unassigned')
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError<ApiErrorResponse>) => {
       toast.error(
         err?.response?.data?.message ?? 'Could not unassign conversation'
       )

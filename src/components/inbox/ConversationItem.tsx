@@ -2,14 +2,7 @@ import { Bot, Check, CheckCheck, X } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
 import type { Conversation, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
-
-const GRADIENTS = [
-  'from-[#1a5c3a] to-[#2d7a4f]',
-  'from-purple-500 to-purple-700',
-  'from-blue-500 to-blue-700',
-  'from-orange-400 to-orange-600',
-  'from-rose-400 to-rose-600',
-]
+import { avatarGradient } from '@/lib/avatarGradient'
 
 const LABEL_COLORS: Record<string, string> = {
   vip: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
@@ -18,12 +11,6 @@ const LABEL_COLORS: Record<string, string> = {
   enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
   priority: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
   bot: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400',
-}
-
-export function avatarGradient(name: string | undefined | null) {
-  if (!name) return GRADIENTS[0]
-  const sum = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return GRADIENTS[sum % GRADIENTS.length]
 }
 
 function formatTime(dateStr: string) {

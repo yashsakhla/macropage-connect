@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Zap, GitBranch, Sparkles, FileText, X, MessageSquare } from 'lucide-react'
+import { Zap, GitBranch, Sparkles, X, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import automationHero from '@/assets/automation/1.svg'
 import AutomationStats from '@/components/automation/AutomationStats'
@@ -139,11 +139,8 @@ export default function Automation() {
           <img src={automationHero} alt="" className="w-full h-full object-cover object-center" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 w-full md:flex md:items-center md:gap-3 md:w-auto md:flex-shrink-0">
-          <button className="btn-ghost h-9 text-sm flex items-center justify-center gap-1.5 whitespace-nowrap">
-            <FileText size={14} /> <span className="hidden sm:inline">View automation logs</span><span className="sm:hidden">View logs</span>
-          </button>
-          <button onClick={() => setShowCreationPicker(true)} className="btn-primary h-9 text-sm justify-center whitespace-nowrap">
+        <div className="w-full md:flex md:items-center md:w-auto md:flex-shrink-0">
+          <button onClick={() => setShowCreationPicker(true)} className="btn-primary h-9 text-sm w-full md:w-auto justify-center whitespace-nowrap">
             + Create automation
           </button>
         </div>

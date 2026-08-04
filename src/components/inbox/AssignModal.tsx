@@ -3,6 +3,7 @@ import { useAssignableMembers } from '@/hooks/useTeam'
 import { useAssignConversation } from '@/hooks/useConversations'
 import { X, Search, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { AssignableMember } from '@/types'
 
 interface AssignModalProps {
   conversationId: string
@@ -30,15 +31,16 @@ export default function AssignModal({
     variables: assigningTo,
   } = useAssignConversation()
 
+  const memberList = members as AssignableMember[] | undefined
   const filtered = useMemo(() => {
-    if (!members) return []
+    if (!memberList) return []
     const q = search.toLowerCase().trim()
-    if (!q) return members
-    return members.filter((m: any) =>
+    if (!q) return memberList
+    return memberList.filter((m: AssignableMember) =>
       m.name.toLowerCase().includes(q) ||
       m.email.toLowerCase().includes(q)
     )
-  }, [members, search])
+  }, [memberList, search])
 
   const handleAssign = (userId: string) => {
     assign(
@@ -105,7 +107,7 @@ export default function AssignModal({
             <p className="text-sm text-gray-400 text-center py-8">No team members found</p>
           )}
 
-          {!isLoading && !isError && filtered.map((member: any) => {
+          {!isLoading && !isError && filtered.map((member: AssignableMember) => {
             const isCurrentAssignee = member._id === currentAssigneeId
             const isAssigningToThis = assigning && assigningTo?.userId === member._id
 

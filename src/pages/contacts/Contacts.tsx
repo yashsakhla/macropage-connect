@@ -16,7 +16,8 @@ import {
 import ContactsTable from '@/components/contacts/ContactsTable'
 import ContactCard from '@/components/contacts/ContactCard'
 import ContactForm from '@/components/contacts/ContactForm'
-import ContactFiltersPanel, { useFilterCount } from '@/components/contacts/ContactFilters'
+import ContactFiltersPanel from '@/components/contacts/ContactFilters'
+import { useFilterCount } from '@/hooks/useFilterCount'
 import ContactImport from '@/components/contacts/ContactImport'
 import ContactSegments from '@/components/contacts/ContactSegments'
 import BulkActionsBar from '@/components/contacts/BulkActionsBar'
@@ -168,7 +169,7 @@ export default function Contacts() {
   }, [location.key, location.state])
 
   const { data: contactsData } = useContacts(filters)
-  const allContacts: Contact[] = (contactsData as any)?.data ?? []
+  const allContacts: Contact[] = useMemo(() => (contactsData as { data?: Contact[] } | undefined)?.data ?? [], [contactsData])
   const stats = useMemo(() => {
     const startOfMonth = new Date()
     startOfMonth.setDate(1)

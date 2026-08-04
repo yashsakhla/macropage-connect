@@ -3,7 +3,10 @@ import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import { uploadImage } from '@/hooks/useUpload'
 import { useAuthStore } from '@/store/authStore'
-import type { UpdateProfilePayload, ChangePasswordPayload } from '@/types'
+import type { AxiosError } from 'axios'
+import type { UpdateProfilePayload, ChangePasswordPayload, ApiErrorResponse } from '@/types'
+
+type MutationError = AxiosError<ApiErrorResponse>
 
 export function useProfile() {
   const user = useAuthStore((s) => s.user)
@@ -32,7 +35,7 @@ export function useUpdateProfile() {
       qc.invalidateQueries({ queryKey: ['profile'] })
       toast.success('Profile updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to update profile'),
   })
 }
@@ -50,7 +53,7 @@ export function useUpdateAvatar() {
       qc.invalidateQueries({ queryKey: ['profile'] })
       toast.success('Avatar updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to update avatar'),
   })
 }
@@ -60,7 +63,7 @@ export function useChangePassword() {
     mutationFn: (data: ChangePasswordPayload) =>
       api.patch('/auth/change-password', data).then((r) => r.data),
     onSuccess: () => toast.success('Password updated successfully'),
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to update password'),
   })
 }
@@ -81,7 +84,7 @@ export function useRevokeSession() {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       toast.success('Session revoked')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to revoke session'),
   })
 }
@@ -94,7 +97,7 @@ export function useRevokeAllSessions() {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       toast.success('All other sessions revoked')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to revoke sessions'),
   })
 }

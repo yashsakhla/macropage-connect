@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User } from '@/types'
+import { useSupportChatStore } from '@/store/supportChatStore'
 
 function decodeRoleFromToken(token: string): string | undefined {
   try {
@@ -74,7 +75,11 @@ export const useAuthStore = create<AuthState>()(
 
       setRefreshToken: (refreshToken) => set({ refreshToken }),
 
-      logout: () => set({ user: null, token: null, refreshToken: null, isAuthenticated: false }),
+      logout: () => {
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
+        // Support chat history is only meant to persist for the logged-in session.
+        useSupportChatStore.getState().reset([])
+      },
 
       setLoading: (isLoading) => set({ isLoading }),
 

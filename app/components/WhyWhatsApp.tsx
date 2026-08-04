@@ -1,5 +1,5 @@
 "use client";
-import { TrendingUp, MessageCircle, Clock, Users, Star, Smartphone } from "lucide-react";
+import { TrendingUp, MessageCircle, Clock, Users, Star } from "lucide-react";
 
 const reasons = [
   {

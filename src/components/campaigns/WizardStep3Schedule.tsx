@@ -1,4 +1,5 @@
-import { Zap, Clock, Info } from 'lucide-react'
+import { useEffect } from 'react'
+import { Zap, Clock, Info, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 
@@ -20,6 +21,7 @@ interface WizardStep3Props {
   abSplit: number
   onAbSplitChange: (v: number) => void
   totalContacts: number
+  qualityRating?: string
 }
 
 const TIMEZONES = [
@@ -69,9 +71,19 @@ export default function WizardStep3Schedule({
   isAbTest, onAbTestChange,
   abSplit, onAbSplitChange,
   totalContacts,
+  qualityRating,
 }: WizardStep3Props) {
   const today = new Date().toISOString().split('T')[0]
   const estMinutes = getEstimatedMinutes(totalContacts || 5000, sendSpeed)
+  const canUseFast = qualityRating === 'GREEN'
+
+  // If the account isn't GREEN (or drops out of it) while "Fast" is selected,
+  // fall back to the recommended speed rather than leaving an invalid choice active.
+  useEffect(() => {
+    if (sendSpeed === 'fast' && !canUseFast) {
+      onSendSpeedChange('normal')
+    }
+  }, [sendSpeed, canUseFast, onSendSpeedChange])
 
   let scheduledPreview = ''
   if (!sendImmediately && scheduledDate && scheduledTime) {
@@ -126,6 +138,7 @@ export default function WizardStep3Schedule({
               <input
                 type="date"
                 className="input"
+                style={{ transform: 'translateZ(0)' }}
                 min={today}
                 value={scheduledDate}
                 onChange={e => onScheduledDateChange(e.target.value)}
@@ -136,6 +149,7 @@ export default function WizardStep3Schedule({
               <input
                 type="time"
                 className="input"
+                style={{ transform: 'translateZ(0)' }}
                 value={scheduledTime}
                 onChange={e => onScheduledTimeChange(e.target.value)}
               />
@@ -169,25 +183,39 @@ export default function WizardStep3Schedule({
         <div className="space-y-2">
           {SPEED_CONFIG.map(s => {
             const isSelected = sendSpeed === s.value
+            const isLocked = s.value === 'fast' && !canUseFast
             return (
               <div
                 key={s.value}
-                onClick={() => onSendSpeedChange(s.value)}
+                onClick={() => !isLocked && onSendSpeedChange(s.value)}
                 className={cn(
-                  'border-2 rounded-xl p-4 cursor-pointer flex items-start gap-3 transition-all',
-                  isSelected ? 'border-[#1a5c3a] bg-[#fafffe] dark:bg-white/5' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]'
+                  'border-2 rounded-xl p-4 flex items-start gap-3 transition-all',
+                  isLocked
+                    ? 'opacity-50 cursor-not-allowed border-[#e8ebe8] dark:border-white/10'
+                    : cn('cursor-pointer', isSelected ? 'border-[#1a5c3a] bg-[#fafffe] dark:bg-white/5' : 'border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]')
                 )}
+                title={isLocked ? 'Requires a GREEN quality rating on your WhatsApp account' : undefined}
               >
-                <div className={cn('w-4 h-4 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center', isSelected ? 'border-[#1a5c3a]' : 'border-gray-300 dark:border-gray-700')}>
-                  {isSelected && <div className="w-2 h-2 rounded-full bg-[#1a5c3a]" />}
+                <div className={cn('w-4 h-4 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center', isSelected && !isLocked ? 'border-[#1a5c3a]' : 'border-gray-300 dark:border-gray-700')}>
+                  {isSelected && !isLocked && <div className="w-2 h-2 rounded-full bg-[#1a5c3a]" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{s.title}</span>
-                    {s.badge && <span className={cn('text-[10px] rounded-full px-2 py-0.5 font-medium', s.badge.color)}>{s.badge.label}</span>}
+                    {s.badge && (
+                      <span className={cn('text-[10px] rounded-full px-2 py-0.5 font-medium flex items-center gap-1', s.badge.color)}>
+                        {isLocked && <Lock size={9} />}
+                        {s.badge.label}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-mono text-gray-600 dark:text-gray-400 mt-0.5">{s.rate}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.desc}</p>
+                  {isLocked && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      Your account's quality rating must be GREEN to use this speed.
+                    </p>
+                  )}
                 </div>
               </div>
             )

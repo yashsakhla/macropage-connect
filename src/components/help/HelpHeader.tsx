@@ -45,7 +45,7 @@ export default function HelpHeader({ onSearch, initialQuery }: Props) {
 
           {/* Right — "We're here for you" card */}
           <div className="hidden lg:flex justify-end items-center">
-            <div className="w-56 bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl p-4">
+            <div className="w-60 bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl p-5">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">We're here for you!</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Our support team is available 24/7</p>
 
@@ -66,9 +66,9 @@ export default function HelpHeader({ onSearch, initialQuery }: Props) {
 
               <a
                 href="#contact-support"
-                className="btn-primary w-full mt-3 text-xs flex items-center justify-center gap-1.5"
+                className="btn-primary w-full h-10 mt-4 px-4 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <MessagesSquare size={13} />
+                <MessagesSquare size={14} />
                 Start a conversation
               </a>
             </div>

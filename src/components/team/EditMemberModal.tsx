@@ -7,7 +7,7 @@ import { cn, getInitials } from '@/lib/utils'
 import type { TeamMember } from '@/types'
 import { useUpdateMemberRole, useRemoveMember } from '@/hooks/useTeam'
 import RoleBadge from './RoleBadge'
-import type { Role } from '@/lib/permissions'
+import type { Role } from '@/lib/permissionsConstants'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

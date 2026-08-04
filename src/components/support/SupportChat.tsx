@@ -1,28 +1,22 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   MessageCircle, X, Send, Loader2,
   Mail, Ticket as TicketIcon,
   ChevronRight, BookOpen, HelpCircle,
-  RotateCcw, ExternalLink,
+  RotateCcw, ExternalLink, CalendarClock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import api from '@/lib/axios'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
+import { useSupportChatStore, type SupportChatMessage } from '@/store/supportChatStore'
 import { normalizeSearchResults } from '@/hooks/useHelp'
 import type { SearchResult } from '@/types'
 
 // ── Types ─────────────────────────────────
 
-interface Message {
-  id:        string
-  role:      'user' | 'bot'
-  text:      string
-  timestamp: Date
-  type:      'text' | 'results' | 'escalation'
-  results?:  SearchResult[]
-}
+type Message = SupportChatMessage
 
 // ── Static config ─────────────────────────
 // TODO: swap in real support phone/WhatsApp numbers — no real values
@@ -47,7 +41,7 @@ I can help you with:
 - Inbox and conversation management
 
 Type your question or tap one below 👇`,
-  timestamp: new Date(),
+  timestamp: Date.now(),
   type:      'text',
 }
 
@@ -56,6 +50,31 @@ const FALLBACK_MESSAGE = `I couldn't find a specific answer for that in our help
 You can also try browsing our full documentation at the Help & Support page.
 
 Or reach our support team directly:`
+
+// Matches short greetings ("hey", "helo", "hii", "good morning") so we can
+// reply warmly instead of running them through help search and getting a
+// "no results found" fallback for what's really just a hello.
+const GREETING_PATTERN = /^(hi+|hey+|hello+|helo+|yo+|sup|howdy|namaste|good\s?(morning|afternoon|evening))[\s!.,]*$/i
+
+const GREETING_REPLIES = [
+  `Hey there! 👋 How can I help you with Macropage Connect today?`,
+  `Hello! 😊 What can I help you with — WhatsApp setup, campaigns, templates, or something else?`,
+  `Hi! 👋 I'm here to help. What would you like to know?`,
+]
+
+function isGreeting(text: string): boolean {
+  return GREETING_PATTERN.test(text.trim())
+}
+
+// Catches "demo", "training", "walkthrough", "onboarding call" style requests so
+// we can offer the Request Demo booking flow directly instead of a doc search.
+const DEMO_PATTERN = /\b(demo|training|walkthrough|walk[\s-]?through|onboarding call|live session)\b/i
+
+function wantsDemo(text: string): boolean {
+  return DEMO_PATTERN.test(text)
+}
+
+const DEMO_CTA_TEXT = `Happy to set that up! 🎥 You can book a live demo with our team and pick a date & time that works for you.`
 
 const SUGGESTED_QUESTIONS = [
   'Why is my token expired?',
@@ -78,13 +97,24 @@ export default function SupportChat() {
 
   const isOpen  = useUIStore(s => s.helpWidgetOpen)
   const setOpen = useUIStore(s => s.setHelpWidgetOpen)
+  const openDemoModal = useUIStore(s => s.openDemoModal)
+
+  const messages = useSupportChatStore(s => s.messages)
+  const noAnswerCount = useSupportChatStore(s => s.noAnswerCount)
+  const storeAddMessage = useSupportChatStore(s => s.addMessage)
+  const setNoAnswerCount = useSupportChatStore(s => s.setNoAnswerCount)
+  const resetChat = useSupportChatStore(s => s.reset)
+
+  // Seed the greeting once, the first time this browser ever opens the widget.
+  useEffect(() => {
+    if (messages.length === 0) resetChat([GREETING_MESSAGE])
+  }, [messages.length, resetChat])
 
   const [input, setInput]         = useState('')
-  const [messages, setMessages]   = useState<Message[]>([GREETING_MESSAGE])
   const [isSearching, setIsSearching] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [hasOpened, setHasOpened]     = useState(false)
-  const [noAnswerCount, setNoAnswerCount] = useState(0)
+  const [showNudge, setShowNudge]     = useState(false)
 
   const inputRef  = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -100,22 +130,29 @@ export default function SupportChat() {
       setTimeout(() => inputRef.current?.focus(), 100)
       setUnreadCount(0)
       setHasOpened(true)
+      setShowNudge(false)
     }
   }, [isOpen])
 
-  // Show unread badge after 30s if user hasn't opened
+  // "Need help?" nudge — shows once per login session, shortly after the app
+  // loads, then auto-dismisses itself after a few seconds if left untouched.
   useEffect(() => {
-    if (hasOpened) return
-    const timer = setTimeout(() => setUnreadCount(1), 30000)
-    return () => clearTimeout(timer)
+    if (hasOpened || sessionStorage.getItem('support-nudge-shown')) return
+    const showTimer = setTimeout(() => {
+      sessionStorage.setItem('support-nudge-shown', '1')
+      setShowNudge(true)
+      setUnreadCount(1)
+    }, 1500)
+    return () => clearTimeout(showTimer)
   }, [hasOpened])
 
-  const addMessage = useCallback((msg: Omit<Message, 'id' | 'timestamp'>) => {
-    setMessages(prev => [
-      ...prev,
-      { ...msg, id: Math.random().toString(36).slice(2), timestamp: new Date() },
-    ])
-  }, [])
+  useEffect(() => {
+    if (!showNudge) return
+    const hideTimer = setTimeout(() => setShowNudge(false), 6000)
+    return () => clearTimeout(hideTimer)
+  }, [showNudge])
+
+  const addMessage = storeAddMessage
 
   const searchHelp = async (query: string) => {
     setIsSearching(true)
@@ -167,12 +204,23 @@ export default function SupportChat() {
 
     addMessage({ role: 'user', type: 'text', text: query })
     setInput('')
+
+    if (isGreeting(query)) {
+      const reply = GREETING_REPLIES[Math.floor(Math.random() * GREETING_REPLIES.length)]
+      addMessage({ role: 'bot', type: 'text', text: reply })
+      return
+    }
+
+    if (wantsDemo(query)) {
+      addMessage({ role: 'bot', type: 'demo-cta', text: DEMO_CTA_TEXT })
+      return
+    }
+
     await searchHelp(query)
   }
 
   const handleReset = () => {
-    setMessages([GREETING_MESSAGE])
-    setNoAnswerCount(0)
+    resetChat([{ ...GREETING_MESSAGE, timestamp: Date.now() }])
     setInput('')
   }
 
@@ -180,7 +228,7 @@ export default function SupportChat() {
     <>
       {/* Floating bubble */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-        {!isOpen && !hasOpened && unreadCount > 0 && (
+        {!isOpen && showNudge && (
           <div
             className="bg-white border border-[#e8ebe8] rounded-2xl shadow-lg px-4 py-3 max-w-xs cursor-pointer animate-bounce-once"
             onClick={() => setOpen(true)}
@@ -195,6 +243,7 @@ export default function SupportChat() {
           className={cn(
             'relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center',
             'transition-all duration-300 hover:scale-110 active:scale-95',
+            !isOpen && 'animate-chat-float',
             isOpen ? 'bg-gray-700' : 'bg-[#1a5c3a]'
           )}
         >
@@ -239,7 +288,7 @@ export default function SupportChat() {
                     <div className="max-w-[80%] bg-[#1a5c3a] text-white rounded-2xl rounded-br-sm px-4 py-2.5">
                       <p className="text-sm leading-relaxed">{msg.text}</p>
                       <p className="text-2xs text-white/50 mt-1 text-right">
-                        {formatDistanceToNow(msg.timestamp, { addSuffix: true })}
+                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
                       </p>
                     </div>
                   </div>
@@ -255,7 +304,7 @@ export default function SupportChat() {
                         <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{msg.text}</p>
                       </div>
                       <p className="text-2xs text-gray-400 mt-1 ml-1">
-                        {formatDistanceToNow(msg.timestamp, { addSuffix: true })}
+                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
                       </p>
                     </div>
                   </div>
@@ -344,6 +393,28 @@ export default function SupportChat() {
                               <p className="text-2xs text-gray-400">Usually responds within 2 hours</p>
                             </div>
                             <ChevronRight size={13} className="text-gray-300 group-hover:text-[#1a5c3a]" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {msg.role === 'bot' && msg.type === 'demo-cta' && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-7 h-7 bg-[#e8f5ee] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <MessageCircle size={13} className="text-[#1a5c3a]" />
+                    </div>
+                    <div className="max-w-[85%]">
+                      <div className="bg-[#f7f8f6] border border-[#e8ebe8] rounded-2xl rounded-bl-sm overflow-hidden">
+                        <p className="text-sm text-gray-700 px-4 pt-3 pb-3 leading-relaxed whitespace-pre-line">{msg.text}</p>
+                        <div className="border-t border-[#e8ebe8] px-4 py-3">
+                          <button
+                            onClick={openDemoModal}
+                            className="w-full flex items-center justify-center gap-2 bg-[#1a5c3a] hover:bg-[#2d7a4f] text-white text-xs font-semibold rounded-xl px-3 py-2.5 transition-colors"
+                          >
+                            <CalendarClock size={14} />
+                            Request Demo
                           </button>
                         </div>
                       </div>

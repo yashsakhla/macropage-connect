@@ -1,30 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { Template, CreateTemplatePayload } from '@/types'
+import type { AxiosError } from 'axios'
+import type { Template, CreateTemplatePayload, RawTemplateDTO, ApiErrorResponse } from '@/types'
 
-function apiError(err: any, fallback: string): string {
-  return (
-    err?.error?.message ??
-    err?.response?.data?.error?.message ??
-    err?.response?.data?.message ??
-    fallback
-  )
+type TemplateErrorResponse = ApiErrorResponse & { error?: { message?: string } }
+type MutationError = AxiosError<TemplateErrorResponse> | (TemplateErrorResponse & { response?: undefined })
+
+function apiError(err: MutationError, fallback: string): string {
+  if (err && 'isAxiosError' in err) {
+    return err.response?.data?.error?.message ?? err.response?.data?.message ?? fallback
+  }
+  return err?.error?.message ?? fallback
 }
 
 // `_id` is sometimes plain string, sometimes MongoDB extended JSON (`{ $oid: "..." }`)
 // depending on how the backend serialized it — normalize both to a plain string so
 // every PATCH/DELETE `/templates/:id` call built from `template.id` actually resolves.
-function normalizeTemplateId(raw: any): string {
+function normalizeTemplateId(raw: RawTemplateDTO): string {
   const rawId = raw._id ?? raw.id
-  return (typeof rawId === 'object' && rawId?.$oid) ? rawId.$oid : rawId
+  return (typeof rawId === 'object' && rawId?.$oid) ? rawId.$oid : (rawId as string)
 }
 
 // The API returns the WhatsApp-wire shape (header.format, buttons wrapped in
 // { buttons: [...] }) — the rest of the app reads the flatter Template shape
 // (header.type, buttons as a plain array), so without this every template
 // with a header or buttons silently rendered as body-text-only.
-export function normalizeTemplate(raw: any): Template {
+export function normalizeTemplate(raw: RawTemplateDTO): Template {
   const header = raw.header
     ? { type: raw.header.type ?? raw.header.format, text: raw.header.text, mediaUrl: raw.header.mediaUrl }
     : undefined
@@ -41,7 +43,7 @@ export function useTemplates(filters?: { status?: string }) {
     queryKey: ['templates', filters],
     queryFn: () =>
       api.get('/templates', { params: filters }).then((r) => {
-        const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
+        const items: RawTemplateDTO[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
         return items.map(normalizeTemplate)
       }),
   })
@@ -67,7 +69,7 @@ export function useCreateTemplate() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Template submitted for Meta review')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to create template')),
   })
 }
@@ -84,7 +86,7 @@ export function useUpdateTemplate() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Template updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to update template')),
   })
 }
@@ -100,7 +102,7 @@ export function useDeleteTemplate() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Template deleted')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to delete template')),
   })
 }
@@ -114,7 +116,7 @@ export function useSaveDraft() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Draft saved')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to save draft')),
   })
 }
@@ -128,7 +130,7 @@ export function useUpdateDraft() {
       qc.invalidateQueries({ queryKey: ['templates'] })
       toast.success('Draft updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to update draft')),
   })
 }
@@ -148,6 +150,6 @@ export function useSyncTemplates() {
         }),
     enabled: false,
     retry: false,
-    meta: { onError: (err: any) => toast.error(apiError(err, 'Failed to sync templates')) },
+    meta: { onError: (err: MutationError) => toast.error(apiError(err, 'Failed to sync templates')) },
   })
 }

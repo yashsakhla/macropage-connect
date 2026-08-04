@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { format } from 'date-fns'
 import { Code2, Users, GitMerge, ArrowRight } from 'lucide-react'
 import StatusBanner from '@/components/help/StatusBanner'
 import HelpHeader from '@/components/help/HelpHeader'
@@ -11,7 +12,9 @@ import FAQAccordion from '@/components/help/FAQAccordion'
 import ContactSupport from '@/components/help/ContactSupport'
 import SearchResults from '@/components/help/SearchResults'
 import SupportTicketForm from '@/components/help/SupportTicketForm'
+import ServiceUptimeChart from '@/components/help/ServiceUptimeChart'
 import { useSystemStatus, useHelpDocs, useHelpFAQs } from '@/hooks/useHelp'
+import { CURRENT_VERSION, LATEST_RELEASE_DATE } from '@/data/changelog'
 import type { HelpCategory } from '@/types'
 
 export default function Help() {
@@ -49,26 +52,6 @@ export default function Help() {
           <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-8">
             <OnboardingChecklist />
           </div>
-
-          {/* Category grid + articles — all live inside one "Browse documentation" section */}
-          <CategoryGrid
-            docs={docs}
-            docsLoading={docsLoading}
-            activeCategory={activeCategory}
-            onCategoryClick={cat => setActiveCategory(cat)}
-            onClearCategory={() => setActiveCategory(null)}
-          />
-
-          {/* Video tutorials */}
-          <VideoTutorials />
-
-          {/* FAQs */}
-          <FAQAccordion faqs={faqs} />
-
-          {/* Contact support */}
-          <ContactSupport
-            onTicketClick={() => setTicketOpen(true)}
-          />
 
           {/* Status page */}
           <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
@@ -138,20 +121,7 @@ export default function Help() {
                             <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{uptime}%</span>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
-                            {history.map((h, i) => (
-                              <div
-                                key={`${svc.name}-${i}`}
-                                className="h-6 flex-1 rounded-sm"
-                                style={{
-                                  backgroundColor:
-                                    h === 'operational' ? '#1a5c3a' :
-                                    h === 'degraded' ? '#f59e0b' : '#ef4444',
-                                  opacity: i === history.length - 1 ? 1 : 0.8,
-                                }}
-                              />
-                            ))}
-                          </div>
+                          <ServiceUptimeChart history={history} status={svc.status} />
                         </div>
                       )
                     })}
@@ -171,7 +141,12 @@ export default function Help() {
                   ) : (
                     <div className="space-y-3">
                       {(status?.incidents ?? []).map(inc => (
-                        <div key={inc.id} className="rounded-xl border border-[#edf0ee] dark:border-white/10 bg-white dark:bg-[#0b1220] p-3">
+                        <button
+                          key={inc.id}
+                          type="button"
+                          onClick={() => navigate(`/help/tickets/${inc.id}`)}
+                          className="w-full text-left rounded-xl border border-[#edf0ee] dark:border-white/10 bg-white dark:bg-[#0b1220] p-3 hover:border-[#c8e6d4] dark:hover:border-emerald-900/50 transition-colors group"
+                        >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{inc.title}</p>
@@ -179,21 +154,24 @@ export default function Help() {
                                 {new Date(inc.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </p>
                             </div>
-                            <span
-                              className="text-[0.625rem] font-semibold px-2 py-1 rounded-full whitespace-nowrap"
-                              style={{
-                                backgroundColor:
-                                  inc.status === 'resolved' ? '#e8f5ee' :
-                                  inc.status === 'monitoring' ? '#fff7ed' : '#fef2f2',
-                                color:
-                                  inc.status === 'resolved' ? '#1a5c3a' :
-                                  inc.status === 'monitoring' ? '#b45309' : '#b91c1c',
-                              }}
-                            >
-                              {inc.status}
-                            </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span
+                                className="text-[0.625rem] font-semibold px-2 py-1 rounded-full whitespace-nowrap"
+                                style={{
+                                  backgroundColor:
+                                    inc.status === 'resolved' ? '#e8f5ee' :
+                                    inc.status === 'monitoring' ? '#fff7ed' : '#fef2f2',
+                                  color:
+                                    inc.status === 'resolved' ? '#1a5c3a' :
+                                    inc.status === 'monitoring' ? '#b45309' : '#b91c1c',
+                                }}
+                              >
+                                {inc.status}
+                              </span>
+                              <ArrowRight size={13} className="text-gray-300 dark:text-gray-600 group-hover:text-[#1a5c3a] dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                            </div>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -201,6 +179,26 @@ export default function Help() {
               </div>
             </div>
           </div>
+
+          {/* Category grid + articles — all live inside one "Browse documentation" section */}
+          <CategoryGrid
+            docs={docs}
+            docsLoading={docsLoading}
+            activeCategory={activeCategory}
+            onCategoryClick={cat => setActiveCategory(cat)}
+            onClearCategory={() => setActiveCategory(null)}
+          />
+
+          {/* Video tutorials */}
+          <VideoTutorials />
+
+          {/* FAQs */}
+          <FAQAccordion faqs={faqs} />
+
+          {/* Contact support */}
+          <ContactSupport
+            onTicketClick={() => setTicketOpen(true)}
+          />
 
           {/* Community & resources */}
           <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
@@ -220,7 +218,12 @@ export default function Help() {
                 </p>
               </button>
 
-              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
+              <a
+                href="https://www.macropage.in/contact"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all block"
+              >
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center mb-3">
                   <Users size={20} className="text-purple-600 dark:text-purple-400" />
                 </div>
@@ -229,9 +232,13 @@ export default function Help() {
                 <p className="text-sm text-[#1a5c3a] font-medium mt-3 flex items-center gap-1">
                   Join community <ArrowRight size={14} />
                 </p>
-              </div>
+              </a>
 
-              <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer">
+              <button
+                type="button"
+                onClick={() => navigate('/changelog')}
+                className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 hover:border-[#c8e6d4] hover:shadow-sm transition-all text-left"
+              >
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3">
                   <GitMerge size={20} className="text-blue-600 dark:text-blue-400" />
                 </div>
@@ -241,9 +248,9 @@ export default function Help() {
                   View changelog <ArrowRight size={14} />
                 </p>
                 <span className="inline-block bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[0.625rem] rounded-full px-2 py-0.5 mt-2">
-                  v1.2.0 · 2 days ago
+                  v{CURRENT_VERSION} · {format(new Date(LATEST_RELEASE_DATE), 'MMM d, yyyy')}
                 </span>
-              </div>
+              </button>
             </div>
           </div>
         </>

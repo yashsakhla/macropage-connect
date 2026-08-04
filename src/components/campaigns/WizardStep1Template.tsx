@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Check, FileText, AlertCircle, RefreshCw } from 'lucide-react'
+import { AxiosError } from 'axios'
 import { cn } from '@/lib/utils'
-import type { Template } from '@/types'
+import type { Template, ApiErrorResponse } from '@/types'
 import { useApprovedTemplates } from '@/hooks/useCampaigns'
 import TemplatePreview from '@/components/templates/TemplatePreview'
 
@@ -20,8 +21,6 @@ interface WizardStep1Props {
 const VARIABLE_SOURCE_OPTIONS = [
   { value: 'contactName', label: 'Contact name' },
   { value: 'contactPhone', label: 'Contact phone' },
-  { value: 'customField1', label: 'Custom field 1' },
-  { value: 'customField2', label: 'Custom field 2' },
   { value: 'fixed', label: 'Fixed text' },
 ]
 
@@ -132,7 +131,7 @@ export default function WizardStep1Template({
               <div className="flex-1">
                 <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not load templates</p>
                 <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
-                  {(templatesRawErr as any)?.response?.data?.message
+                  {(templatesRawErr as AxiosError<ApiErrorResponse> | null)?.response?.data?.message
                     ?? 'We are currently facing an issue. Please try again.'}
                 </p>
               </div>

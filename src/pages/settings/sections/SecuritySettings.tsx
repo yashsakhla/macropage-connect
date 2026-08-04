@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
 import SessionsTable from '@/components/settings/SessionsTable'
 import { useChangePassword, useActiveSessions, useRevokeSession, useRevokeAllSessions } from '@/hooks/useProfile'
+import { useAuthStore } from '@/store/authStore'
 import type { ActiveSession } from '@/types'
 
 const schema = z.object({
@@ -29,12 +30,15 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 export default function SecuritySettings() {
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false })
 
+  const { user } = useAuthStore()
+  const isAgent = (((user?.role as string) ?? '').toUpperCase()) === 'AGENT'
+
   const changePassword = useChangePassword()
   const { data: sessionsData } = useActiveSessions()
   const revokeSession = useRevokeSession()
   const revokeAll = useRevokeAllSessions()
 
-  const sessions = ((sessionsData as any) ?? []) as ActiveSession[]
+  const sessions = (sessionsData ?? []) as ActiveSession[]
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) })
   const newPw = watch('newPassword') ?? ''
@@ -99,9 +103,11 @@ export default function SecuritySettings() {
       </div>
 
       {/* Sessions */}
-      <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
-        <SessionsTable sessions={sessions} onRevoke={id => revokeSession.mutate(id)} onRevokeAll={() => revokeAll.mutate()} />
-      </div>
+      {!isAgent && (
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+          <SessionsTable sessions={sessions} onRevoke={id => revokeSession.mutate(id)} onRevokeAll={() => revokeAll.mutate()} />
+        </div>
+      )}
     </SettingsSection>
   )
 }

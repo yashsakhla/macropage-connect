@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { Download, Copy, Check, QrCode, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { Download, Copy, Check, QrCode, MessageCircle, ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import type { DashboardHealthData } from '@/types'
+import { useAuthStore } from '@/store/authStore'
+import { useQrMessages, useCreateQrMessage, useUpdateQrMessage } from '@/hooks/useQrMessage'
 import brandLogo from '@assets/macropage-connect-black-icon.svg'
 import brandLogoWhite from '@assets/macropage-connect-white-icon.svg'
 
@@ -20,9 +22,10 @@ function readStoredOpen(): boolean {
   return stored === null ? true : stored === '1'
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+function loadImage(src: string, crossOrigin = false): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()
+    if (crossOrigin) img.crossOrigin = 'anonymous'
     img.onload = () => resolve(img)
     img.onerror = reject
     img.src = src
@@ -41,12 +44,23 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: num
 
 export default function WhatsAppQRCard({ health }: { health?: DashboardHealthData }) {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const canvasWrapRef = useRef<HTMLDivElement>(null)
   const exportWrapRef = useRef<HTMLDivElement>(null)
-  const [prefillText, setPrefillText] = useState('Hi! I found you via QR code.')
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [open, setOpen] = useState(readStoredOpen)
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  const { data: qrMessages } = useQrMessages()
+  const createQrMessage = useCreateQrMessage()
+  const updateQrMessage = useUpdateQrMessage()
+  const existing = qrMessages?.[0]
+
+  const prebuiltMessage = `Hi, tell us how ${user?.companyName?.trim() || 'your company'} can help you`
+  const prefillText = existing?.message?.trim() ? existing.message : prebuiltMessage
+  const isSaving = createQrMessage.isPending || updateQrMessage.isPending
 
   const digits = health?.connected && health.phoneNumber ? toE164Digits(health.phoneNumber) : ''
 
@@ -64,6 +78,29 @@ export default function WhatsAppQRCard({ health }: { health?: DashboardHealthDat
     })
   }
 
+  const startEditing = () => {
+    setDraft(prefillText)
+    setIsEditing(true)
+  }
+
+  const handleSubmit = async () => {
+    const message = draft.trim()
+    if (!message) {
+      toast.error('Message cannot be empty')
+      return
+    }
+    try {
+      if (existing?.id) {
+        await updateQrMessage.mutateAsync({ id: existing.id, message })
+      } else {
+        await createQrMessage.mutateAsync(message)
+      }
+      setIsEditing(false)
+    } catch {
+      // toast already shown by the mutation's onError
+    }
+  }
+
   const handleDownload = async () => {
     const qrCanvas = exportWrapRef.current?.querySelector('canvas')
     if (!qrCanvas || downloading) return
@@ -71,8 +108,8 @@ export default function WhatsAppQRCard({ health }: { health?: DashboardHealthDat
 
     try {
       const W = 480
-      const H = 720
-      const headerH = 130
+      const H = 780
+      const headerH = 190
       const canvas = document.createElement('canvas')
       canvas.width = W
       canvas.height = H
@@ -95,22 +132,27 @@ export default function WhatsAppQRCard({ health }: { health?: DashboardHealthDat
       ctx.fillRect(0, 0, W, headerH)
       ctx.restore()
 
-      // Header logo + title
+      // Small Macropage Connect watermark, top-right corner of the header
       const [whiteLogo] = await Promise.all([loadImage(brandLogoWhite)])
-      const logoH = 30
-      const logoW = logoH * (whiteLogo.width / whiteLogo.height)
-      ctx.drawImage(whiteLogo, W / 2 - logoW / 2, 22, logoW, logoH)
+      const markH = 20
+      const markW = markH * (whiteLogo.width / whiteLogo.height)
+      ctx.drawImage(whiteLogo, W - 28 - markW, 18, markW, markH)
 
-      ctx.fillStyle = '#ffffff'
-      ctx.textAlign = 'center'
-      ctx.font = '600 20px Inter, Arial, sans-serif'
-      ctx.fillText('Scan to Chat on WhatsApp', W / 2, 90)
-
+      const textStartY = 90
       const displayName = health?.displayName?.trim()
+      ctx.textAlign = 'center'
       if (displayName) {
-        ctx.font = '400 13px Inter, Arial, sans-serif'
-        ctx.fillStyle = 'rgba(255,255,255,0.85)'
-        ctx.fillText(displayName, W / 2, 112)
+        ctx.fillStyle = '#ffffff'
+        ctx.font = '700 34px Inter, Arial, sans-serif'
+        ctx.fillText(displayName, W / 2, textStartY)
+
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'
+        ctx.font = '400 14px Inter, Arial, sans-serif'
+        ctx.fillText('Scan to Chat on WhatsApp', W / 2, textStartY + 28)
+      } else {
+        ctx.fillStyle = '#ffffff'
+        ctx.font = '600 22px Inter, Arial, sans-serif'
+        ctx.fillText('Scan to Chat on WhatsApp', W / 2, textStartY + 6)
       }
 
       // QR panel
@@ -270,13 +312,57 @@ export default function WhatsAppQRCard({ health }: { health?: DashboardHealthDat
           />
         </div>
 
-        <input
-          className="input text-sm mt-4 w-full"
-          value={prefillText}
-          maxLength={120}
-          onChange={(e) => setPrefillText(e.target.value)}
-          placeholder="Pre-filled message"
-        />
+        <div className="w-full mt-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-2xs font-medium text-gray-600 dark:text-gray-400">Pre-filled message</label>
+            {!isEditing && (
+              <button
+                onClick={startEditing}
+                className="inline-flex items-center gap-1 text-2xs font-medium text-[#1a5c3a] hover:underline"
+              >
+                <Pencil size={11} /> Edit
+              </button>
+            )}
+          </div>
+
+          {isEditing ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                className="input text-sm w-full truncate"
+                maxLength={300}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={prebuiltMessage}
+                autoFocus
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSaving}
+                  className="btn btn-primary flex-1 justify-center text-sm disabled:opacity-60"
+                  style={{ background: '#1a5c3a', borderColor: '#1a5c3a' }}
+                >
+                  {isSaving ? 'Saving…' : 'Submit'}
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
+                  className="btn btn-outline flex-1 justify-center text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p
+              className="text-sm text-gray-700 dark:text-gray-300 leading-snug bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 truncate"
+              title={prefillText}
+            >
+              {prefillText}
+            </p>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 mt-3 w-full">
           <button

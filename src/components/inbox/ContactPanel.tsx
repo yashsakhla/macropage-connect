@@ -24,7 +24,7 @@ import { getInitials, cn } from '@/lib/utils'
 import { useConversation } from '@/hooks/useConversations'
 import { useUpdateContact } from '@/hooks/useContacts'
 import { useInboxStore } from '@/store/inboxStore'
-import { avatarGradient } from './ConversationItem'
+import { avatarGradient } from '@/lib/avatarGradient'
 
 function safeFormat(value: string | undefined | null, fmt: string, fallback = '—'): string {
   if (!value) return fallback

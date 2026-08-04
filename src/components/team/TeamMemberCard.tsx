@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreVertical, Shield, Users, Headphones } from 'lucide-react'
+import { MoreVertical, Shield, Users, Headphones, Check } from 'lucide-react'
 import { cn, getInitials, fromNow } from '@/lib/utils'
 import type { TeamMember, UserRole } from '@/types'
 import { useUpdateMemberRole, useRemoveMember } from '@/hooks/useTeam'
-import { usePermissions } from '@/lib/permissions'
+import { usePermissions } from '@/lib/permissionsConstants'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; icon: typeof Shield; label: string }> = {
   owner:   { bg: 'bg-rose-50',    text: 'text-rose-700',   icon: Shield,     label: 'Owner'   },
@@ -28,9 +29,17 @@ interface TeamMemberCardProps {
   isCurrentUser: boolean
 }
 
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  admin: 'Full access to team, billing & settings',
+  manager: 'Manages conversations, campaigns & agents',
+  agent: 'Handles conversations assigned to them',
+}
+
 export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [roleMenuOpen, setRoleMenuOpen] = useState(false)
+  const [pendingRole, setPendingRole] = useState<string | null>(null)
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const updateRole = useUpdateMemberRole()
@@ -50,14 +59,23 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
   const RoleIcon = role.icon
 
   const handleChangeRole = (newRole: string) => {
-    if (!window.confirm(`Change ${member.name}'s role to ${newRole}?`)) return
-    updateRole.mutate({ id: member.id, role: newRole as import('@/lib/permissions').Role })
+    setPendingRole(newRole)
     setRoleMenuOpen(false)
   }
 
+  const confirmChangeRole = () => {
+    if (!pendingRole) return
+    updateRole.mutate({ id: member.id, role: pendingRole as import('@/lib/permissionsConstants').Role })
+    setPendingRole(null)
+  }
+
   const handleRemove = () => {
-    if (!window.confirm(`Remove ${member.name} from the team?`)) return
+    setRemoveConfirmOpen(true)
+  }
+
+  const confirmRemove = () => {
     removeMember.mutate(member.id)
+    setRemoveConfirmOpen(false)
   }
 
   return (
@@ -86,7 +104,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
 
           {!isCurrentUser ? (
             <div className="relative shrink-0" ref={menuRef}>
-              <button className="btn-ghost w-8 h-8" onClick={() => setMenuOpen(v => !v)}>
+              <button className="btn-ghost w-8 h-8 !px-0" onClick={() => setMenuOpen(v => !v)}>
                 <MoreVertical size={14} />
               </button>
               {menuOpen && (
@@ -120,12 +138,25 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
               <RoleIcon size={11} /> {role.label}
             </button>
             {roleMenuOpen && canChangeTeamRole && (
-              <div className="absolute left-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-32 text-sm">
-                {(['admin', 'manager', 'agent'] as UserRole[]).map(r => (
-                  <button key={r} className={cn('w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 capitalize', member.role === r && 'text-[#1a5c3a] font-medium')} onClick={() => handleChangeRole(r)}>
-                    {r}
-                  </button>
-                ))}
+              <div className="absolute left-0 top-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl shadow-[0_20px_40px_-8px_rgba(0,0,0,0.2),0_8px_16px_-6px_rgba(0,0,0,0.1)] py-2 w-60 text-sm overflow-hidden">
+                <p className="px-3 pb-1.5 text-2xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Change role to</p>
+                {(['admin', 'manager', 'agent'] as UserRole[]).map(r => {
+                  const opt = ROLE_CONFIG[r]
+                  const OptIcon = opt.icon
+                  const active = member.role === r
+                  return (
+                    <button key={r} className={cn('w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 transition-colors', active && 'bg-[#f0faf5] dark:bg-emerald-950/20')} onClick={() => handleChangeRole(r)}>
+                      <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', opt.bg, opt.text)}>
+                        <OptIcon size={14} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={cn('block capitalize font-medium', active ? 'text-[#1a5c3a] dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200')}>{r}</span>
+                        <span className="block text-2xs text-gray-400 dark:text-gray-500 truncate">{ROLE_DESCRIPTIONS[r]}</span>
+                      </span>
+                      {active && <Check size={14} className="text-[#1a5c3a] dark:text-emerald-400 shrink-0" />}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -258,6 +289,27 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
         {isCurrentUser && <span className="text-xs text-gray-300 dark:text-gray-600 pr-1">—</span>}
       </div>
       </div>
+
+      {pendingRole && (
+        <ConfirmDialog
+          title="Change role"
+          message={`Change ${member.name || member.email}'s role to ${pendingRole}?`}
+          confirmLabel="Change role"
+          danger={false}
+          onConfirm={confirmChangeRole}
+          onCancel={() => setPendingRole(null)}
+        />
+      )}
+      {removeConfirmOpen && (
+        <ConfirmDialog
+          title="Remove member"
+          message={`Remove ${member.name || member.email} from the team? They will lose access immediately.`}
+          confirmLabel="Remove member"
+          danger
+          onConfirm={confirmRemove}
+          onCancel={() => setRemoveConfirmOpen(false)}
+        />
+      )}
     </>
   )
 }

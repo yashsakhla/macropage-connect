@@ -5,7 +5,7 @@ import {
   Upload, UserPlus, KeyRound, Building2, User, BarChart2, Key, Webhook,
   Puzzle, Bell, Shield,
 } from 'lucide-react'
-import { PERMISSIONS } from '@/lib/permissions'
+import { PERMISSIONS } from '@/lib/permissionsConstants'
 
 export type SearchGroup = 'Pages' | 'Quick Actions' | 'Sample Templates' | 'Settings' | 'Help'
 

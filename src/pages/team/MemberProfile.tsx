@@ -4,8 +4,9 @@ import { ArrowLeft, Edit2, MoreVertical, Mail, CheckCircle, XCircle } from 'luci
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from 'recharts'
 import { cn, getInitials, fromNow } from '@/lib/utils'
 import { useTeamMember } from '@/hooks/useTeam'
-import { ROLE_PERMISSIONS, type Role } from '@/lib/permissions'
+import { ROLE_PERMISSIONS, type Role } from '@/lib/permissionsConstants'
 import { useTeamActivity } from '@/hooks/useTeamActivity'
+import type { ActivityLog as AL } from '@/types'
 import RoleBadge from '@/components/team/RoleBadge'
 import OnlineIndicator from '@/components/team/OnlineIndicator'
 import EditMemberModal from '@/components/team/EditMemberModal'
@@ -55,9 +56,9 @@ export default function MemberProfile() {
   }
 
   const grad = avatarGradient(member.name || member.email)
-  const role = member.role as Role
-  const perms = ROLE_PERMISSIONS[role]
-  const memberActivity = ((activityData as any)?.data ?? []).slice(0, 10)
+  const role = (member.role?.toUpperCase() as Role) || 'AGENT'
+  const perms = ROLE_PERMISSIONS[role] ?? []
+  const memberActivity = ((activityData as { data?: AL[] } | undefined)?.data ?? []).slice(0, 10)
 
   const KEY_PERMS = [
     'view_all_conversations', 'assign_conversations', 'create_campaigns',

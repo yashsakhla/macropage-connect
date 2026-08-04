@@ -9,11 +9,13 @@ import {
   AlertCircle, RefreshCw, Loader2,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUserActivity } from '@/hooks/useProfile'
+import type { UserActivityItem, UserActivityData } from '@/types'
 
-function getActivityConfig(type: string): { icon: any; bg: string; color: string } {
-  const configs: Record<string, { icon: any; bg: string; color: string }> = {
+function getActivityConfig(type: string): { icon: LucideIcon; bg: string; color: string } {
+  const configs: Record<string, { icon: LucideIcon; bg: string; color: string }> = {
     LOGIN:                  { icon: LogIn,        bg: 'bg-blue-50',     color: 'text-blue-500' },
     LOGOUT:                 { icon: LogOut,       bg: 'bg-gray-100',    color: 'text-gray-400' },
     PASSWORD_CHANGED:       { icon: Lock,         bg: 'bg-purple-50',   color: 'text-purple-500' },
@@ -37,7 +39,7 @@ function getActivityConfig(type: string): { icon: any; bg: string; color: string
   return configs[type] ?? { icon: Activity, bg: 'bg-gray-100', color: 'text-gray-400' }
 }
 
-function ActivityRow({ activity }: { activity: any }) {
+function ActivityRow({ activity }: { activity: UserActivityItem }) {
   const config = getActivityConfig(activity.type)
   const Icon = config.icon
 
@@ -90,8 +92,8 @@ export default function ActivityFeed() {
     isFetching: activityFetching,
   } = useUserActivity(activityPage)
 
-  const activities = activityData?.activities ?? []
-  const totalPages = activityData?.totalPages ?? 1
+  const activities = (activityData as UserActivityData | undefined)?.activities ?? []
+  const totalPages = (activityData as UserActivityData | undefined)?.totalPages ?? 1
 
   return (
     <div className="bg-white border border-[#e8ebe8] rounded-2xl overflow-hidden mt-6">
@@ -147,7 +149,7 @@ export default function ActivityFeed() {
         {/* Activity list */}
         {!activityLoading && !activityError && activities.length > 0 && (
           <div className="space-y-1">
-            {activities.map((activity: any) => (
+            {activities.map((activity: UserActivityItem) => (
               <ActivityRow key={activity._id} activity={activity} />
             ))}
           </div>

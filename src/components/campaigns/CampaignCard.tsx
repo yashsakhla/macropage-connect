@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
-import { MoreVertical, FileText, Pause, Edit2, Trash2, Copy, Users, Eye, Calendar, CheckCircle2 } from 'lucide-react'
+import { MoreVertical, FileText, Pause, Edit2, Trash2, Users, Eye, Calendar, CheckCircle2, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Campaign } from '@/types'
 import { format } from 'date-fns'
-import { usePermissions } from '@/lib/permissions'
+import { usePermissions } from '@/lib/permissionsConstants'
 import messageIcon from '@/assets/campaigns/message.svg'
 import goalIcon from '@/assets/campaigns/goal.svg'
 import peoplesIcon from '@/assets/contacts/peoples-icon.png'
 import peoplePlusIcon from '@/assets/contacts/people-plus.png'
 
-export const LIST_GRID_COLS = '2fr 100px 70px 80px 70px 60px 60px 60px 118px 90px'
+export const LIST_GRID_COLS = '2fr 100px 70px 80px 70px 60px 60px 60px 140px 130px'
 
 // Audience-type thumbnail per row — reuses illustrations already shipped for
 // campaigns/contacts elsewhere in the app instead of a generic lucide icon.
@@ -55,10 +55,11 @@ interface CampaignCardProps {
   view: 'list' | 'grid'
   onClick: (c: Campaign) => void
   onPause?: (c: Campaign) => void
-  onDuplicate?: (c: Campaign) => void
+  onEdit?: (c: Campaign) => void
+  onLaunch?: (c: Campaign) => void
 }
 
-export default function CampaignCard({ campaign, view, onClick, onPause, onDuplicate }: CampaignCardProps) {
+export default function CampaignCard({ campaign, view, onClick, onPause, onEdit, onLaunch }: CampaignCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const { canLaunchCampaign, canDeleteCampaign } = usePermissions()
@@ -116,15 +117,25 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
               {s.label}
             </span>
             <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-              <button className="btn-ghost w-7 h-7" onClick={() => setMenuOpen(v => !v)}>
+              <button className="btn-ghost w-7 h-7 p-0" onClick={() => setMenuOpen(v => !v)}>
                 <MoreVertical size={14} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-36 text-sm">
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"
-                    onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}>
-                    <Copy size={12} /> Duplicate
-                  </button>
+                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+                  {campaign.status === 'draft' && (
+                    <>
+                      <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"
+                        onClick={() => { onEdit?.(campaign); setMenuOpen(false) }}>
+                        <Edit2 size={12} /> Edit
+                      </button>
+                      {canLaunchCampaign && (
+                        <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2 text-[#1a5c3a]"
+                          onClick={() => { onLaunch?.(campaign); setMenuOpen(false) }}>
+                          <Rocket size={12} /> Launch
+                        </button>
+                      )}
+                    </>
+                  )}
                   {canDeleteCampaign && (
                     <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2">
                       <Trash2 size={12} /> Delete
@@ -258,12 +269,17 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
           </div>
           <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
             {campaign.status === 'running' && canLaunchCampaign && (
-              <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>
+              <button className="btn-ghost w-8 h-8 p-0" title="Pause" onClick={() => onPause?.(campaign)}>
                 <Pause size={14} />
               </button>
             )}
             {campaign.status === 'draft' && (
-              <button className="btn-ghost w-8 h-8" title="Edit"><Edit2 size={14} /></button>
+              <>
+                <button className="btn-ghost w-8 h-8 p-0" title="Edit" onClick={() => onEdit?.(campaign)}><Edit2 size={14} /></button>
+                {canLaunchCampaign && (
+                  <button className="btn-ghost w-8 h-8 p-0 text-[#1a5c3a]" title="Launch" onClick={() => onLaunch?.(campaign)}><Rocket size={14} /></button>
+                )}
+              </>
             )}
             {campaign.status === 'completed' && (
               <button
@@ -274,13 +290,12 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
               </button>
             )}
             <div className="relative" ref={menuRef}>
-              <button className="btn-ghost w-8 h-8" onClick={() => setMenuOpen(v => !v)}>
+              <button className="btn-ghost w-8 h-8 p-0" onClick={() => setMenuOpen(v => !v)}>
                 <MoreVertical size={14} />
               </button>
               {menuOpen && (
                 <div className="absolute right-0 bottom-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"><Users size={12} /> View recipients</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onClick(campaign); setMenuOpen(false) }}><Users size={12} /> View recipients</button>
                   {canDeleteCampaign && (
                     <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
                   )}
@@ -308,37 +323,37 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
         </div>
 
         {/* col 2: status */}
-        <span className={cn('flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium w-fit', s.bg, s.text)}>
+        <span className={cn('flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium w-fit mx-auto', s.bg, s.text)}>
           <span className={cn('w-1.5 h-1.5 rounded-full', s.dot, s.pulse && 'animate-pulse')} />
           {s.label}
         </span>
 
         {/* col 3: contacts */}
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{campaign.totalContacts.toLocaleString()}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 text-center whitespace-nowrap">{campaign.totalContacts.toLocaleString()}</p>
 
         {/* col 4: delivered */}
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 text-center whitespace-nowrap">
           {hasResults ? campaign.delivered.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
         </p>
 
         {/* col 5: open rate */}
-        <div className="flex justify-start">
+        <div className="flex justify-center">
           {hasResults ? <DeliveryRing pct={openPct} size="sm" /> : <span className="text-sm text-gray-300 dark:text-gray-600">—</span>}
         </div>
 
         {/* col 6-8: sent / read / failed */}
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 text-center whitespace-nowrap">
           {hasResults ? campaign.sent.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
         </p>
-        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 text-center whitespace-nowrap">
           {hasResults ? campaign.read.toLocaleString() : <span className="text-gray-300 dark:text-gray-600">—</span>}
         </p>
-        <p className={cn('text-sm font-medium', hasResults && campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-300 dark:text-gray-600')}>
+        <p className={cn('text-sm font-medium text-center whitespace-nowrap', hasResults && campaign.failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-300 dark:text-gray-600')}>
           {hasResults ? campaign.failed.toLocaleString() : '—'}
         </p>
 
         {/* col 9: last updated */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1 whitespace-nowrap">
           {campaign.status === 'scheduled'
             ? <Calendar size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
             : <CheckCircle2 size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
@@ -347,14 +362,19 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
         </div>
 
         {/* col 10: actions */}
-        <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-1 justify-center" onClick={e => e.stopPropagation()}>
           {campaign.status === 'running' && canLaunchCampaign && (
-            <button className="btn-ghost w-8 h-8" title="Pause" onClick={() => onPause?.(campaign)}>
+            <button className="btn-ghost w-8 h-8 p-0" title="Pause" onClick={() => onPause?.(campaign)}>
               <Pause size={14} />
             </button>
           )}
           {campaign.status === 'draft' && (
-            <button className="btn-ghost w-8 h-8" title="Edit"><Edit2 size={14} /></button>
+            <>
+              <button className="btn-ghost w-8 h-8 p-0" title="Edit" onClick={() => onEdit?.(campaign)}><Edit2 size={14} /></button>
+              {canLaunchCampaign && (
+                <button className="btn-ghost w-8 h-8 p-0 text-[#1a5c3a]" title="Launch" onClick={() => onLaunch?.(campaign)}><Rocket size={14} /></button>
+              )}
+            </>
           )}
           {campaign.status === 'completed' && (
             <button
@@ -365,13 +385,12 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onDupli
             </button>
           )}
           <div className="relative" ref={menuRef}>
-            <button className="btn-ghost w-8 h-8" onClick={() => setMenuOpen(v => !v)}>
+            <button className="btn-ghost w-8 h-8 p-0" onClick={() => setMenuOpen(v => !v)}>
               <MoreVertical size={14} />
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
-                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onDuplicate?.(campaign); setMenuOpen(false) }}><Copy size={12} /> Duplicate</button>
-                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2"><Users size={12} /> View recipients</button>
+                <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onClick(campaign); setMenuOpen(false) }}><Users size={12} /> View recipients</button>
                 {canDeleteCampaign && (
                   <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
                 )}

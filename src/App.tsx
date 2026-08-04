@@ -33,9 +33,13 @@ const WhatsAppSetup   = lazy(() => import('@/pages/setup/WhatsAppSetup'))
 const SetupComplete   = lazy(() => import('@/pages/setup/SetupComplete'))
 const Help            = lazy(() => import('@/pages/help/Help'))
 const ArticleDetail   = lazy(() => import('@/pages/help/ArticleDetail'))
+const MyTickets       = lazy(() => import('@/pages/help/MyTickets'))
+const TicketDetail    = lazy(() => import('@/pages/help/TicketDetail'))
 const Plans           = lazy(() => import('@/pages/plans/Plans'))
 const VerifyEmail     = lazy(() => import('@/pages/auth/VerifyEmail'))
+const VerifyOtp       = lazy(() => import('@/pages/auth/VerifyOtp'))
 const AcceptInvite    = lazy(() => import('@/pages/invite/AcceptInvite'))
+const Changelog       = lazy(() => import('@/pages/changelog/Changelog'))
 
 const router = createBrowserRouter([
   // Public auth routes
@@ -85,6 +89,9 @@ const router = createBrowserRouter([
       { path: '/developers/api-reference', element: <ApiReference /> },
       { path: '/help', element: <Help /> },
       { path: '/help/articles/:slug', element: <ArticleDetail /> },
+      { path: '/help/tickets', element: <MyTickets /> },
+      { path: '/help/tickets/:ticketId', element: <TicketDetail /> },
+      { path: '/changelog', element: <Changelog /> },
       { path: '/plans', element: <Plans /> },
     ],
   },
@@ -123,6 +130,16 @@ const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <VerifyEmail />
+      </Suspense>
+    ),
+  },
+  // OTP verification for accounts that registered but never completed the
+  // signup OTP step — reached only via the emailVerified:false login redirect.
+  {
+    path: '/verify-otp',
+    element: (
+      <Suspense fallback={null}>
+        <VerifyOtp />
       </Suspense>
     ),
   },

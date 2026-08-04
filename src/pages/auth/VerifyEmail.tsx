@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   CheckCircle, XCircle, Loader2,
   Mail, ArrowRight, RefreshCw
 } from 'lucide-react'
+import type { AxiosError } from 'axios'
 import { useVerifyEmail, useResendVerification } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
+import { useUIStore } from '@/store/uiStore'
+import type { ApiErrorResponse } from '@/types'
+import blackLogo from '@assets/macropage-connect-black.svg'
+import whiteLogo from '@assets/macropage-connect-white.svg'
 
 type VerifyState = 'loading' | 'success' | 'error' | 'expired'
 
@@ -14,6 +19,8 @@ export default function VerifyEmail() {
   const [searchParams] = useSearchParams()
   const token = tokenParam ?? searchParams.get('token') ?? undefined
   const navigate   = useNavigate()
+  const { theme } = useUIStore()
+  const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [state, setState]         = useState<VerifyState>('loading')
   const [errorCode, setErrorCode] = useState('')
 
@@ -24,8 +31,9 @@ export default function VerifyEmail() {
 
     verify(token, {
       onSuccess: () => setState('success'),
-      onError: (err: any) => {
-        const code = err.response?.data?.error?.code ?? ''
+      onError: (err: Error) => {
+        const axiosErr = err as AxiosError<ApiErrorResponse>
+        const code = axiosErr.response?.data?.error?.code ?? axiosErr.response?.data?.code ?? ''
         setErrorCode(code)
         setState(code === 'TOKEN_EXPIRED' ? 'expired' : 'error')
       },
@@ -34,7 +42,8 @@ export default function VerifyEmail() {
   }, [token])
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f7f8f6] flex flex-col items-center justify-center p-4">
+      <img src={logo} alt="Macropage Connect" className="h-8 mb-6" />
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 text-center">
 
         {/* ── LOADING ── */}
@@ -83,9 +92,6 @@ export default function VerifyEmail() {
               Request a new one below.
             </p>
             <ResendButton />
-            <Link to="/dashboard" className="block mt-3 text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              Go to dashboard anyway
-            </Link>
           </>
         )}
 
@@ -112,17 +118,12 @@ export default function VerifyEmail() {
                 <ArrowRight size={16} />
               </button>
             ) : (
-              <>
-                <ResendButton />
-                <Link to="/dashboard" className="block mt-3 text-sm text-gray-400 hover:text-gray-600">
-                  Go to dashboard
-                </Link>
-              </>
+              <ResendButton />
             )}
           </>
         )}
 
-        <p className="text-xs text-gray-300 mt-8">Macropage Connect · Email Verification</p>
+        <p className="text-xs text-gray-600 mt-8">Macropage Connect · Email Verification</p>
       </div>
     </div>
   )

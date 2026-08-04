@@ -4,6 +4,10 @@ import api from '@/lib/axios'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import type { SetupStatus } from '@/types/setup'
+import type { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
+
+type MutationError = AxiosError<ApiErrorResponse & { error?: { message?: string; code?: string } }>
 
 export function useWABADetails() {
   return useQuery({
@@ -19,10 +23,10 @@ export function useShareWABADetails() {
   return useMutation({
     mutationFn: (email?: string) =>
       api.post('/whatsapp/share-details', { email }).then(r => r.data?.data ?? r.data),
-    onSuccess: (data: any) => {
+    onSuccess: (data: { message?: string }) => {
       toast.success(data?.message ?? 'Details sent!')
     },
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       toast.error(err?.response?.data?.message ?? 'Could not send details')
     },
   })
@@ -62,7 +66,7 @@ export function useSaveBusinessInfo() {
       qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
     },
 
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       const msg = err?.response?.data?.error?.message
       toast.error(msg ?? 'Could not save business info')
     },
@@ -84,7 +88,7 @@ export function useConnectMeta() {
       qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
     },
 
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       const msg = err?.response?.data?.error?.message
       toast.error(msg ?? 'Could not connect WhatsApp')
     },
@@ -97,7 +101,7 @@ export function useRequestPhoneOTP() {
       api.post('/whatsapp/verify-phone/request', data)
         .then(r => r.data?.data ?? r.data),
 
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       const msg = err?.response?.data?.error?.message
       toast.error(msg ?? 'Could not send OTP')
     },
@@ -115,7 +119,7 @@ export function useConfirmPhoneOTP() {
       qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
     },
 
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       const msg = err?.response?.data?.error?.message
       toast.error(msg ?? 'Invalid OTP. Try again.')
     },
@@ -165,7 +169,7 @@ export function useCompleteSetup() {
       navigate('/dashboard')
     },
 
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       const code = err?.response?.data?.error?.code
       const msg  = err?.response?.data?.error?.message
 

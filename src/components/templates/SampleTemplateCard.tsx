@@ -3,7 +3,7 @@ import { Check, Clock, Loader2, FileText, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Template, TemplateCategory } from '@/types'
 import type { SampleTemplate } from '@/hooks/useSampleTemplates'
-import { CATEGORY_CONFIG } from './TemplateCard'
+import { CATEGORY_CONFIG } from '@/data/templateCategoryConfig'
 
 import marketingIcon from '@/assets/templates/icons/marketing.png'
 import utilityIcon from '@/assets/templates/icons/utility.png'

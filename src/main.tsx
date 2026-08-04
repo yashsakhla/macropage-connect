@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import App from './App'
+import AppToaster from '@/components/shared/AppToaster'
 import { getErrorToastMessage } from '@/lib/axios'
 import './index.css'
 
@@ -43,17 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <GoogleOAuthProvider clientId={googleClientId}>
         <App />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              fontSize: '14px',
-              borderRadius: '10px',
-              border: '1px solid #e5e7eb',
-            },
-          }}
-        />
+        <AppToaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </GoogleOAuthProvider>
     </QueryClientProvider>

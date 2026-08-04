@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTeamMembers } from '@/hooks/useTeam'
+import type { TeamMember } from '@/types'
 
 function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
   return (
@@ -15,7 +16,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
 export default function TeamSettings() {
   const { data: teamData } = useTeamMembers()
   const MAX_SEATS = 10
-  const usedSeats = ((teamData as any)?.data ?? []).filter((m: any) => m.status === 'active').length
+  const usedSeats = ((teamData as { data?: TeamMember[] } | undefined)?.data ?? []).filter((m: TeamMember) => m.status === 'active').length
 
   const [defaultRole, setDefaultRole] = useState('agent')
   const [sessionTimeout, setSessionTimeout] = useState('8h')

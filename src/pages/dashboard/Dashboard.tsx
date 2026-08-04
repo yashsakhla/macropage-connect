@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow, format, subDays } from 'date-fns'
 import {
   TrendingUp, MessageSquare, Send, Eye, AlertTriangle,
-  ArrowUpRight, CheckCircle2, Circle, ExternalLink,
+  ArrowUpRight, CheckCircle2, Circle, ExternalLink, CalendarClock,
 } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -12,6 +12,7 @@ import {
 import { cn, formatIndian } from '@/lib/utils'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
+import { useUIStore } from '@/store/uiStore'
 import type {
   DashboardStatsData, DashboardHealthData, DashboardRecentItem,
   ChecklistData, ChartDataPoint,
@@ -53,21 +54,32 @@ function formatAxisTick(v: number): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ label, value, iconImg, trend, hero }: {
+function StatCard({ label, value, iconImg, trend, hero, to }: {
   label: string
   value: number | string
   iconImg: string
   trend?: { value: number; positive: boolean }
   hero?: boolean
+  to: string
 }) {
+  const navigate = useNavigate()
   return (
     <div
-      className={cn('relative p-3.5 sm:p-5 overflow-hidden', hero ? 'rounded-2xl shadow-card' : 'card p-3.5 sm:p-5')}
+      className={cn('group relative p-3.5 sm:p-5 overflow-hidden cursor-pointer', hero ? 'rounded-2xl shadow-card' : 'card p-3.5 sm:p-5')}
       style={hero ? { background: '#1a5c3a', color: '#fff' } : undefined}
+      onClick={() => navigate(to)}
     >
-      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 text-sm rounded-full bg-white/10 px-2 py-1 flex items-center gap-1">
+      <button
+        onClick={(e) => { e.stopPropagation(); navigate(to) }}
+        title={`Go to ${label}`}
+        className={cn(
+          'absolute top-2.5 right-2.5 sm:top-3 sm:right-3 rounded-full p-1.5 flex items-center justify-center',
+          'opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200',
+          hero ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-white/10 dark:hover:bg-white/20 dark:text-gray-300'
+        )}
+      >
         <ArrowUpRight size={14} />
-      </div>
+      </button>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className={cn('text-xs sm:text-sm font-medium truncate', hero ? 'text-white/90' : 'text-gray-500 dark:text-gray-400')}>
@@ -117,6 +129,20 @@ function AccountHealthBanner({ health }: { health: import('@/types').DashboardHe
   )
 }
 
+// Backend steps don't always carry an actionUrl — infer a sensible route from
+// the step title so every incomplete step still gets a working nav arrow.
+function inferStepUrl(title: string): string {
+  const t = title.toLowerCase()
+  if (t.includes('whatsapp')) return '/setup/whatsapp'
+  if (t.includes('contact')) return '/contacts'
+  if (t.includes('template')) return '/templates'
+  if (t.includes('campaign')) return '/campaigns'
+  if (t.includes('team')) return '/team'
+  if (t.includes('profile') || t.includes('business')) return '/settings'
+  if (t.includes('email') || t.includes('verify')) return '/settings'
+  return '/dashboard'
+}
+
 function OnboardingChecklist({ steps, progressPercent, completedCount, totalSteps }: ChecklistData) {
   const navigate = useNavigate()
   return (
@@ -132,25 +158,29 @@ function OnboardingChecklist({ steps, progressPercent, completedCount, totalStep
         />
       </div>
       <div className="space-y-3">
-        {steps.map(step => (
-          <div key={step.id} className="flex items-center gap-3">
-            {step.completed
-              ? <CheckCircle2 size={20} className="text-[#1a5c3a] flex-shrink-0" />
-              : <Circle size={20} className="text-gray-300 flex-shrink-0" />
-            }
-            <span className={cn('text-sm flex-1', step.completed ? 'line-through text-gray-400' : 'text-gray-700')}>
-              {step.title}
-            </span>
-            {!step.completed && step.actionUrl && (
-              <button
-                onClick={() => navigate(step.actionUrl!)}
-                className="text-xs text-[#1a5c3a] hover:underline flex items-center gap-0.5 flex-shrink-0"
-              >
-                Go <ExternalLink size={10} />
-              </button>
-            )}
-          </div>
-        ))}
+        {steps.map(step => {
+          const targetUrl = step.actionUrl || inferStepUrl(step.title)
+          return (
+            <div key={step.id} className="flex items-center gap-3">
+              {step.completed
+                ? <CheckCircle2 size={20} className="text-[#1a5c3a] flex-shrink-0" />
+                : <Circle size={20} className="text-gray-300 flex-shrink-0" />
+              }
+              <span className={cn('text-sm', step.completed ? 'line-through text-gray-400' : 'text-gray-700')}>
+                {step.title}
+              </span>
+              {!step.completed && (
+                <button
+                  onClick={() => navigate(targetUrl)}
+                  className="text-xs text-[#1a5c3a] hover:underline flex items-center gap-0.5 flex-shrink-0"
+                >
+                  Go <ExternalLink size={10} />
+                </button>
+              )}
+              <span className="flex-1" />
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -163,20 +193,18 @@ function MiniStat({ label, value, icon: Icon, tone }: {
   tone: 'green' | 'blue' | 'red'
 }) {
   const toneMap = {
-    green: 'bg-green-50 text-[#1a5c3a] dark:bg-green-950/30',
-    blue:  'bg-blue-50 text-blue-600 dark:bg-blue-950/30',
-    red:   'bg-red-50 text-red-600 dark:bg-red-950/30',
+    green: 'bg-[#1a5c3a] text-white shadow-[#1a5c3a]/25',
+    blue:  'bg-blue-500 text-white shadow-blue-500/25',
+    red:   'bg-red-500 text-white shadow-red-500/25',
   }
   return (
-    <div className="flex items-center gap-2 sm:gap-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 px-2 sm:px-3 py-2 sm:py-2.5 min-w-0">
-      <div className={cn('w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0', toneMap[tone])}>
+    <div className="group rounded-2xl bg-white dark:bg-[#0f1724] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200 px-3 sm:px-4 py-3 sm:py-3.5 min-w-0">
+      <div className={cn('w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg mb-2 sm:mb-3', toneMap[tone])}>
         <Icon size={14} className="sm:hidden" />
-        <Icon size={16} className="hidden sm:block" />
+        <Icon size={17} className="hidden sm:block" />
       </div>
-      <div className="min-w-0">
-        <p className="text-2xs text-gray-500 dark:text-gray-400 truncate">{label}</p>
-        <p className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight truncate">{formatIndian(value)}</p>
-      </div>
+      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight truncate">{formatIndian(value)}</p>
+      <p className="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{label}</p>
     </div>
   )
 }
@@ -218,6 +246,7 @@ function AnalyticsTooltip({ active, label, points }: {
 export default function Dashboard() {
   const [showWizard, setShowWizard] = useState(false)
   const { user } = useAuthStore()
+  const openDemoModal = useUIStore(s => s.openDemoModal)
   const navigate = useNavigate()
 
   const {
@@ -335,6 +364,48 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Request a demo — only for users who haven't connected WhatsApp yet */}
+      {!user?.whatsappSetupDone && (
+        <div className="rounded-2xl border border-[#c8e6d4] dark:border-emerald-900/40 bg-gradient-to-r from-[#eafbf3] to-[#dcf5e8] dark:from-emerald-950/20 dark:to-emerald-950/10 px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#0b1220] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <CalendarClock size={18} className="text-[#1a5c3a] dark:text-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">New here? Book a live demo</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Let our team walk you through setup, campaigns, and everything else — pick a time that works for you.</p>
+          </div>
+          <button
+            onClick={openDemoModal}
+            className="btn-primary h-9 px-4 flex-shrink-0 w-full sm:w-auto justify-center"
+          >
+            Request Demo
+          </button>
+        </div>
+      )}
+
+      {/* Onboarding Checklist — only for users who haven't finished setup */}
+      {!user?.whatsappSetupDone && (
+        checklistLoading ? (
+          <ChecklistSkeleton />
+        ) : checklistError ? (
+          <div className="bg-white border border-[#e8ebe8] rounded-2xl min-h-48">
+            <WidgetError
+              title="Could not load checklist"
+              message="We are currently facing an issue. Please try again."
+              onRetry={refetchChecklist}
+              isRetrying={checklistFetching}
+            />
+          </div>
+        ) : checklist ? (
+          <OnboardingChecklist
+            steps={checklist.steps ?? []}
+            progressPercent={checklist.progressPercent ?? 0}
+            completedCount={checklist.completedCount ?? 0}
+            totalSteps={checklist.totalSteps ?? 0}
+          />
+        ) : null
+      )}
+
       {/* Health Banner */}
       {healthLoading ? (
         <div className="h-12 rounded-xl bg-gray-100 animate-pulse" />
@@ -376,6 +447,7 @@ export default function Dashboard() {
               value={stats?.conversations?.value ?? 0}
               iconImg={msgIcon}
               trend={stats?.conversations?.trend != null ? { value: stats.conversations.trend, positive: stats.conversations.trend >= 0 } : undefined}
+              to="/inbox"
               hero
             />
             <StatCard
@@ -383,18 +455,21 @@ export default function Dashboard() {
               value={stats?.messagesSent?.value ?? 0}
               iconImg={rocketIcon}
               trend={stats?.messagesSent?.trend != null ? { value: stats.messagesSent.trend, positive: stats.messagesSent.trend >= 0 } : undefined}
+              to="/campaigns"
             />
             <StatCard
               label="Active Contacts"
               value={stats?.activeContacts?.value ?? 0}
               iconImg={peoplesIcon}
               trend={stats?.activeContacts?.trend != null ? { value: stats.activeContacts.trend, positive: stats.activeContacts.trend >= 0 } : undefined}
+              to="/contacts"
             />
             <StatCard
               label="Campaigns"
               value={stats?.campaigns?.value ?? 0}
               iconImg={soundIcon}
               trend={stats?.campaigns?.trend != null ? { value: stats.campaigns.trend, positive: stats.campaigns.trend >= 0 } : undefined}
+              to="/campaigns"
             />
           </>
         )}
@@ -564,29 +639,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
-      {/* Onboarding Checklist — only for users who haven't finished setup */}
-      {!user?.whatsappSetupDone && (
-        checklistLoading ? (
-          <ChecklistSkeleton />
-        ) : checklistError ? (
-          <div className="bg-white border border-[#e8ebe8] rounded-2xl min-h-48">
-            <WidgetError
-              title="Could not load checklist"
-              message="We are currently facing an issue. Please try again."
-              onRetry={refetchChecklist}
-              isRetrying={checklistFetching}
-            />
-          </div>
-        ) : checklist ? (
-          <OnboardingChecklist
-            steps={checklist.steps ?? []}
-            progressPercent={checklist.progressPercent ?? 0}
-            completedCount={checklist.completedCount ?? 0}
-            totalSteps={checklist.totalSteps ?? 0}
-          />
-        ) : null
-      )}
 
       {showWizard && <CampaignWizard onClose={() => setShowWizard(false)} />}
       <WelcomePopup />

@@ -3,7 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { AxiosError } from 'axios'
 import { cn } from '@/lib/utils'
+import type { InviteVerifyData, ApiErrorResponseWithCode } from '@/types'
 import {
   useVerifyInviteToken,
   useAcceptInvite,
@@ -12,8 +14,9 @@ import {
   Eye, EyeOff, Lock, User,
   CheckCircle, XCircle, Loader2,
   AlertCircle, ArrowRight, Mail,
-  UserCheck, MessageSquare,
+  UserCheck,
 } from 'lucide-react'
+import blackLogo from '@assets/macropage-connect-black.svg'
 
 const schema = z.object({
   name: z.string().min(2, 'Enter your full name'),
@@ -64,13 +67,13 @@ export default function AcceptInvite() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: (inviteData as any)?.name ?? '',
+      name: (inviteData as InviteVerifyData | undefined)?.name ?? '',
     },
   })
 
   useEffect(() => {
     if (!token) navigate('/login')
-  }, [token])
+  }, [token, navigate])
 
   const onSubmit = (data: FormData) => {
     if (!token) return
@@ -92,18 +95,16 @@ export default function AcceptInvite() {
   }
   const strengthScore = Object.values(strength).filter(Boolean).length
 
-  const tokenErrAny = tokenErr as any
+  const tokenErrTyped = tokenErr as AxiosError<ApiErrorResponseWithCode> | null
+  const invite = inviteData as InviteVerifyData | undefined
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[length:200%_200%] animate-gradient-shift bg-gradient-to-br from-[#eafbf3] via-[#d7f5e3] to-[#bdeccf]">
+      <div className="w-full max-w-md relative z-10">
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-[#1a3d2b] rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <MessageSquare size={22} className="text-white" />
-          </div>
-          <h1 className="text-lg font-bold text-gray-900">Macropage Connect</h1>
+          <img src={blackLogo} alt="Macropage Connect" className="h-9 mx-auto" />
         </div>
 
         {/* Loading */}
@@ -122,7 +123,7 @@ export default function AcceptInvite() {
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-2">
               {(() => {
-                const code = tokenErrAny?.response?.data?.code
+                const code = tokenErrTyped?.response?.data?.code
                 if (code === 'INVITE_EXPIRED') return 'Invite link expired'
                 if (code === 'INVITE_ALREADY_ACCEPTED') return 'Already accepted'
                 if (code === 'INVITE_CANCELLED') return 'Invite cancelled'
@@ -130,7 +131,7 @@ export default function AcceptInvite() {
               })()}
             </h2>
             <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-              {tokenErrAny?.response?.data?.message ?? 'This invite link is not valid.'}
+              {tokenErrTyped?.response?.data?.message ?? 'This invite link is not valid.'}
             </p>
             <button
               onClick={() => navigate('/login')}
@@ -154,18 +155,18 @@ export default function AcceptInvite() {
                 <div>
                   <p className="text-white/70 text-xs">You've been invited by</p>
                   <p className="text-white font-bold text-sm">
-                    {(inviteData as any).invitedByName}
+                    {invite?.invitedByName}
                   </p>
                 </div>
               </div>
 
               <h2 className="text-xl font-black text-white">
-                Join {(inviteData as any).tenantName}
+                Join {invite?.tenantName}
               </h2>
               <p className="text-white/70 text-sm mt-1">
                 You'll join as a{' '}
                 <span className="text-white font-semibold">
-                  {(inviteData as any).role}
+                  {invite?.role}
                 </span>
               </p>
 
@@ -173,7 +174,7 @@ export default function AcceptInvite() {
               <div className="mt-4 bg-white/15 border border-white/20 rounded-xl px-3 py-2 flex items-center gap-2 w-fit">
                 <Mail size={13} className="text-white/70" />
                 <span className="text-white text-xs font-medium">
-                  {(inviteData as any).email}
+                  {invite?.email}
                 </span>
               </div>
             </div>
@@ -187,7 +188,7 @@ export default function AcceptInvite() {
                 <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
                   <AlertCircle size={15} className="text-red-400 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-red-600">
-                    {(acceptErr as any)?.response?.data?.message ??
+                    {(acceptErr as AxiosError<ApiErrorResponseWithCode> | null)?.response?.data?.message ??
                      'Could not create account. Try again.'}
                   </p>
                 </div>
@@ -205,7 +206,7 @@ export default function AcceptInvite() {
                     {...register('name')}
                     type="text"
                     placeholder="Rahul Sharma"
-                    defaultValue={(inviteData as any).name ?? ''}
+                    defaultValue={invite?.name ?? ''}
                     className={cn(
                       'w-full h-11 pl-9 pr-4 rounded-xl',
                       'border text-sm focus:outline-none',
@@ -355,7 +356,7 @@ export default function AcceptInvite() {
                   </>
                 ) : (
                   <>
-                    Join {(inviteData as any).tenantName}
+                    Join {invite?.tenantName}
                     <ArrowRight size={16} />
                   </>
                 )}

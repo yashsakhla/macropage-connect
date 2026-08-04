@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { AxiosError } from 'axios'
 import api from '@/lib/axios'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import type { ApiErrorResponse } from '@/types'
 
 interface DangerAction {
   title: string
@@ -62,8 +64,9 @@ export default function DangerZone() {
     try {
       await activeAction.onConfirm()
       close()
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? `Could not complete: ${activeAction.title}`)
+    } catch (err) {
+      const e = err as AxiosError<ApiErrorResponse>
+      toast.error(e?.response?.data?.message ?? `Could not complete: ${activeAction.title}`)
     } finally {
       setConfirming(false)
     }

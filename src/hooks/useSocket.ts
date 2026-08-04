@@ -5,6 +5,47 @@ import { toast }            from 'react-hot-toast'
 import { useAuthStore }     from '@/store/authStore'
 import { useInboxStore }    from '@/store/inboxStore'
 import { getSocket, connectSocket } from '@/lib/socket'
+import type {
+  Message,
+  Conversation,
+  Campaign,
+  AssignableMember,
+  PaginatedResponse,
+  RawNotificationDTO,
+} from '@/types'
+
+// Backends aren't fully consistent about field names on these socket payloads
+// (id vs _id, content vs text/body, etc.) — kept loose here, normalized below.
+interface RawSocketMessage {
+  id?: string
+  _id?: string
+  content?: string
+  text?: string
+  body?: string
+  direction?: string
+  type?: string
+  createdAt?: string
+  timestamp?: string
+  conversationId?: string
+  conversation?: string | { _id?: string; id?: string }
+  metaMessageId?: string
+  status?: string
+  templateData?: Message['templateData']
+  [key: string]: unknown
+}
+
+interface AgentPresenceEvent {
+  userId:     string
+  name:       string
+  avatarUrl?: string
+  status:     'online' | 'away' | 'offline'
+}
+
+interface NotificationsCache {
+  notifications: RawNotificationDTO[]
+  total?:        number
+  unreadCount?:  number
+}
 
 export function useSocket() {
   const { token, logout }          = useAuthStore()
@@ -56,7 +97,7 @@ export function useSocket() {
 
     // ── MESSAGES ──────────────────────────────────────────────
 
-    socket.on('message:new', (raw: any) => {
+    socket.on('message:new', (raw: RawSocketMessage) => {
       // Normalize to the same shape the Messages API returns so ChatThread
       // filters never silently drop the message due to field name differences.
       const msg = {
@@ -69,10 +110,10 @@ export function useSocket() {
         direction: (raw.direction ?? 'inbound').toLowerCase(),
         type:      (raw.type     ?? 'text').toLowerCase(),
         createdAt: raw.createdAt ?? raw.timestamp ?? new Date().toISOString(),
-      }
+      } as unknown as Message
 
       // Resolve the conversation this message belongs to
-      const rawConv = msg.conversationId ?? msg.conversation
+      const rawConv = raw.conversationId ?? raw.conversation
       const conversationId: string | undefined =
         typeof rawConv === 'string' ? rawConv : rawConv?._id ?? rawConv?.id
 
@@ -87,11 +128,11 @@ export function useSocket() {
       if (targetId) {
         qc.setQueryData(
           ['messages', targetId, 1],
-          (old: any) => {
-            const base = old ?? { data: [], total: 0 }
-            const data: any[] = base.data ?? []
+          (old: PaginatedResponse<Message> | undefined) => {
+            const base = old ?? { data: [], total: 0, page: 1, perPage: 20, totalPages: 1 }
+            const data: Message[] = base.data ?? []
             const alreadyExists = data.some(
-              (m: any) =>
+              (m) =>
                 (msg.metaMessageId && msg.metaMessageId === m.metaMessageId) ||
                 (msg._id && msg._id === m._id) ||
                 (msg.id && msg.id === m.id)
@@ -99,7 +140,7 @@ export function useSocket() {
             if (alreadyExists) return base
             // Replace optimistic SENDING bubble for outbound messages
             const sendingIdx = msg.direction === 'outbound'
-              ? data.findIndex((m: any) => m.status === 'SENDING')
+              ? data.findIndex((m) => m.status === 'SENDING')
               : -1
             if (sendingIdx !== -1) {
               const updated = [...data]
@@ -134,13 +175,13 @@ export function useSocket() {
     }) => {
       qc.setQueryData(
         ['messages', conversationId, 1],
-        (old: any) => {
+        (old: PaginatedResponse<Message> | undefined) => {
           if (!old) return old
-          const data: any[] = old.data ?? []
+          const data: Message[] = old.data ?? []
           return {
             ...old,
-            data: data.map((m: any) =>
-              (m._id === messageId || m.id === messageId) ? { ...m, status } : m
+            data: data.map((m) =>
+              (m._id === messageId || m.id === messageId) ? { ...m, status: status as Message['status'] } : m
             ),
           }
         }
@@ -153,10 +194,10 @@ export function useSocket() {
       qc.invalidateQueries({ queryKey: ['conversations'] })
     })
 
-    socket.on('conversation:updated', (updated: any) => {
+    socket.on('conversation:updated', (updated: Partial<Conversation> & { _id?: string; id?: string }) => {
       qc.setQueryData(
         ['conversation', updated._id ?? updated.id],
-        (old: any) => old ? { ...old, ...updated } : old
+        (old: Conversation | undefined) => old ? { ...old, ...updated } : old
       )
       qc.invalidateQueries({ queryKey: ['conversations'] })
     })
@@ -188,16 +229,11 @@ export function useSocket() {
 
     // ── AGENT PRESENCE ────────────────────────────────────────
 
-    socket.on('agent:presence', (data: {
-      userId:     string
-      name:       string
-      avatarUrl?: string
-      status:     'online' | 'away' | 'offline'
-    }) => {
+    socket.on('agent:presence', (data: AgentPresenceEvent) => {
       updateAgentPresence(data)
       qc.invalidateQueries({ queryKey: ['team'] })
       // Update AssignModal list in-place so online dots refresh without reopening
-      qc.setQueryData(['team-assignable'], (old: any[]) => {
+      qc.setQueryData(['team-assignable'], (old: AssignableMember[] | undefined) => {
         if (!old) return old
         return old.map(m =>
           (m._id === data.userId || m.id === data.userId)
@@ -220,11 +256,11 @@ export function useSocket() {
     }) => {
       qc.setQueryData(
         ['campaign', campaignId],
-        (old: any) => old ? { ...old, sent, totalContacts: total } : old
+        (old: Campaign | undefined) => old ? { ...old, sent, totalContacts: total } : old
       )
     })
 
-    socket.on('campaign:completed', (campaign: any) => {
+    socket.on('campaign:completed', (campaign: Campaign & { _id?: string }) => {
       qc.invalidateQueries({ queryKey: ['campaign', campaign._id ?? campaign.id] })
       qc.invalidateQueries({ queryKey: ['campaigns'] })
       toast.success(`Campaign "${campaign.name}" completed!`)
@@ -232,12 +268,12 @@ export function useSocket() {
 
     // ── NOTIFICATIONS ─────────────────────────────────────────
 
-    socket.on('notification:new', (notification: any) => {
+    socket.on('notification:new', (notification: RawNotificationDTO) => {
       // Update unread count immediately without a refetch
       qc.setQueryData(['notifications-unread'], (old: number) => (old ?? 0) + 1)
 
       // Prepend to cached list so the panel reflects it instantly
-      qc.setQueryData(['notifications', 1, 20], (old: any) => {
+      qc.setQueryData(['notifications', 1, 20], (old: NotificationsCache | undefined) => {
         if (!old) return old
         return {
           ...old,
@@ -251,7 +287,7 @@ export function useSocket() {
       })
 
       toast(notification.title || 'New notification', {
-        icon:     getNotifEmoji(notification.type),
+        icon:     getNotifEmoji(notification.type ?? notification.kind ?? ''),
         duration: 4000,
       })
     })
@@ -324,7 +360,7 @@ export function useSocket() {
       socket.off('waba:quality_changed')
       socket.off('bot:handoff')
     }
-  }, [token])
+  }, [token, clearAgentTyping, logout, navigate, qc, setAgentTyping, updateAgentPresence])
 }
 
 function getNotifEmoji(type: string): string {

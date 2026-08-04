@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/axios'
 import { BusinessInfoPayload, PhoneVerificationPayload, TestMessagePayload } from '@/types/setup'
+import type { RawAuthUserDTO, User } from '@/types'
 import { useAuthStore } from '@/store/authStore'
 
 export function useWhatsAppSetup() {
@@ -28,8 +29,8 @@ export function useWhatsAppSetup() {
 
   const completeSetup = useMutation({
     mutationFn: () => api.patch('/whatsapp/setup/complete', {}).then(r => r.data),
-    onSuccess: (data: any) => {
-      useAuthStore.getState().setUser(data?.user ?? useAuthStore.getState().user)
+    onSuccess: (data: { user?: RawAuthUserDTO }) => {
+      useAuthStore.getState().setUser((data?.user ?? useAuthStore.getState().user) as unknown as User)
     }
   })
 

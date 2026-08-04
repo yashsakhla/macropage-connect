@@ -2,10 +2,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
-import { Loader2, ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
+import { Loader2, ArrowLeft, CheckCircle2, Mail, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
+import type { AxiosError } from 'axios'
 import api from '@/lib/axios'
 import { cn } from '@/lib/utils'
+import type { ApiErrorResponse } from '@/types'
 
 const schema = z.object({ email: z.string().email('Enter a valid email') })
 type FormData = z.infer<typeof schema>
@@ -13,13 +15,23 @@ type FormData = z.infer<typeof schema>
 export default function ForgotPassword() {
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const { register, handleSubmit, formState: { errors }, getValues } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
+    setSubmitError('')
     try {
       await api.post('/auth/forgot-password', data)
       setSent(true)
+    } catch (err) {
+      const error = err as AxiosError<ApiErrorResponse>
+      const code = error.response?.data?.code ?? error.response?.data?.error?.code
+      setSubmitError(
+        code === 'EMAIL_NOT_FOUND'
+          ? '😕 No registered account found with this email.'
+          : error.response?.data?.message ?? 'Something went wrong. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
@@ -62,6 +74,13 @@ export default function ForgotPassword() {
         <button type="submit" disabled={loading} className="btn-primary w-full h-10">
           {loading ? <><Loader2 size={15} className="animate-spin" />Sending…</> : 'Send reset link'}
         </button>
+
+        {submitError && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
+            <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700 leading-snug">{submitError}</p>
+          </div>
+        )}
       </form>
       <Link to="/login" className="flex items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft size={14} /> Back to sign in

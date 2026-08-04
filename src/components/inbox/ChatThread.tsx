@@ -27,9 +27,9 @@ import { getInitials, cn } from '@/lib/utils'
 import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
 import { useConversation, useMessages, useSendMessage, useAddNote, useUpdateConversation, useResolveConversation } from '@/hooks/useConversations'
-import { usePermissions } from '@/lib/permissions'
+import { usePermissions } from '@/lib/permissionsConstants'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
-import { avatarGradient } from './ConversationItem'
+import { avatarGradient } from '@/lib/avatarGradient'
 import MessageBubble, { TypingBubble } from './MessageBubble'
 import MessageInput, { type SentMedia } from './MessageInput'
 import AssignModal from './AssignModal'
@@ -382,7 +382,7 @@ export default function ChatThread({ mobileBack }: Props) {
     isError: msgsError,
     refetch: refetchMsgs,
   } = useMessages(selectedConversationId ?? null)
-  const rawMessages: Message[] = (messagesData as any)?.data ?? []
+  const rawMessages: Message[] = (messagesData as { data?: Message[] } | undefined)?.data ?? []
   const sendMessage = useSendMessage()
   const { requireConnected } = useRequireWhatsApp()
   const addNote = useAddNote()
@@ -392,7 +392,7 @@ export default function ChatThread({ mobileBack }: Props) {
 
   const seenKeys = new Set<string>()
   const allMessages = rawMessages
-    .filter((m: any) => {
+    .filter((m: Message) => {
       if (!m) return false
       // Use || (not ??) so empty-string metaMessageId is treated as absent
       const key = m.metaMessageId || m._id || m.id
@@ -400,21 +400,21 @@ export default function ChatThread({ mobileBack }: Props) {
       seenKeys.add(key)
       return true
     })
-    .map((m: any) => ({
+    .map((m: Message) => ({
       ...m,
-      id: m.id ?? m._id ?? m.metaMessageId,
-      direction: (m.direction ?? '').toString().toLowerCase(),
+      id: m.id ?? m._id ?? m.metaMessageId ?? '',
+      direction: (m.direction ?? '').toString().toLowerCase() as Message['direction'],
       // Historical messages from the REST API aren't guaranteed to be lowercase
       // the way socket.io's message:new normalizes them — without this, past
       // media messages (type "IMAGE" etc.) fall through to the text bubble.
-      type: (m.type ?? 'text').toString().toLowerCase(),
+      type: (m.type ?? 'text').toString().toLowerCase() as Message['type'],
     }))
-    .filter((m: any) => {
+    .filter((m: Message) => {
       const type = (m.type ?? 'text').toLowerCase()
       if (['image', 'document', 'audio', 'video', 'sticker', 'location', 'template'].includes(type)) return true
       return !!(m.content && (m.content as string).trim())
     })
-    .sort((a: any, b: any) =>
+    .sort((a: Message, b: Message) =>
       new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime()
     )
 
@@ -491,14 +491,14 @@ export default function ChatThread({ mobileBack }: Props) {
     if (!selectedConv?.id || !(selectedConv.unreadCount > 0)) return
     const id = selectedConv.id
 
-    qc.setQueriesData<any>({ queryKey: ['conversations'] }, (old: any) => {
+    qc.setQueriesData<{ data: Conversation[] } | undefined>({ queryKey: ['conversations'] }, (old) => {
       if (!old?.data) return old
       return {
         ...old,
         data: old.data.map((c: Conversation) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
       }
     })
-    qc.setQueryData(['conversation', id], (old: any) => (old ? { ...old, unreadCount: 0 } : old))
+    qc.setQueryData(['conversation', id], (old: Conversation | undefined) => (old ? { ...old, unreadCount: 0 } : old))
 
     updateConversation.mutate({ id, data: { unreadCount: 0 } })
     // Only re-run when the conversation identity or its unread count changes —
@@ -626,7 +626,7 @@ export default function ChatThread({ mobileBack }: Props) {
   // message. Outside that window (or if they've never messaged at all — a
   // freshly-initiated conversation from the Contacts page) only an approved
   // template message can reach them.
-  const lastInboundMessage = [...allMessages].reverse().find((m: any) => m.direction === 'inbound')
+  const lastInboundMessage = [...allMessages].reverse().find((m) => m.direction === 'inbound')
   const templateRequired = !lastInboundMessage
     || Date.now() - new Date(lastInboundMessage.createdAt).getTime() > 24 * 60 * 60 * 1000
 
@@ -741,7 +741,7 @@ export default function ChatThread({ mobileBack }: Props) {
     : []
 
   return (
-    <div className="flex-1 flex flex-col bg-[#f7f8f6] dark:bg-gray-900 min-w-0 overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#f7f8f6] dark:bg-gray-900 min-w-0 min-h-0 overflow-hidden">
       <ChatHeader
         conv={selectedConv}
         contactPanelOpen={contactPanelOpen}
@@ -783,7 +783,7 @@ export default function ChatThread({ mobileBack }: Props) {
       {/* Messages area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1.5 relative"
+        className="chat-wallpaper flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1.5 relative"
         onScroll={handleScroll}
       >
         {messages.length === 0 && (

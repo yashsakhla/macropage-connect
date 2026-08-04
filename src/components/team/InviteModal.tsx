@@ -5,8 +5,8 @@ import { z } from 'zod'
 import { X, UserPlus, Shield, Users, Headphones, CheckCircle, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useInviteMember } from '@/hooks/useTeam'
-import { ROLE_PERMISSIONS, type Role } from '@/lib/permissions'
-import { ROLE_STYLE } from './RoleBadge'
+import { ROLE_PERMISSIONS, type Role } from '@/lib/permissionsConstants'
+import { ROLE_STYLE } from '@/data/roleStyle'
 import toast from 'react-hot-toast'
 
 const ROLE_CARDS: { value: string; icon: React.ElementType; title: string; can: string[]; cannot: string[] }[] = [

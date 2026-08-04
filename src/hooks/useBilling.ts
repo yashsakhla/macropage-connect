@@ -3,13 +3,16 @@ import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
-import type { Subscription, BillingPlan, Payment, PaymentMethod } from '@/types'
+import type { AxiosError, AxiosResponse } from 'axios'
+import type { Subscription, BillingPlan, Payment, PaymentMethod, ApiErrorResponse, RawBillingPlanDTO } from '@/types'
 
 const STATUS_MAP: Record<string, Subscription['status']> = {
   ACTIVE: 'active', TRIALING: 'trial', CANCELLED: 'cancelled', PAST_DUE: 'past_due',
 }
 
-function unwrap(r: any) {
+type MutationError = AxiosError<ApiErrorResponse>
+
+function unwrap(r: AxiosResponse) {
   // handles both { success, data: T } and direct T responses
   return r.data?.data ?? r.data
 }
@@ -40,7 +43,7 @@ export function useBillingPlans() {
     queryFn: (): Promise<BillingPlan[]> =>
       api.get('/billing/plans').then((r) => {
         const payload = unwrap(r)
-        const raw: any[] = Array.isArray(payload) ? payload : []
+        const raw: RawBillingPlanDTO[] = Array.isArray(payload) ? payload : []
         return raw.map((p) => ({
           ...p,
           features: Array.isArray(p.features) ? p.features : [],
@@ -91,7 +94,7 @@ export function useCreateSubscription() {
   return useMutation({
     mutationFn: ({ planId, billingCycle }: { planId: string; billingCycle: string }) =>
       api.post('/billing/subscription', { plan: planId, billingCycle }).then((r) => unwrap(r)),
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to initiate checkout'),
   })
 }
@@ -125,11 +128,11 @@ export function useCancelSubscription() {
   return useMutation({
     mutationFn: (cancelImmediately: boolean) =>
       api.delete('/billing/subscription', { data: { cancelImmediately } }).then((r) => unwrap(r)),
-    onSuccess: (data: any) => {
+    onSuccess: (data: { message?: string } | undefined) => {
       qc.invalidateQueries({ queryKey: ['billing'] })
       toast.success(data?.message ?? 'Subscription cancelled')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to cancel subscription'),
   })
 }

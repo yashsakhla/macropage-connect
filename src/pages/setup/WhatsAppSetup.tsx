@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { BusinessInfoPayload } from '@/types/setup'
+import type { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
 import { useNavigate } from 'react-router-dom'
 import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
@@ -284,7 +286,7 @@ export default function WhatsAppSetup() {
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-red-700">Could not save business info</p>
                             <p className="text-xs text-red-500 mt-0.5">
-                              {(saveErr as any)?.response?.data?.error?.message ?? 'Something went wrong. Please try again.'}
+                              {(saveErr as AxiosError<ApiErrorResponse> | null)?.response?.data?.error?.message ?? 'Something went wrong. Please try again.'}
                             </p>
                           </div>
                           <button
@@ -384,7 +386,7 @@ export default function WhatsAppSetup() {
                 )}
 
                 <div className="flex items-center justify-between pt-2">
-                  <button onClick={() => {}} className="btn-ghost">← Back</button>
+                  <button onClick={() => {}} className="btn-ghost h-9 px-4">← Back</button>
                   <button
                     onClick={() => { refetchStatus() }}
                     disabled={!isMetaConnected}

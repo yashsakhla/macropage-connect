@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Download, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { cn, formatPhone, fromNow, downloadCSV } from '@/lib/utils'
 import type { CampaignRecipient } from '@/types'
 
@@ -38,11 +38,13 @@ interface RecipientTableProps {
   // campaign-level totals — when provided, tab badge counts reflect the
   // whole campaign rather than just the (possibly paginated) recipients list
   campaignTotals?: { sent: number; delivered: number; read: number; replied: number; failed: number }
+  onRefresh?: () => void
+  isRefreshing?: boolean
 }
 
 const PER_PAGE = 10
 
-export default function RecipientTable({ recipients, isLoading, campaignTotals }: RecipientTableProps) {
+export default function RecipientTable({ recipients, isLoading, campaignTotals, onRefresh, isRefreshing }: RecipientTableProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -86,6 +88,16 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
               placeholder="Search recipients..."
             />
           </div>
+          {onRefresh && (
+            <button
+              className="btn-ghost w-8 h-8 p-0 shrink-0"
+              title="Refresh recipients"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw size={13} className={cn(isRefreshing && 'animate-spin')} />
+            </button>
+          )}
           <button
             className="btn-outline h-8 px-3 text-xs flex items-center gap-1 shrink-0"
             onClick={() => {
@@ -125,17 +137,26 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
       {isLoading ? (
         <div className="p-10 text-center text-gray-400 dark:text-gray-500 text-sm">Loading recipients...</div>
       ) : (
-        <div className="overflow-x-auto">
-        <table className="data-table w-full min-w-[640px]">
+        <div>
+        <table className="data-table w-full table-fixed">
+          <colgroup>
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '11%' }} />
+            <col style={{ width: '9%' }} />
+            <col style={{ width: '8%' }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Contact</th>
-              <th>Phone</th>
-              <th>Status</th>
-              <th>Delivered</th>
-              <th>Read</th>
-              <th>Replied</th>
-              <th>Clicked</th>
+              <th className="text-center">Phone</th>
+              <th className="text-center">Status</th>
+              <th className="text-center">Delivered</th>
+              <th className="text-center">Read</th>
+              <th className="text-center">Replied</th>
+              <th className="text-center">Clicked</th>
             </tr>
           </thead>
           <tbody>
@@ -150,33 +171,33 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals }
                   <td>
                     <div className="flex items-center gap-2">
                       <Avatar name={r.contactName} />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{r.contactName}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{r.contactName}</span>
                     </div>
                   </td>
-                  <td>
-                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{formatPhone(r.phone)}</span>
+                  <td className="text-center">
+                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatPhone(r.phone)}</span>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span
-                      className={cn('badge text-xs', badge.bg, badge.text)}
+                      className={cn('badge text-xs whitespace-nowrap', badge.bg, badge.text)}
                       title={r.status === 'failed' ? r.failureReason : undefined}
                     >
                       {badge.label}
                     </span>
                   </td>
-                  <td>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <td className="text-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {r.deliveredAt ? fromNow(r.deliveredAt) : '—'}
                     </span>
                   </td>
-                  <td>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <td className="text-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {r.readAt ? fromNow(r.readAt) : '—'}
                     </span>
                   </td>
                   {/* per-recipient reply/click timestamps aren't tracked yet — only campaign-level totals exist */}
-                  <td><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
-                  <td><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
+                  <td className="text-center"><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
+                  <td className="text-center"><span className="text-xs text-gray-300 dark:text-gray-600">—</span></td>
                 </tr>
               )
             })}

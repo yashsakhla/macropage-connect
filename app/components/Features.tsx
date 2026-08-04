@@ -1,7 +1,7 @@
 "use client";
 import {
-  MessageSquare, Zap, BarChart3, Users, Bot, Send,
-  Inbox, Globe, Lock, Layers, Bell, RefreshCw,
+  BarChart3, Users, Bot, Send,
+  Inbox, Globe, Lock, Layers, RefreshCw,
 } from "lucide-react";
 
 const features = [

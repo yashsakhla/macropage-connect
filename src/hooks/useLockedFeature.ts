@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
-import { PLAN_FEATURES } from '@/lib/permissions'
-import type { Plan } from '@/lib/permissions'
+import { PLAN_FEATURES } from '@/lib/permissionsConstants'
+import type { Plan } from '@/lib/permissionsConstants'
 
 export function useLockedFeature(feature: string) {
   const effectivePlan = useAuthStore(s => s.effectivePlan)

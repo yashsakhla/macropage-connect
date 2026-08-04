@@ -33,9 +33,9 @@ export default function Navbar() {
         >
           <Menu size={20} />
         </button>
-        {user?.companyLogoUrl && (
+        {user?.logoUrl && (
           <img
-            src={user.companyLogoUrl}
+            src={user.logoUrl}
             alt={user.companyName ?? 'Company logo'}
             className="hidden sm:block w-9 h-9 rounded-lg object-contain shrink-0 border border-gray-100 dark:border-gray-800 bg-white"
           />

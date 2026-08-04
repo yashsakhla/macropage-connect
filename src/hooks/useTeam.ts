@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
-import type { TeamMember, TeamFilters, MemberStatus, OnlineStatus, UserRole } from '@/types'
-import type { Role } from '@/lib/permissions'
+import type { TeamMember, TeamFilters, MemberStatus, OnlineStatus, UserRole, RawTeamMemberDTO, ApiErrorResponse } from '@/types'
+import type { Role } from '@/lib/permissionsConstants'
+import type { AxiosError } from 'axios'
+
+type MutationError = AxiosError<ApiErrorResponse>
 
 export function useAssignableMembers() {
   return useQuery({
@@ -15,16 +18,16 @@ export function useAssignableMembers() {
   })
 }
 
-function normalizeMember(m: any): TeamMember {
+function normalizeMember(m: RawTeamMemberDTO): TeamMember {
   return {
     ...m,
-    id: m.id ?? m._id,
+    id: m.id ?? m._id ?? '',
     role: (m.role ?? 'agent') as UserRole,
     status: (m.status ?? 'active') as MemberStatus,
     onlineStatus: (m.onlineStatus ?? 'offline') as OnlineStatus,
     permissions: m.permissions ?? [],
     openConversations: m.openConversations ?? 0,
-  }
+  } as unknown as TeamMember
 }
 
 export function useTeamMembers(filters?: TeamFilters) {
@@ -32,7 +35,7 @@ export function useTeamMembers(filters?: TeamFilters) {
     queryKey: ['team', filters],
     queryFn: () =>
       api.get('/team', { params: { search: filters?.search } }).then((r) => {
-        const raw: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
+        const raw: RawTeamMemberDTO[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
         return raw.map(normalizeMember)
       }),
     placeholderData: keepPreviousData,
@@ -58,7 +61,7 @@ export function useInviteMember() {
       qc.invalidateQueries({ queryKey: ['team'] })
       toast.success('Invite sent successfully!')
     },
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       toast.error(
         err?.response?.data?.message ??
         err?.response?.data?.error?.message ??
@@ -86,7 +89,7 @@ export function useResendInvite() {
       qc.invalidateQueries({ queryKey: ['team-invites'] })
       toast.success('Invite resent!')
     },
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       toast.error(
         err?.response?.data?.message ?? 'Could not resend invite'
       )
@@ -103,7 +106,7 @@ export function useCancelInvite() {
       qc.invalidateQueries({ queryKey: ['team-invites'] })
       toast.success('Invite cancelled')
     },
-    onError: (err: any) => {
+    onError: (err: MutationError) => {
       toast.error(
         err?.response?.data?.message ?? 'Could not cancel invite'
       )
@@ -139,7 +142,7 @@ export function useAcceptInvite() {
       toast.success('Welcome to the team!')
       navigate('/dashboard')
     },
-    onError: (_err: any) => {
+    onError: (_err: MutationError) => {
       // errors handled on page
     },
   })
@@ -147,7 +150,7 @@ export function useAcceptInvite() {
 
 export function useUpdateMemberRole() {
   const qc = useQueryClient()
-  return useMutation<unknown, Error, { id: string; role: Role }>({
+  return useMutation<unknown, MutationError, { id: string; role: Role }>({
     mutationFn: ({ id, role }) =>
       api.patch(`/team/${id}/role`, { role }).then((r) => r.data),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
@@ -155,7 +158,7 @@ export function useUpdateMemberRole() {
       qc.invalidateQueries({ queryKey: ['team-member', id] })
       toast.success('Role updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to update role'),
   })
 }
@@ -169,7 +172,7 @@ export function useDeactivateMember() {
       qc.invalidateQueries({ queryKey: ['team'] })
       toast.success('Member deactivated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to deactivate member'),
   })
 }
@@ -182,7 +185,7 @@ export function useRemoveMember() {
       qc.invalidateQueries({ queryKey: ['team'] })
       toast.success('Member removed')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to remove member'),
   })
 }

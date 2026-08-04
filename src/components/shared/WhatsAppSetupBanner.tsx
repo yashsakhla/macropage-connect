@@ -8,10 +8,14 @@ export default function WhatsAppSetupBanner() {
   const [dismissed, setDismissed] = useState(false)
   const navigate = useNavigate()
 
+  // Scope the dismissal to this specific user — a shared/global key meant a
+  // dismiss in one session (or by one account) hid the banner for every
+  // account that logged in afterwards in the same browser tab.
+  const dismissKey = user?.id ? `wa-setup-dismissed:${user.id}` : null
+
   useEffect(() => {
-    const key = 'wa-setup-dismissed'
-    setDismissed(sessionStorage.getItem(key) === '1')
-  }, [])
+    setDismissed(dismissKey ? sessionStorage.getItem(dismissKey) === '1' : false)
+  }, [dismissKey])
 
   if (!user || user.whatsappSetupDone || dismissed) return null
 
@@ -23,14 +27,14 @@ export default function WhatsAppSetupBanner() {
           <div className="font-semibold truncate">Complete your WhatsApp setup</div>
           <div className="text-sm text-white/90 sm:truncate">Connect your WhatsApp Business number to start sending messages</div>
         </div>
-        <button className="text-white/80 p-2 shrink-0 sm:hidden ml-auto" onClick={() => { sessionStorage.setItem('wa-setup-dismissed', '1'); setDismissed(true) }}><X size={18} /></button>
+        <button className="text-white/80 p-2 shrink-0 sm:hidden ml-auto" onClick={() => { if (dismissKey) sessionStorage.setItem(dismissKey, '1'); setDismissed(true) }}><X size={18} /></button>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
         <button onClick={() => navigate('/setup/whatsapp')} className="btn btn-primary justify-center whitespace-nowrap" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>
           <Play size={14} className="mr-2" /> Connect WhatsApp
         </button>
-        <button className="btn btn-outline text-white/90 border-white/30 justify-center whitespace-nowrap">Get support</button>
-        <button className="hidden sm:flex text-white/80 p-2" onClick={() => { sessionStorage.setItem('wa-setup-dismissed', '1'); setDismissed(true) }}><X /></button>
+        <button onClick={() => navigate('/help')} className="btn btn-outline text-white/90 border-white/30 justify-center whitespace-nowrap">Get support</button>
+        <button className="hidden sm:flex text-white/80 p-2" onClick={() => { if (dismissKey) sessionStorage.setItem(dismissKey, '1'); setDismissed(true) }}><X /></button>
       </div>
     </div>
   )

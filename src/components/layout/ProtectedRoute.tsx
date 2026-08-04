@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { PLAN_FEATURES, normalisePlan, UpgradePrompt } from '@/lib/permissions'
+import { PLAN_FEATURES, normalisePlan } from '@/lib/permissionsConstants'
+import { UpgradePrompt } from '@/lib/permissions'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -23,6 +24,15 @@ export default function ProtectedRoute({ children, roles, feature }: Props) {
 
   const userRoleUpper = normalise(user.role)
   const userStatusUpper = normalise(user.status)
+
+  // Unverified email blocks every main-app page — Google-authenticated users
+  // are pre-verified by the provider so they never hit this.
+  if (user.emailVerified === false && user.provider !== 'google') {
+    if (!location.pathname.startsWith('/verify-otp')) {
+      return <Navigate to="/verify-otp" replace />
+    }
+    return <>{children}</>
+  }
 
   // Inbox + Settings (incl. Billing) + Plans + Help + Setup must stay reachable
   // no matter why the account is restricted — otherwise a suspended/expired

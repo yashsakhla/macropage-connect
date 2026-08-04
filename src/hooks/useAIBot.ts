@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
 import type { AIConfigPayload, KBItemPayload } from '@/types/automation'
+import type { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
+
+type MutationError = AxiosError<ApiErrorResponse>
 
 export function useAIConfig() {
   return useQuery({
@@ -19,7 +23,7 @@ export function useSaveAIConfig() {
       qc.invalidateQueries({ queryKey: ['ai-config'] })
       toast.success('AI configuration saved')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to save AI config'),
   })
 }
@@ -40,7 +44,7 @@ export function useAddKnowledgeItem() {
       qc.invalidateQueries({ queryKey: ['knowledge-base'] })
       toast.success('Added to knowledge base')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to add item'),
   })
 }
@@ -54,7 +58,7 @@ export function useDeleteKnowledgeItem() {
       qc.invalidateQueries({ queryKey: ['knowledge-base'] })
       toast.success('Item removed')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to remove item'),
   })
 }
@@ -67,7 +71,7 @@ export function useToggleKnowledgeItem() {
         .patch(`/automation/ai/knowledge/${id}/toggle`, { enabled })
         .then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['knowledge-base'] }),
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to toggle item'),
   })
 }
@@ -76,7 +80,7 @@ export function useTestAIResponse() {
   return useMutation({
     mutationFn: (message: string) =>
       api.post('/automation/ai/test', { message }).then((r) => r.data.data),
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Test failed'),
   })
 }
