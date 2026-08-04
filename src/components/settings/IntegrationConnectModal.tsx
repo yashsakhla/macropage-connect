@@ -17,7 +17,7 @@ const STEPS = [
 ]
 
 export default function IntegrationConnectModal({ integration, connectUrl, onClose, onConnected }: Props) {
-  const [stage, setStage] = useState<'awaiting' | 'connecting'>(connectUrl ? 'awaiting' : 'connecting')
+  const [stage] = useState<'awaiting' | 'connecting'>(connectUrl ? 'awaiting' : 'connecting')
   const started = useRef(false)
 
   useEffect(() => {
