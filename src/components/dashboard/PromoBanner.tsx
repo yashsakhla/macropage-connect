@@ -1,15 +1,35 @@
 import { useEffect, useState } from 'react'
-import { X, Sparkles, Zap, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, Sparkles, Zap, UserPlus, FileText, Rocket, LineChart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
 import rocketIcon from '@/assets/dashboard/rocket-icon.png'
+import bannerIllustration from '@/assets/templates/icons/banner-illustration.png'
+
+// Ordered as an S-shaped stepper: 1 → 2 (top row, left to right), down to 3,
+// then 3 → 4 (bottom row, right to left) — placed via CSS grid position below.
+const QUICK_ACTIONS = [
+  { step: 1, label: 'Create Contact',  icon: UserPlus,  to: '/contacts',  state: { openCreate: true }, chip: 'bg-blue-50 text-blue-600',     badge: 'bg-blue-600',   col: 1, row: 1 },
+  { step: 2, label: 'Create Template', icon: FileText,  to: '/templates', state: { openCreate: true }, chip: 'bg-purple-50 text-purple-600', badge: 'bg-purple-600', col: 3, row: 1 },
+  { step: 3, label: 'Run Campaign',    icon: Rocket,    to: '/campaigns', state: { openWizard: true }, chip: 'bg-amber-50 text-amber-600',   badge: 'bg-amber-500',  col: 3, row: 3 },
+  { step: 4, label: 'Track Campaign',  icon: LineChart, to: '/campaigns', state: null,                 chip: 'bg-[#e8f5ee] text-[#1a5c3a]',  badge: 'bg-[#1a5c3a]',  col: 1, row: 3 },
+]
+
+// Delay (ms) before each stepper element's entrance animation starts —
+// button, then the line leading out of it, staggered so the sequence reads
+// left-to-right, top-to-bottom, then loops 4 → 1 to close the circuit.
+const STEP_DELAY = 280
+const BASE_DELAY = 350
+const HOLD_AFTER_COMPLETE = 1300
+// Last event (line 4) starts at BASE_DELAY + STEP_DELAY*7 and its draw-in takes ~250ms.
+const CYCLE_DURATION = BASE_DELAY + STEP_DELAY * 7 + 250 + HOLD_AFTER_COMPLETE
 
 // Shown once, right after a successful login/sign-in, the first time the
 // user lands on the dashboard. useUIStore.justLoggedIn is set by useAuth
 // (useLogin / useGoogleAuth) just before navigating to /dashboard, and is
 // never persisted — so a page refresh or later visit won't bring it back.
 export default function PromoBanner() {
-  const openHelpChat = useUIStore((s) => s.openHelpChat)
+  const navigate = useNavigate()
 
   // Captured once at mount — not a reactive subscription. Clearing the flag
   // below must not be a dependency of this effect, or the resulting re-render
@@ -17,6 +37,10 @@ export default function PromoBanner() {
   const [visible, setVisible] = useState(() => useUIStore.getState().justLoggedIn)
   const [entered, setEntered] = useState(false)
   const [closing, setClosing] = useState(false)
+  // Bumped on an interval to remount the stepper subtree, which restarts every
+  // (fill: forwards) entrance animation inside it — the simplest way to loop
+  // a staggered CSS animation sequence indefinitely and in sync.
+  const [cycleKey, setCycleKey] = useState(0)
 
   useEffect(() => {
     if (!visible) return
@@ -24,6 +48,12 @@ export default function PromoBanner() {
     const t = requestAnimationFrame(() => setEntered(true))
     return () => cancelAnimationFrame(t)
   }, [visible])
+
+  useEffect(() => {
+    if (!entered) return
+    const interval = setInterval(() => setCycleKey(k => k + 1), CYCLE_DURATION)
+    return () => clearInterval(interval)
+  }, [entered])
 
   const handleClose = () => {
     setClosing(true)
@@ -36,14 +66,29 @@ export default function PromoBanner() {
     <div
       className={cn(
         'relative overflow-hidden rounded-2xl shadow-card transition-all duration-300 ease-out',
-        entered && !closing ? 'opacity-100 translate-y-0 max-h-[220px]' : 'opacity-0 -translate-y-2 max-h-0'
+        entered && !closing ? 'opacity-100 translate-y-0 max-h-[200px]' : 'opacity-0 -translate-y-2 max-h-0'
       )}
     >
-      <div className="relative bg-gradient-to-r from-[#123724] via-[#1a5c3a] to-[#2d7a4f] px-6 py-6 sm:px-8 sm:py-7 flex items-center gap-6 flex-wrap sm:flex-nowrap">
+      <div className="relative bg-gradient-to-r from-[#123724] via-[#1a5c3a] to-[#2d7a4f] px-6 py-6 sm:px-8 sm:py-7 flex items-center gap-6 flex-wrap lg:flex-nowrap">
         {/* Decorative floating shapes */}
         <div className="pointer-events-none absolute -right-10 -top-16 w-48 h-48 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="pointer-events-none absolute right-24 -bottom-10 w-24 h-24 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute left-1/3 -top-6 w-16 h-16 rounded-full bg-white/5" />
+
+        {/* Illustration — centered, sits behind the copy/actions on top of the gradient */}
+        <img
+          src={bannerIllustration}
+          alt=""
+          className="pointer-events-none hidden md:block absolute right-1 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[95%] max-h-[170px] w-auto object-contain opacity-80"
+        />
+
+        <button
+          onClick={handleClose}
+          aria-label="Dismiss"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center"
+        >
+          <X size={15} className="text-white" />
+        </button>
 
         {/* "Image" — rocket illustration */}
         <div className="group relative shrink-0 w-16 h-16 sm:w-20 sm:h-20">
@@ -57,7 +102,7 @@ export default function PromoBanner() {
         </div>
 
         {/* Copy */}
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[200px] pr-6">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/70 mb-1">
             <Zap size={11} />
             Welcome back
@@ -71,22 +116,58 @@ export default function PromoBanner() {
           </p>
         </div>
 
-        {/* CTA + close */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => { openHelpChat(); handleClose() }}
-            className="inline-flex items-center gap-1.5 bg-white text-[#123724] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-white/90 active:scale-95 transition-all"
-          >
-            Take a quick look
-            <ArrowRight size={14} />
-          </button>
-          <button
-            onClick={handleClose}
-            aria-label="Dismiss"
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center"
-          >
-            <X size={15} className="text-white" />
-          </button>
+        {/* Quick actions — S-shaped stepper: 1→2 across, down to 3, 3→4 back across, then 4→1 to loop */}
+        <div
+          key={cycleKey}
+          className="relative grid shrink-0 w-full sm:w-auto items-center justify-items-center"
+          style={{ gridTemplateColumns: 'auto 18px auto', gridTemplateRows: 'auto 18px auto' }}
+        >
+          {/* connectors — each draws in right after the step before it pops in */}
+          {entered && (
+            <>
+              <div
+                className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
+                style={{ gridColumn: 2, gridRow: 1, animationDelay: `${BASE_DELAY + STEP_DELAY * 1}ms` }}
+              />
+              <div
+                className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
+                style={{ gridColumn: 3, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 3}ms` }}
+              />
+              <div
+                className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
+                style={{ gridColumn: 2, gridRow: 3, animationDelay: `${BASE_DELAY + STEP_DELAY * 5}ms` }}
+              />
+              {/* 4 → 1, closing the loop back to the start */}
+              <div
+                className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
+                style={{ gridColumn: 1, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 7}ms` }}
+              />
+            </>
+          )}
+
+          {QUICK_ACTIONS.map(action => (
+            <button
+              key={action.label}
+              onClick={() => { navigate(action.to, action.state ? { state: action.state } : undefined); handleClose() }}
+              style={{
+                gridColumn: action.col,
+                gridRow: action.row,
+                ...(entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }),
+              }}
+              className={cn(
+                'inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-semibold pl-1.5 pr-2.5 py-1.5 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all whitespace-nowrap',
+                entered && 'animate-stepper-pop'
+              )}
+            >
+              <span className={cn('relative flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0 backdrop-blur-sm', action.chip)}>
+                <action.icon size={12} />
+                <span className={cn('absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full border border-white/70 text-white text-[8px] font-bold flex items-center justify-center', action.badge)}>
+                  {action.step}
+                </span>
+              </span>
+              {action.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>

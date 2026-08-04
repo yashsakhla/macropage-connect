@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUIStore } from '@/store/uiStore'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import type { AxiosError } from 'axios'
 import api from '@/lib/axios'
 import { useAuthStore } from '@/store/authStore'
 import { connectSocket, disconnectSocket } from '@/lib/socket'
-import type { LoginPayload } from '@/types'
+import type { LoginPayload, RegisterFormPayload, RawAuthResponseDTO, ApiErrorResponse, User } from '@/types'
+
+type AuthErrorResponse = ApiErrorResponse & { code?: string; error?: { code?: string; message?: string } }
+type AuthError = AxiosError<AuthErrorResponse> & { __email?: string }
 
 function decodeTokenRole(token: string): string | undefined {
   try {
@@ -23,7 +27,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (payload: LoginPayload) =>
-      api.post('/auth/login', payload).then((r) => r.data),
+      api.post('/auth/login', payload).then((r) => r.data).catch((err) => { throw Object.assign(err, { __email: payload.email }) }),
     onMutate: () => setFullLoader(true),
     onSettled: () => setFullLoader(false),
     onSuccess: ({ data }) => {
@@ -38,17 +42,21 @@ export function useLogin() {
       connectSocket(token)
       useUIStore.getState().setJustLoggedIn(true)
 
-      if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
+      if (user.emailVerified === false && user.provider !== 'google') {
+        navigate('/verify-otp')
+      } else if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
         navigate('/setup/whatsapp')
       } else {
         navigate('/dashboard')
       }
     },
-    onError: (err: any) => {
-      const code = err.response?.data?.error?.code
+    onError: (err: AuthError) => {
+      const code = err.response?.data?.code ?? err.response?.data?.error?.code
       if (code === 'TWO_FACTOR_REQUIRED') {
         // 2FA not yet wired — show generic message
         toast.error('Two-factor authentication required')
+      } else if (code === 'EMAIL_NOT_VERIFIED') {
+        navigate('/verify-otp', { state: { email: err.__email } })
       } else {
         toast.error(err.response?.data?.message ?? 'Invalid credentials')
       }
@@ -85,7 +93,7 @@ export function useGoogleAuth() {
         navigate('/dashboard')
       }
     },
-    onError: (err: any) => {
+    onError: (err: AuthError) => {
       toast.error(err.response?.data?.message ?? 'Google sign-in failed')
     },
   })
@@ -98,7 +106,7 @@ export function useRegister() {
   const setFullLoader = useUIStore.getState().setFullLoader
 
   return useMutation({
-    mutationFn: (payload: any) => {
+    mutationFn: (payload: RegisterFormPayload) => {
       const rawPhone = (payload.phone ?? '') + ''
       const digits = rawPhone.replace(/\D/g, '')
       let phone: string | undefined
@@ -121,7 +129,7 @@ export function useRegister() {
     },
     onMutate: () => setFullLoader(true),
     onSettled: () => setFullLoader(false),
-    onError: (err: any) => {
+    onError: (err: AuthError) => {
       toast.error(err.response?.data?.message ?? 'Registration failed')
     },
   })
@@ -133,15 +141,15 @@ export function useFinalizeSignup() {
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
 
-  return (data: any) => {
-    const token = data.accessToken ?? data.token
+  return (data: RawAuthResponseDTO) => {
+    const token = data.accessToken ?? data.token ?? ''
     const refreshToken = data.refreshToken ?? ''
     const user = {
       ...(data.user || {}),
       plan: (data.user?.plan ?? 'TRIAL') as string,
       role: data.user?.role ?? decodeTokenRole(token),
       emailVerified: true,
-    }
+    } as unknown as User
     setAuth(user, token, refreshToken)
     connectSocket(token)
     navigate('/setup/whatsapp')
@@ -170,7 +178,7 @@ export function useForgotPassword() {
     mutationFn: (email: string) =>
       api.post('/auth/forgot-password', { email }).then((r) => r.data),
     onSuccess: () => toast.success('Reset link sent to your email'),
-    onError: (err: any) => {
+    onError: (err: AuthError) => {
       toast.error(err.response?.data?.message ?? 'Failed to send reset link')
     },
   })
@@ -185,7 +193,7 @@ export function useResetPassword() {
       toast.success('Password updated. Please log in.')
       navigate('/login')
     },
-    onError: (err: any) => {
+    onError: (err: AuthError) => {
       toast.error(err.response?.data?.message ?? 'Failed to reset password')
     },
   })
@@ -248,7 +256,7 @@ export function useVerifyOtp() {
   return useMutation({
     mutationFn: ({ email, otp }: { email: string; otp: string }) =>
       api.post('/auth/verify-otp', { email, otp }).then(r => r.data),
-    onError: (err: any) => {
+    onError: (err: AuthError) => {
       toast.error(err.response?.data?.message ?? 'Invalid code. Try again.')
     },
   })
@@ -262,14 +270,15 @@ export function useResendVerification() {
     onSuccess: () =>
       toast.success('Verification email sent! Check your inbox.'),
 
-    onError: (err: any) => {
-      const code = err.response?.data?.error?.code
-      if (code === 'ALREADY_VERIFIED') {
+    onError: (err: AuthError) => {
+      const code = err.response?.data?.code ?? err.response?.data?.error?.code
+      const message = err.response?.data?.message ?? ''
+      if (code === 'ALREADY_VERIFIED' || /already verified/i.test(message)) {
         toast.success('Your email is already verified!')
       } else if (code === 'TOO_MANY_REQUESTS') {
         toast.error('Too many requests. Wait an hour and try again.')
       } else {
-        toast.error('Could not send email. Try again.')
+        toast.error(message || 'Could not send email. Try again.')
       }
     },
   })

@@ -8,7 +8,7 @@ import {
 import { format } from 'date-fns'
 import { cn, downloadCSV } from '@/lib/utils'
 import type { Campaign, CampaignStatus } from '@/types'
-import { useCampaigns, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
+import { useCampaigns, usePauseCampaign, useLaunchCampaign } from '@/hooks/useCampaigns'
 import CampaignCard, { LIST_GRID_COLS } from '@/components/campaigns/CampaignCard'
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import rocketIcon from '@/assets/campaigns/roccket.png'
@@ -38,9 +38,9 @@ export default function Campaigns() {
   const navigate = useNavigate()
   const location = useLocation()
   const { data: campaignsData, isLoading } = useCampaigns()
-  const campaigns: Campaign[] = (campaignsData as any)?.data ?? []
+  const campaigns: Campaign[] = (campaignsData as { data?: Campaign[] } | undefined)?.data ?? []
   const pause = usePauseCampaign()
-  const duplicate = useDuplicateCampaign()
+  const launch = useLaunchCampaign()
 
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all')
   const [search, setSearch] = useState('')
@@ -50,6 +50,7 @@ export default function Campaigns() {
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [showWizard, setShowWizard] = useState(false)
+  const [editCampaign, setEditCampaign] = useState<Campaign | null>(null)
 
   const dateMenuRef = useRef<HTMLDivElement>(null)
   const sortMenuRef = useRef<HTMLDivElement>(null)
@@ -325,13 +326,13 @@ export default function Campaigns() {
         <EmptyState onCreateClick={() => setShowWizard(true)} hasFilter={statusFilter !== 'all' || !!search || dateRange !== 'all'} />
       ) : view === 'list' ? (
         <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden md:overflow-x-auto">
-          <div className="md:min-w-[900px]">
+          <div className="md:min-w-[920px]">
             <div
               className="hidden md:grid items-center gap-3 px-5 py-3 border-b border-[#eef0ee] dark:border-white/10 bg-[#fafbfa] dark:bg-white/5"
               style={{ gridTemplateColumns: LIST_GRID_COLS }}
             >
-              {['Campaign', 'Status', 'Contacts', 'Delivered', 'Open Rate', 'Sent', 'Read', 'Failed', 'Last Updated', ''].map(label => (
-                <span key={label} className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">{label}</span>
+              {['Campaign', 'Status', 'Contacts', 'Delivered', 'Open Rate', 'Sent', 'Read', 'Failed', 'Last Updated', ''].map((label, i) => (
+                <span key={label} className={cn('text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide', i > 0 && 'text-center')}>{label}</span>
               ))}
             </div>
             {filtered.map(c => (
@@ -341,7 +342,8 @@ export default function Campaigns() {
                 view="list"
                 onClick={(c: Campaign) => navigate(`/campaigns/${c.id}`)}
                 onPause={(c: Campaign) => pause.mutate(c.id)}
-                onDuplicate={(c: Campaign) => duplicate.mutate(c.id)}
+                onEdit={(c: Campaign) => setEditCampaign(c)}
+                onLaunch={(c: Campaign) => launch.mutate(c.id)}
               />
             ))}
           </div>
@@ -355,7 +357,8 @@ export default function Campaigns() {
               view="grid"
               onClick={(c: Campaign) => navigate(`/campaigns/${c.id}`)}
               onPause={(c: Campaign) => pause.mutate(c.id)}
-              onDuplicate={(c: Campaign) => duplicate.mutate(c.id)}
+              onEdit={(c: Campaign) => setEditCampaign(c)}
+              onLaunch={(c: Campaign) => launch.mutate(c.id)}
             />
           ))}
         </div>
@@ -365,6 +368,13 @@ export default function Campaigns() {
       {showWizard && (
         <CampaignWizard
           onClose={() => setShowWizard(false)}
+          onSuccess={(id: string) => navigate(`/campaigns/${id}`)}
+        />
+      )}
+      {editCampaign && (
+        <CampaignWizard
+          editCampaign={editCampaign}
+          onClose={() => setEditCampaign(null)}
           onSuccess={(id: string) => navigate(`/campaigns/${id}`)}
         />
       )}

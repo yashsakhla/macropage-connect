@@ -9,6 +9,7 @@ import type {
   WAEmbeddedSignupFinishData,
   WABAAccount,
 } from '@/types/meta'
+import type { RawWabaConnectDTO } from '@/types'
 
 export type SignupState =
   | 'idle'
@@ -55,17 +56,19 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
       return response.data?.data ?? response.data
     },
 
-    onSuccess: (data: any) => {
+    onSuccess: (data: RawWabaConnectDTO) => {
       setWabaAccount({
         wabaId:        data.wabaId        ?? '',
         wabaName:      data.wabaName      ?? data.displayName ?? '',
         phoneNumberId: data.phoneNumberId ?? '',
         phoneNumber:   data.phoneNumber   ?? '',
         displayName:   data.displayName   ?? '',
-        qualityRating: ['GREEN', 'YELLOW', 'RED'].includes(data.qualityRating)
-          ? data.qualityRating
+        qualityRating: ['GREEN', 'YELLOW', 'RED'].includes(data.qualityRating ?? '')
+          ? (data.qualityRating as 'GREEN' | 'YELLOW' | 'RED')
           : 'UNKNOWN',
-        messagingTier: data.messagingTier ?? 'TIER_1K',
+        messagingTier: (['TIER_1K', 'TIER_10K', 'TIER_100K', 'TIER_UNLIMITED'].includes(data.messagingTier ?? '')
+          ? data.messagingTier
+          : 'TIER_1K') as 'TIER_1K' | 'TIER_10K' | 'TIER_100K' | 'TIER_UNLIMITED',
         isVerified:    data.isVerified    ?? false,
         currency:      data.currency      ?? '',
         timezone:      data.timezone      ?? '',

@@ -5,6 +5,10 @@ import {
   CheckCircle, Eye, EyeOff, Info,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
+
+type PinErrorResponse = ApiErrorResponse & { code?: string; error?: { code?: string; message?: string } }
 
 interface Props {
   phoneNumber: string | null
@@ -81,7 +85,8 @@ export default function WhatsAppPinStep({
       onSuccess: () => {
         onSuccess()
       },
-      onError: (err: any) => {
+      onError: (rawErr: Error) => {
+        const err = rawErr as AxiosError<PinErrorResponse>
         const code = err?.response?.data?.error?.code
           ?? err?.response?.data?.code
 

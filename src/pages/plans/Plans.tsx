@@ -60,9 +60,21 @@ export default function Plans() {
   })
   const planIndex = (id?: string) => orderedPlans.findIndex(p => p.id === id)
 
-  // Cycle toggle savings badge — same discount % across plans, so read it off the first non-custom plan
-  const referencePlan = orderedPlans.find(p => !p.custom)
-  const cycleSavings = (cycle: BillingCycle) => referencePlan?.pricing[cycle]?.savings
+  // Cycle toggle savings badge — plans can each carry a slightly different
+  // discount %, so average the numeric % out of every non-custom plan's
+  // pricing.savings string (e.g. "Save 20%") rather than reading just one plan.
+  const cycleSavings = (cycle: BillingCycle) => {
+    const pct = orderedPlans
+      .filter(p => !p.custom)
+      .map(p => p.pricing[cycle]?.savings)
+      .filter((s): s is string => !!s)
+      .map(s => parseFloat(s.match(/(\d+(\.\d+)?)/)?.[0] ?? ''))
+      .filter(n => !Number.isNaN(n))
+
+    if (!pct.length) return undefined
+    const avg = Math.round(pct.reduce((sum, n) => sum + n, 0) / pct.length)
+    return `Save ~${avg}%`
+  }
 
   // The only fully reliable signal: match /billing/subscription's razorpayPlanId
   // against each plan's razorpayPlanIds{monthly,quarterly,yearly} map from /billing/plans.
@@ -149,7 +161,7 @@ export default function Plans() {
     <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#0f1724]">
 
       {/* Top bar */}
-      <div className="bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 sticky top-0 z-0">
+      <div className="bg-white dark:bg-[#0b1220] border-b border-[#e8ebe8] dark:border-white/10 sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -230,11 +242,11 @@ export default function Plans() {
                   key={cycle}
                   onClick={() => setBillingCycle(cycle)}
                   className={cn(
-                    'px-2.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 flex-1 whitespace-nowrap min-w-0',
+                    'px-2.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none whitespace-nowrap min-w-0',
                     billingCycle === cycle ? 'bg-[#1a5c3a] text-white shadow-sm' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
                   )}
                 >
-                  <span className="truncate">{CYCLE_LABEL[cycle]}</span>
+                  <span className="truncate sm:whitespace-nowrap">{CYCLE_LABEL[cycle]}</span>
                   <span className={cn(
                     'text-2xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0',
                     savings ? 'visible' : 'invisible',
@@ -296,7 +308,7 @@ export default function Plans() {
                   )}
 
                   {/* Illustration banner — full-bleed, ~40% of the card's height, with breathing room above it */}
-                  <div className="h-48 mt-4 overflow-hidden bg-[#f7f8f6] dark:bg-white/5 flex-shrink-0">
+                  <div className="h-48 mt-4 overflow-hidden bg-white flex-shrink-0">
                     <img src={meta.image} alt="" className="w-full h-full object-contain" />
                   </div>
 

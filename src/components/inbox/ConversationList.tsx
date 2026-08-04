@@ -61,7 +61,7 @@ export default function ConversationList() {
     search: searchQuery || undefined,
   })
 
-  const allConversations: Conversation[] = (conversationsData as any)?.data ?? []
+  const allConversations: Conversation[] = (conversationsData as { data?: Conversation[] } | undefined)?.data ?? []
 
   let data: Conversation[] = allConversations
   if (activeFilter === 'open') data = data.filter((c) => c.status === 'open')

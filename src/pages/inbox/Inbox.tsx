@@ -45,7 +45,7 @@ export default function Inbox() {
       {/* Panel 2 — Chat thread */}
       <div
         className={cn(
-          'flex-1 flex flex-col min-w-0',
+          'flex-1 flex flex-col min-w-0 min-h-0',
           // Mobile: show only when mobileView === 'chat'
           mobileView === 'chat' ? 'flex' : 'hidden',
           // Desktop: always show

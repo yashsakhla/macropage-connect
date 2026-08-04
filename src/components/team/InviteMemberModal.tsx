@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,12 +7,12 @@ import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types'
 import { useInviteMember } from '@/hooks/useTeam'
 
-const schema = z.object({
+const baseSchema = z.object({
   email: z.string().email('Valid email required'),
   role: z.enum(['admin', 'manager', 'agent']),
   message: z.string().max(200).optional(),
 })
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<typeof baseSchema>
 
 const ROLES: { value: UserRole; icon: React.ElementType; label: string; desc: string; iconBg: string; iconColor: string }[] = [
   { value: 'admin',   icon: Shield,     label: 'Admin',   desc: 'Full access — manage everything',          iconBg: 'bg-purple-50 dark:bg-purple-950/30', iconColor: 'text-purple-600 dark:text-purple-400' },
@@ -39,19 +39,46 @@ const PERMISSIONS: Record<string, { can: string[]; cannot: string[] }> = {
   },
 }
 
-interface InviteMemberModalProps { onClose: () => void }
+interface InviteMemberModalProps {
+  onClose: () => void
+  /** emails of people already on the team (active/inactive members) */
+  existingMemberEmails?: string[]
+  /** emails that already have an invite sent and awaiting acceptance */
+  pendingInviteEmails?: string[]
+}
 
-export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
+export default function InviteMemberModal({ onClose, existingMemberEmails = [], pendingInviteEmails = [] }: InviteMemberModalProps) {
   const [multiOpen, setMultiOpen] = useState(false)
   const invite = useInviteMember()
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
+  const memberEmailsLower = useMemo(() => new Set(existingMemberEmails.map(e => e.toLowerCase())), [existingMemberEmails])
+  const pendingEmailsLower = useMemo(() => new Set(pendingInviteEmails.map(e => e.toLowerCase())), [pendingInviteEmails])
+
+  const schema = useMemo(
+    () =>
+      baseSchema.extend({
+        email: baseSchema.shape.email
+          .refine((email) => !memberEmailsLower.has(email.toLowerCase()), {
+            message: 'This person is already a team member',
+          })
+          .refine((email) => !pendingEmailsLower.has(email.toLowerCase()), {
+            message: 'This person already has a pending invite',
+          }),
+      }),
+    [memberEmailsLower, pendingEmailsLower]
+  )
+
+  const { register, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: 'onChange',
     defaultValues: { email: '', role: 'agent', message: '' },
   })
 
   const selectedRole = watch('role')
   const perms = PERMISSIONS[selectedRole]
+  const emailValue = watch('email')
+  const normalizedEmail = emailValue?.trim().toLowerCase()
+  const isDuplicate = !!normalizedEmail && (memberEmailsLower.has(normalizedEmail) || pendingEmailsLower.has(normalizedEmail))
 
   const onSubmit = (data: FormValues) => {
     invite.mutate(
@@ -75,7 +102,12 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
           {/* email */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Email address *</label>
-            <input {...register('email')} type="email" className="input" placeholder="colleague@company.com" />
+            <input
+              {...register('email')}
+              type="email"
+              className={cn('input', errors.email && 'border-red-400 dark:border-red-500/60 focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/30')}
+              placeholder="colleague@company.com"
+            />
             {errors.email && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.email.message}</p>}
           </div>
 
@@ -143,7 +175,12 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
 
         <div className="flex items-center gap-2 px-6 py-4 border-t border-[#e8ebe8] dark:border-white/10">
           <button type="button" className="btn btn-ghost h-9 px-4" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn btn-primary h-9 px-5 ml-auto" onClick={handleSubmit(onSubmit)} disabled={invite.isPending}>
+          <button
+            type="button"
+            className="btn btn-primary h-9 px-5 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSubmit(onSubmit)}
+            disabled={invite.isPending || isDuplicate || !isValid || !emailValue}
+          >
             {invite.isPending ? 'Sending...' : 'Send invitation'}
           </button>
         </div>

@@ -11,6 +11,7 @@ interface UIState {
   paymentIssueModalOpen: boolean
   paymentIssueReferenceId: string | null
   helpWidgetOpen: boolean
+  demoModalOpen: boolean
 
   // global full-page loader
   fullLoader: boolean
@@ -37,6 +38,8 @@ interface UIState {
   setPaymentIssueModalOpen: (v: boolean) => void
   setHelpWidgetOpen: (v: boolean) => void
   openHelpChat: () => void
+  setDemoModalOpen: (v: boolean) => void
+  openDemoModal: () => void
   setJustLoggedIn: (v: boolean) => void
   setWelcomePopupOpen: (v: boolean) => void
 }
@@ -53,6 +56,7 @@ export const useUIStore = create<UIState>()(
       paymentIssueModalOpen: false,
       paymentIssueReferenceId: null,
       helpWidgetOpen: false,
+      demoModalOpen: false,
       fullLoader: false,
       justLoggedIn: false,
       welcomePopupOpen: false,
@@ -77,6 +81,8 @@ export const useUIStore = create<UIState>()(
       setPaymentIssueModalOpen: (v) => set({ paymentIssueModalOpen: v }),
       setHelpWidgetOpen: (v) => set({ helpWidgetOpen: v }),
       openHelpChat: () => set({ helpWidgetOpen: true }),
+      setDemoModalOpen: (v) => set({ demoModalOpen: v }),
+      openDemoModal: () => set({ demoModalOpen: true, helpWidgetOpen: false }),
       setJustLoggedIn: (v) => set({ justLoggedIn: v }),
       setWelcomePopupOpen: (v) => set({ welcomePopupOpen: v }),
     }),

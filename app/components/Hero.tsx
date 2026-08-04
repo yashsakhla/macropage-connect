@@ -286,7 +286,7 @@ export default function Hero() {
 
         {/* Stats bar */}
         <div className="mt-16 lg:mt-20 grid grid-cols-2 sm:grid-cols-4 gap-px bg-green-100 rounded-3xl overflow-hidden shadow-card">
-          {stats.map((stat, i) => (
+          {stats.map((stat) => (
             <div
               key={stat.label}
               className="bg-white px-6 py-6 text-center hover:bg-green-50 transition-colors"

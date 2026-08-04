@@ -35,5 +35,5 @@ export function useTokenRefresh() {
     }, REFRESH_INTERVAL_MS)
 
     return () => clearInterval(interval)
-  }, [token, refreshToken])
+  }, [token, refreshToken, setAuth, user])
 }

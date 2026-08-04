@@ -1,15 +1,16 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Megaphone, FileText,
   Users, Users2, Settings, ChevronLeft, ChevronRight,
   HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock, BookOpen, X,
-  PhoneCall,
+  MessageCircle,
 } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/utils'
-import { PLAN_FEATURES, ROLE_PERMISSIONS, normalisePlan } from '@/lib/permissions'
-import type { Role } from '@/lib/permissions'
+import { PLAN_FEATURES, ROLE_PERMISSIONS, normalisePlan } from '@/lib/permissionsConstants'
+import type { Role } from '@/lib/permissionsConstants'
 import blackLogo from '@assets/macropage-connect-black.svg'
 
 // Plan → badge class + display label. Every plan gets its own colour AND font treatment (see .company-badge in index.css)
@@ -55,7 +56,21 @@ function Logo({ collapsed }: { collapsed: boolean }) {
 export default function Sidebar() {
   const { sidebarOpen, toggleSidebar, setPlanExpiredModalOpen, mobileSidebarOpen, setMobileSidebarOpen } = useUIStore()
   const location = useLocation()
-  const collapsed = !sidebarOpen
+
+  // The collapsed (icon-only) rail is a desktop-only concept. On mobile the
+  // drawer is always full-width, so it must always show full labels — never
+  // inherit whatever collapsed state the desktop rail happens to be in.
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  )
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)')
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+  const collapsed = !sidebarOpen && isDesktop
+
   const { user, isInTrial, trialDaysLeft } = useAuthStore()
 
   // Mirror ProtectedRoute's exact expiry check so sidebar and route guard stay in sync
@@ -140,15 +155,18 @@ export default function Sidebar() {
               title={collapsed ? 'Setup WhatsApp' : undefined}
               onClick={() => setMobileSidebarOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-semibold transition-colors',
-                'bg-[#25D366]/10 text-[#1a5c3a] hover:bg-[#25D366]/20 border border-[#25D366]/30',
+                'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-semibold transition-colors',
+                'bg-[#1a5c3a] text-white hover:bg-[#164b30]',
                 collapsed && 'justify-center px-2'
               )}
             >
-              <PhoneCall size={18} className="shrink-0" />
-              {!collapsed && <span className="flex-1">Setup WhatsApp</span>}
+              <MessageCircle size={16} className="shrink-0" />
+              {!collapsed && <span className="flex-1 truncate">Setup WhatsApp</span>}
+              {!collapsed && <ArrowRight size={14} className="shrink-0 opacity-80" />}
               {!collapsed && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse flex-shrink-0" />
+                <span className="absolute -top-1.5 -right-1.5 text-[0.6rem] leading-none font-medium text-white bg-red-500 px-1.5 py-1 rounded-full shrink-0 shadow-sm">
+                  Not connected
+                </span>
               )}
             </Link>
           </div>
@@ -222,6 +240,7 @@ export default function Sidebar() {
           </NavLink>
 
           {/* Billing — golden accent */}
+          {role !== 'AGENT' && (
           <NavLink
             to="/settings/billing"
             title={collapsed ? 'Billing' : undefined}
@@ -239,8 +258,10 @@ export default function Sidebar() {
             <CreditCard size={18} className="shrink-0" />
             {!collapsed && <span>Billing</span>}
           </NavLink>
+          )}
 
           {/* Upgrade Plan — golden CTA, pulsing crown when expired */}
+          {role !== 'AGENT' && (
           <NavLink
             to="/plans"
             title={collapsed ? 'Upgrade Plan' : undefined}
@@ -270,6 +291,7 @@ export default function Sidebar() {
               </span>
             )}
           </NavLink>
+          )}
 
           <Link
             to="/help"

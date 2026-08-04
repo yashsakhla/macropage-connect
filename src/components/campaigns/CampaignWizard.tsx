@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, Check, Loader2, AlertCircle, RefreshCw, Lock } from 'lucide-react'
+import { AxiosError } from 'axios'
 import { cn } from '@/lib/utils'
-import { usePermissions } from '@/lib/permissions'
-import type { Contact, Template } from '@/types'
+import { usePermissions } from '@/lib/permissionsConstants'
+import type { Campaign, Contact, Template, ApiErrorResponse, DashboardHealthData } from '@/types'
 import type { AudienceType } from './WizardStep2Audience'
 import type { SendSpeed } from './WizardStep3Schedule'
-import { useCreateCampaign, useLaunchCampaign, useContactsCount } from '@/hooks/useCampaigns'
+import {
+  useCreateCampaign, useUpdateCampaign, useLaunchCampaign, useContactsCount, useApprovedTemplates,
+} from '@/hooks/useCampaigns'
+import { useDashboardHealth } from '@/hooks/useAnalytics'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 import WizardStep1Template from './WizardStep1Template'
 import WizardStep2Audience from './WizardStep2Audience'
@@ -25,22 +29,38 @@ interface CampaignWizardProps {
   onSuccess?: (campaignId: string) => void
   initialTemplate?: Template
   initialContacts?: Contact[]
+  /** Pass an existing draft campaign to edit it in place instead of creating a new one. */
+  editCampaign?: Campaign
 }
 
-export default function CampaignWizard({ onClose, onSuccess, initialTemplate, initialContacts }: CampaignWizardProps) {
+export default function CampaignWizard({ onClose, onSuccess, initialTemplate, initialContacts, editCampaign }: CampaignWizardProps) {
   const navigate = useNavigate()
   const { canLaunchCampaign } = usePermissions()
   const { requireConnected } = useRequireWhatsApp()
+  const isEditing = !!editCampaign
   const [step, setStep] = useState(0)
 
   // Step 1
-  const [campaignName, setCampaignName] = useState('')
+  const [campaignName, setCampaignName] = useState(editCampaign?.name ?? '')
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(initialTemplate ?? null)
-  const [variableMapping, setVariableMapping] = useState<Record<string, string>>({})
+  const [variableMapping, setVariableMapping] = useState<Record<string, string>>(editCampaign?.variableMapping ?? {})
+
+  // Draft campaigns only carry a templateId, not the full Template object needed
+  // for the picker/preview — look it up once the approved-templates list loads.
+  const { data: approvedTemplates } = useApprovedTemplates()
+  useEffect(() => {
+    if (editCampaign && !selectedTemplate && approvedTemplates?.length) {
+      const match = approvedTemplates.find(t => t.id === editCampaign.templateId)
+      if (match) setSelectedTemplate(match)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editCampaign, approvedTemplates])
 
   // Step 2
-  const [audienceType, setAudienceType] = useState<AudienceType>(initialContacts?.length ? 'selected' : 'all')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [audienceType, setAudienceType] = useState<AudienceType>(
+    editCampaign?.audienceType ?? (initialContacts?.length ? 'selected' : 'all')
+  )
+  const [selectedTags, setSelectedTags] = useState<string[]>(editCampaign?.audienceTags ?? [])
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvMapping, setCsvMapping] = useState<Record<string, string>>({})
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>(initialContacts ?? [])
@@ -50,15 +70,24 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
     isLoading: audienceCountLoading,
     isError: audienceCountError,
   } = useContactsCount(audienceType === 'tag' ? { tags: selectedTags } : {})
-  const totalContacts = audienceType === 'selected' ? selectedContacts.length : (audienceData?.total ?? 0)
+  const totalContacts = audienceType === 'selected'
+    ? (selectedContacts.length || editCampaign?.totalContacts || 0)
+    : (audienceData?.total ?? 0)
+
+  const { data: healthData } = useDashboardHealth()
+  const qualityRating = (healthData as DashboardHealthData | undefined)?.qualityRating
 
   // Step 3
-  const [sendImmediately, setSendImmediately] = useState(true)
-  const [scheduledDate, setScheduledDate] = useState('')
-  const [scheduledTime, setScheduledTime] = useState('')
+  const [sendImmediately, setSendImmediately] = useState(!editCampaign?.scheduledAt)
+  const [scheduledDate, setScheduledDate] = useState(
+    editCampaign?.scheduledAt ? editCampaign.scheduledAt.slice(0, 10) : ''
+  )
+  const [scheduledTime, setScheduledTime] = useState(
+    editCampaign?.scheduledAt ? editCampaign.scheduledAt.slice(11, 16) : ''
+  )
   const [timezone, setTimezone] = useState('Asia/Kolkata')
-  const [sendSpeed, setSendSpeed] = useState<SendSpeed>('normal')
-  const [isAbTest, setIsAbTest] = useState(false)
+  const [sendSpeed, setSendSpeed] = useState<SendSpeed>(editCampaign?.sendSpeed ?? 'normal')
+  const [isAbTest, setIsAbTest] = useState(editCampaign?.isAbTest ?? false)
   const [abSplit, setAbSplit] = useState(50)
 
   // Step 4
@@ -73,6 +102,14 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
   } = useCreateCampaign()
 
   const {
+    mutateAsync: updateCampaignAsync,
+    isPending: updating,
+    isError: updateIsError,
+    error: updateErr,
+    reset: resetUpdate,
+  } = useUpdateCampaign()
+
+  const {
     mutateAsync: launchCampaignAsync,
     isPending: launching,
     isError: launchIsError,
@@ -80,7 +117,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
     reset: resetLaunch,
   } = useLaunchCampaign()
 
-  const isPending = creating || launching
+  const isPending = creating || updating || launching
 
   const canProceed = () => {
     if (step === 0) return !!campaignName.trim() && !!selectedTemplate
@@ -98,6 +135,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
 
   const handleBack = () => {
     resetCreate()
+    resetUpdate()
     resetLaunch()
     setStep(s => s - 1)
   }
@@ -106,26 +144,33 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
     if (!selectedTemplate) return
     if (!requireConnected()) return
     resetCreate()
+    resetUpdate()
     resetLaunch()
     try {
       const scheduledAt = !sendImmediately && scheduledDate && scheduledTime
         ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
         : undefined
 
-      const result = await createCampaignAsync({
+      const payload = {
         name: campaignName,
         templateId: selectedTemplate.id,
         audienceType,
         audienceTags: audienceType === 'tag' ? selectedTags : undefined,
-        contactIds: audienceType === 'selected' ? selectedContacts.map(c => c.id) : undefined,
+        contactIds: audienceType === 'selected' && selectedContacts.length
+          ? selectedContacts.map(c => c.id)
+          : undefined,
         variableMapping,
         scheduledAt,
         sendSpeed,
         isAbTest,
         abTestSplit: isAbTest ? abSplit : undefined,
-      })
+      }
 
-      const campaignId: string = result?._id ?? result?.id ?? result?.data?._id ?? result?.data?.id ?? ''
+      const result = isEditing
+        ? await updateCampaignAsync({ id: editCampaign!.id, data: payload })
+        : await createCampaignAsync(payload)
+
+      const campaignId: string = result?._id ?? result?.id ?? result?.data?._id ?? result?.data?.id ?? editCampaign?.id ?? ''
 
       if (sendImmediately) {
         await launchCampaignAsync(campaignId)
@@ -147,7 +192,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">New Campaign</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">{isEditing ? 'Edit Campaign' : 'New Campaign'}</h2>
               <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 shrink-0">Step {step + 1} of {STEPS.length}</span>
             </div>
 
@@ -270,6 +315,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
               abSplit={abSplit}
               onAbSplitChange={setAbSplit}
               totalContacts={totalContacts}
+              qualityRating={qualityRating}
             />
           )}
           {step === 3 && (
@@ -282,7 +328,23 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not create campaign</p>
                       <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
-                        {(createErr as any)?.response?.data?.message
+                        {(createErr as AxiosError<ApiErrorResponse> | null)?.response?.data?.message
+                          ?? 'We are currently facing an issue. Please try again.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Update campaign error */}
+              {updateIsError && !updating && (
+                <div className="border border-red-200 bg-red-50 dark:bg-red-950/30 rounded-2xl px-4 py-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not save campaign</p>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
+                        {(updateErr as AxiosError<ApiErrorResponse> | null)?.response?.data?.message
                           ?? 'We are currently facing an issue. Please try again.'}
                       </p>
                     </div>
@@ -298,7 +360,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-red-700 dark:text-red-400">Could not launch campaign</p>
                       <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
-                        {(launchErr as any)?.response?.data?.message
+                        {(launchErr as AxiosError<ApiErrorResponse> | null)?.response?.data?.message
                           ?? 'We are currently facing an issue. Please try again.'}
                       </p>
                     </div>
@@ -374,9 +436,11 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
                 disabled={!confirmed || isPending}
               >
                 {isPending ? (
-                  <><Loader2 size={18} className="animate-spin" /> {creating ? 'Saving...' : 'Launching...'}</>
+                  <><Loader2 size={18} className="animate-spin" /> {(creating || updating) ? 'Saving...' : 'Launching...'}</>
+                ) : sendImmediately ? (
+                  <>🚀 {isEditing ? 'Save & Launch' : 'Launch Campaign'}</>
                 ) : (
-                  <>🚀 Launch Campaign</>
+                  <>📅 {isEditing ? 'Save & Schedule' : 'Schedule Campaign'}</>
                 )}
               </button>
             ) : (

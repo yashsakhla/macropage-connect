@@ -3,10 +3,38 @@ import toast from 'react-hot-toast'
 import { useCreateSubscription, useVerifyPayment } from './useBilling'
 import { useAuthStore } from '@/store/authStore'
 import { loadRazorpay } from '@/lib/razorpay'
+import type { AxiosError } from 'axios'
+import type { ApiErrorResponse } from '@/types'
+
+interface RazorpayFailureResponse {
+  error?: { description?: string; code?: string; reason?: string }
+  [key: string]: unknown
+}
+
+interface RazorpayInstance {
+  on: (event: string, handler: (response: RazorpayFailureResponse) => void) => void
+  open: () => void
+}
+
+interface RazorpayOptions {
+  key: string
+  subscription_id: string
+  name: string
+  description: string
+  image: string
+  prefill: { name: string; email: string; contact: string }
+  theme: { color: string }
+  modal: { ondismiss: () => void }
+  handler: (response: {
+    razorpay_subscription_id: string
+    razorpay_payment_id: string
+    razorpay_signature: string
+  }) => void
+}
 
 declare global {
   interface Window {
-    Razorpay: any
+    Razorpay: new (options: RazorpayOptions) => RazorpayInstance
   }
 }
 
@@ -58,15 +86,16 @@ export function useRazorpay() {
           },
         })
 
-        rzp.on('payment.failed', (response: any) => {
+        rzp.on('payment.failed', (response: RazorpayFailureResponse) => {
           toast.error(response?.error?.description ?? 'Payment failed. Please try again.')
           onError?.(response)
         })
 
         rzp.open()
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message ?? 'Could not initiate payment. Please try again.')
-        onError?.(err)
+      } catch (err) {
+        const e = err as AxiosError<ApiErrorResponse>
+        toast.error(e?.response?.data?.message ?? 'Could not initiate payment. Please try again.')
+        onError?.(e)
       }
     },
     [createSubscription, verifyPayment, user]

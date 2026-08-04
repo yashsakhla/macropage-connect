@@ -7,7 +7,7 @@ import RuleForm from './RuleForm'
 import QuickRepliesPanel from './QuickRepliesPanel'
 import { useRules, useToggleRule, useDeleteRule, useCreateRule, useUpdateRule, useAutomationLimits } from '@/hooks/useAutomation'
 import { useFlows, useToggleFlow, useDeleteFlow } from '@/hooks/useFlows'
-import { usePermissions, usePlanFeature } from '@/lib/permissions'
+import { usePermissions, usePlanFeature } from '@/lib/permissionsConstants'
 import type { AutomationRule } from '@/types/automation'
 import type { ConversationFlow } from '@/types/flow'
 

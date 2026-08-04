@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { ActivityFilters } from '@/types'
+import type { ActivityFilters, ActivityLog as AL } from '@/types'
 
 export function useTeamActivity(filters?: ActivityFilters) {
   return useQuery({
@@ -15,7 +15,7 @@ export function useTeamActivity(filters?: ActivityFilters) {
         })
         .then((r) => {
           const body = r.data
-          const list = Array.isArray(body)
+          const list: AL[] = Array.isArray(body)
             ? body
             : Array.isArray(body?.data)
               ? body.data

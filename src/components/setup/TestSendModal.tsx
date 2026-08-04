@@ -9,7 +9,8 @@ import { useContacts, useCreateContact } from '@/hooks/useContacts'
 import { useApprovedTemplates } from '@/hooks/useCampaigns'
 import { useConversationByContact, useCreateConversation, useSendMessage, normalizeTemplateVars } from '@/hooks/useConversations'
 import TemplatePreview from '@/components/templates/TemplatePreview'
-import type { Contact, Template } from '@/types'
+import { AxiosError } from 'axios'
+import type { Contact, Template, ApiErrorResponse } from '@/types'
 
 interface Props {
   onClose: () => void
@@ -109,8 +110,9 @@ export default function TestSendModal({ onClose }: Props) {
       })
 
       setSentTo(recipientLabel)
-    } catch (err: any) {
-      setSendError(err?.response?.data?.message ?? err?.message ?? 'Could not send the test message. Please try again.')
+    } catch (err) {
+      const e = err as AxiosError<ApiErrorResponse> & { message?: string }
+      setSendError(e?.response?.data?.message ?? e?.message ?? 'Could not send the test message. Please try again.')
     }
   }
 

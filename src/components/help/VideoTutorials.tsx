@@ -1,72 +1,75 @@
-import { PlayCircle, Eye } from 'lucide-react'
-import type { VideoTutorial } from '@/types'
+import { useState } from 'react'
+import { PlayCircle, ChevronRight, Film } from 'lucide-react'
+import { cn, getYouTubeThumbnail } from '@/lib/utils'
+import { useVideoTutorials } from '@/hooks/useHelp'
 
-const GRADIENTS: Record<string, string> = {
-  'Getting Started': 'from-[#1a3d2b] to-[#2d7a4f]',
-  WhatsApp: 'from-[#0d4f3f] to-[#0d9488]',
-  Campaigns: 'from-[#4a1d96] to-[#7c3aed]',
-  Automation: 'from-[#1e3a5f] to-[#2563eb]',
-  AI: 'from-[#2d1b69] to-[#7c3aed]',
-  Analytics: 'from-[#7c2d12] to-[#ea580c]',
-}
-
-function formatViews(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
-
-interface Props {
-  videos?: VideoTutorial[]
-}
-
-export default function VideoTutorials({ videos = [] }: Props) {
+export default function VideoTutorials() {
+  const [isOpen, setIsOpen] = useState(true)
+  const { data: videos = [], isLoading } = useVideoTutorials()
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
       <div className="flex items-center mb-6 gap-2">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Video tutorials</h2>
-        <button className="text-sm text-[#1a5c3a] font-medium ml-auto hover:underline whitespace-nowrap">
-          View all videos →
+        <button
+          onClick={() => setIsOpen(v => !v)}
+          className="flex items-center gap-2 group"
+          aria-expanded={isOpen}
+        >
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Video tutorials</h2>
+          <ChevronRight
+            size={18}
+            className={cn('text-gray-400 dark:text-gray-500 group-hover:text-[#1a5c3a] dark:group-hover:text-emerald-400 transition-transform', isOpen && 'rotate-90')}
+          />
         </button>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
-        {videos.map(v => (
-          <a
-            key={v.id}
-            href={v.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 w-64 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer block"
-          >
-            {/* Thumbnail */}
-            <div className={`h-36 bg-gradient-to-br ${GRADIENTS[v.category] ?? 'from-gray-700 to-gray-900'} relative flex items-center justify-center`}>
-              <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                <PlayCircle size={24} className="text-[#1a5c3a]" />
-              </div>
-              <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[0.625rem] rounded-lg px-2 py-0.5 font-mono">
-                {v.duration}
-              </span>
-              <span className="absolute top-2 left-2 bg-white/90 text-gray-700 dark:text-gray-300 text-[0.625rem] rounded-lg px-2 py-1 font-medium">
-                {v.category}
-              </span>
-            </div>
+      {isOpen && (
+        isLoading ? (
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex-shrink-0 w-64 h-36 bg-gray-100 dark:bg-white/5 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : videos.length === 0 ? (
+          <div className="text-center py-10 text-gray-400 dark:text-gray-500 bg-white dark:bg-[#0b1220] border border-dashed border-[#e8ebe8] dark:border-white/10 rounded-2xl">
+            <Film size={24} className="mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No video tutorials yet</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+            {videos.map(v => {
+              const thumbnail = getYouTubeThumbnail(v.videoUrl)
+              return (
+                <a
+                  key={v.id}
+                  href={v.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 w-64 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden hover:border-[#c8e6d4] hover:shadow-sm transition-all cursor-pointer block group"
+                >
+                  {/* Thumbnail */}
+                  <div className="h-36 bg-gray-900 relative flex items-center justify-center overflow-hidden">
+                    {thumbnail ? (
+                      <img src={thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#1a3d2b] to-[#2d7a4f]" />
+                    )}
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/25 transition-colors" />
+                    <div className="relative w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <PlayCircle size={24} className="text-[#1a5c3a]" />
+                    </div>
+                  </div>
 
-            {/* Body */}
-            <div className="p-4">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">{v.title}</p>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-[0.625rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                  <Eye size={11} />
-                  {formatViews(v.views)} views
-                </span>
-                <span className="text-[0.625rem] text-gray-400 dark:text-gray-500">
-                  {new Date(v.publishedAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
-                </span>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
+                  {/* Body */}
+                  <div className="p-4">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">{v.title}</p>
+                  </div>
+                </a>
+              )
+            })}
+          </div>
+        )
+      )}
     </div>
   )
 }

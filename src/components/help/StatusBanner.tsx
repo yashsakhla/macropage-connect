@@ -7,17 +7,12 @@ export default function StatusBanner() {
 
   if (status.overall === 'operational') {
     return (
-      <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border-b border-[#c8e6d4] px-4 sm:px-6 py-2.5 flex items-center gap-2 sm:gap-3 flex-wrap sticky top-0 z-10">
-        <CheckCircle size={14} className="text-[#1a5c3a] flex-shrink-0" />
-        <span className="text-sm text-[#1a5c3a] font-medium">All systems operational</span>
-        <a
-          href="https://status.macropage.in"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-[#1a5c3a] underline ml-auto"
-        >
-          View status page →
-        </a>
+      <div className="bg-gradient-to-r from-[#e8f5ee] to-[#dcf5e8] dark:from-emerald-950/30 dark:to-emerald-950/20 border-b border-[#c8e6d4] dark:border-emerald-900/40 px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 sticky top-0 z-10">
+        <span className="relative flex-shrink-0 flex items-center justify-center w-4 h-4">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-[#1a5c3a]/30 dark:bg-emerald-400/30 animate-ping" />
+          <CheckCircle size={14} className="relative text-[#1a5c3a] dark:text-emerald-400" />
+        </span>
+        <span className="text-sm text-[#1a5c3a] dark:text-emerald-400 font-semibold">All systems operational</span>
       </div>
     )
   }

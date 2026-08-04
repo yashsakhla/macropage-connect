@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { X, ShieldCheck, MessageSquare, CheckCircle2, ArrowRight, FileText } from 'lucide-react'
 import type { Contact, Template } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
-import { avatarGradient } from '@/components/inbox/ConversationItem'
+import { avatarGradient } from '@/lib/avatarGradient'
 import MessageInput from '@/components/inbox/MessageInput'
 import { useSendMessage, useCreateConversation, normalizeTemplateVars } from '@/hooks/useConversations'
 
@@ -24,7 +24,14 @@ interface SentPreview {
  * shapes (bare object, wrapped in `conversation`, wrapped in `data`) — check them all
  * instead of trusting a single field name, so a shape mismatch doesn't silently
  * strand the UI on the "no conversation yet" screen after the send actually worked. */
-function extractConversationId(raw: any): string | undefined {
+interface RawConversationCreateResult {
+  id?: string
+  _id?: string
+  conversation?: { id?: string; _id?: string }
+  data?: { id?: string; _id?: string }
+}
+
+function extractConversationId(raw: RawConversationCreateResult | undefined): string | undefined {
   if (!raw) return undefined
   return (
     raw.id ??

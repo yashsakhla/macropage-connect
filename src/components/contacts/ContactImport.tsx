@@ -96,7 +96,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
         importContacts.mutate(
           { fileUrl: url, columnMapping: mapping, duplicateHandling: dupHandling },
           {
-            onSuccess: (res: any) => {
+            onSuccess: (res: { jobId?: string } | undefined) => {
               setJobId(res?.jobId ?? null)
               setStep(3)
             },

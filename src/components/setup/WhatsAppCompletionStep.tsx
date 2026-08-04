@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWhatsAppSetupStatus } from '@/hooks/useWhatsApp'
 import { useTemplates, useCreateTemplate } from '@/hooks/useTemplates'
 import { useSampleTemplates, type SampleTemplate } from '@/hooks/useSampleTemplates'
-import { usePermissions } from '@/lib/permissions'
+import { usePermissions } from '@/lib/permissionsConstants'
 import type { TemplateStatus } from '@/types'
 import {
   CheckCircle, Clock, ArrowRight,

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
 import { useWABADetails, useShareWABADetails } from '@/hooks/useWhatsApp'
 import { useAccountSettings } from '@/hooks/useSettings'
-import { usePermissions } from '@/lib/permissions'
+import { usePermissions } from '@/lib/permissionsConstants'
 
 export default function WhatsAppSettings() {
   const navigate = useNavigate()

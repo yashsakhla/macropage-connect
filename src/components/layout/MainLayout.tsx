@@ -16,6 +16,7 @@ import PageLoader from '@/components/shared/PageLoader'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import FullPageLoader from '@/components/shared/FullPageLoader'
 import SupportChat from '@/components/support/SupportChat'
+import RequestDemoModal from '@/components/help/RequestDemoModal'
 import NotificationPanel from '@/components/notifications/NotificationPanel'
 import { useSocket } from '@/hooks/useSocket'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
@@ -26,7 +27,7 @@ export default function MainLayout() {
   useTokenRefresh()
   useGetMe()
 
-  const { sidebarOpen } = useUIStore()
+  const { sidebarOpen, demoModalOpen } = useUIStore()
   const { user, isInTrial, trialDaysLeft, isPlanExpired } = useAuthStore()
   useAuthGuard()
   const location = useLocation()
@@ -106,11 +107,12 @@ export default function MainLayout() {
         </div>
       </div>
 
-      {!location.pathname.startsWith('/help') && <SupportChat />}
+      {!location.pathname.startsWith('/help') && !isInboxRoute && <SupportChat />}
       <NotificationPanel />
       <PlanExpiredModal />
       <WhatsAppRequiredModal />
       <PaymentVerificationFailedModal />
+      {demoModalOpen && <RequestDemoModal />}
     </div>
   )
 }

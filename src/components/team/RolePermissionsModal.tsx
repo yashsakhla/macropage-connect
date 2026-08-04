@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { CheckCircle, Minus, AlertCircle, Shield, Users, Headphones, Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ROLE_PERMISSIONS, ROLE_META, type Role } from '@/lib/permissions'
-import { ROLE_STYLE } from './RoleBadge'
+import { ROLE_PERMISSIONS, ROLE_META, type Role } from '@/lib/permissionsConstants'
+import { ROLE_STYLE } from '@/data/roleStyle'
 
 const PERMISSION_GROUPS = [
   {

@@ -16,19 +16,7 @@ import {
 } from 'lucide-react'
 import type { Message, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
-
-const GRADIENTS = [
-  'from-[#1a5c3a] to-[#2d7a4f]',
-  'from-purple-500 to-purple-700',
-  'from-blue-500 to-blue-700',
-  'from-orange-400 to-orange-600',
-  'from-rose-400 to-rose-600',
-]
-
-export function avatarGradient(name: string) {
-  const sum = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return GRADIENTS[sum % GRADIENTS.length]
-}
+import { avatarGradient } from '@/lib/avatarGradient'
 
 function formatTime(d: string | undefined) {
   if (!d) return ''
@@ -44,11 +32,11 @@ function formatSize(bytes: number) {
 }
 
 function OutboundTick({ status }: { status: MessageStatus }) {
-  if (status === 'SENDING') return <Loader2 size={11} className="text-white/60 flex-shrink-0 animate-spin" />
-  if (status === 'SENT') return <Check size={11} className="text-white/60 flex-shrink-0" />
-  if (status === 'DELIVERED') return <CheckCheck size={11} className="text-white/60 flex-shrink-0" />
-  if (status === 'READ') return <CheckCheck size={11} className="text-blue-300 flex-shrink-0" />
-  if (status === 'FAILED') return <X size={11} className="text-red-400 flex-shrink-0" />
+  if (status === 'SENDING') return <Loader2 size={11} className="text-gray-500 dark:text-white/60 flex-shrink-0 animate-spin" />
+  if (status === 'SENT') return <Check size={11} className="text-gray-500 dark:text-white/60 flex-shrink-0" />
+  if (status === 'DELIVERED') return <CheckCheck size={11} className="text-gray-500 dark:text-white/60 flex-shrink-0" />
+  if (status === 'READ') return <CheckCheck size={11} className="text-[#53bdeb] flex-shrink-0" />
+  if (status === 'FAILED') return <X size={11} className="text-red-500 dark:text-red-400 flex-shrink-0" />
   return null
 }
 
@@ -57,11 +45,11 @@ function MediaError({ label, inbound }: { label: string; inbound: boolean }) {
     <div
       className={cn(
         'flex items-center gap-2 rounded-xl px-3 py-2.5 max-w-[200px]',
-        inbound ? 'bg-[#f7f8f6] dark:bg-gray-700' : 'bg-white/10'
+        inbound ? 'bg-[#f7f8f6] dark:bg-gray-700' : 'bg-black/5 dark:bg-white/10'
       )}
     >
-      <AlertCircle size={14} className={inbound ? 'text-gray-400' : 'text-white/60'} />
-      <p className={cn('text-xs', inbound ? 'text-gray-400 dark:text-gray-500' : 'text-white/60')}>{label}</p>
+      <AlertCircle size={14} className={inbound ? 'text-gray-400' : 'text-gray-500 dark:text-white/60'} />
+      <p className={cn('text-xs', inbound ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-white/60')}>{label}</p>
     </div>
   )
 }
@@ -127,10 +115,10 @@ function AudioPlayer({
   const progress = duration > 0 ? (current / duration) * 100 : 0
   const btnCls = inbound
     ? 'bg-[#1a5c3a] hover:bg-[#2d7a4f]'
-    : 'bg-white/20 hover:bg-white/30'
-  const barFill = inbound ? 'bg-[#1a5c3a]' : 'bg-white'
-  const barBg = inbound ? 'bg-gray-200 dark:bg-gray-600' : 'bg-white/30'
-  const timeCls = inbound ? 'text-gray-500 dark:text-gray-400' : 'text-white/60'
+    : 'bg-black/10 hover:bg-black/15 dark:bg-white/20 dark:hover:bg-white/30'
+  const barFill = inbound ? 'bg-[#1a5c3a]' : 'bg-[#1a5c3a] dark:bg-white'
+  const barBg = inbound ? 'bg-gray-200 dark:bg-gray-600' : 'bg-black/10 dark:bg-white/30'
+  const timeCls = inbound ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-white/60'
 
   return (
     <div className="flex items-center gap-3 min-w-[180px]">
@@ -146,7 +134,8 @@ function AudioPlayer({
       <button
         onClick={toggle}
         className={cn(
-          'w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 transition',
+          'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition',
+          inbound ? 'text-white' : 'text-[#1a5c3a] dark:text-white',
           btnCls
         )}
       >
@@ -215,10 +204,10 @@ export default function MessageBubble({ msg, senderName }: Props) {
     'rounded-2xl max-w-[70%]',
     inbound
       ? 'bg-white dark:bg-gray-800 border border-[#e8ebe8] dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-tl-none shadow-sm'
-      : 'bg-[#1a5c3a] text-white rounded-tr-none'
+      : 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-white rounded-tr-none shadow-sm'
   )
 
-  const timeColor = inbound ? 'text-gray-400 dark:text-gray-500' : 'text-white/60'
+  const timeColor = inbound ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-white/60'
 
   // Image
   if (msg.type === 'image') {
@@ -242,7 +231,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
             </div>
           )}
           {msg.caption && (
-            <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-white/80')}>
+            <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-gray-700 dark:text-white/80')}>
               {msg.caption}
             </p>
           )}
@@ -275,7 +264,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
             />
           )}
           {msg.caption && (
-            <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-white/80')}>
+            <p className={cn('text-xs mt-1.5 px-1', inbound ? 'text-gray-600 dark:text-gray-400' : 'text-gray-700 dark:text-white/80')}>
               {msg.caption}
             </p>
           )}
@@ -330,14 +319,14 @@ export default function MessageBubble({ msg, senderName }: Props) {
               rel="noreferrer"
               className={cn(
                 'rounded-xl p-3 flex items-center gap-3 transition-colors',
-                inbound ? 'bg-[#f7f8f6] dark:bg-gray-700 hover:bg-[#e8ebe8] dark:hover:bg-gray-600' : 'bg-white/10 hover:bg-white/20'
+                inbound ? 'bg-[#f7f8f6] dark:bg-gray-700 hover:bg-[#e8ebe8] dark:hover:bg-gray-600' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
               )}
             >
               <div className="w-9 h-9 bg-[#e8f5ee] dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
                 <FileText size={16} className="text-[#1a5c3a]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-medium truncate', inbound ? 'text-gray-800 dark:text-gray-100' : 'text-white')}>
+                <p className={cn('text-xs font-medium truncate', inbound ? 'text-gray-800 dark:text-gray-100' : 'text-gray-900 dark:text-white')}>
                   {msg.mediaName ?? 'Document'}
                 </p>
                 <p className={cn('text-2xs mt-0.5', timeColor)}>
@@ -347,7 +336,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
               </div>
               <Download
                 size={16}
-                className={cn('flex-shrink-0', inbound ? 'text-[#1a5c3a]' : 'text-white/80')}
+                className={cn('flex-shrink-0', inbound ? 'text-[#1a5c3a]' : 'text-gray-700 dark:text-white/80')}
               />
             </a>
           )}
@@ -387,7 +376,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
               <div
                 className={cn(
                   'px-4 py-2.5 text-sm font-semibold',
-                  inbound ? 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100' : 'bg-white/10 text-white'
+                  inbound ? 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100' : 'bg-black/5 dark:bg-white/10 text-gray-900 dark:text-white'
                 )}
               >
                 {t.header}
@@ -404,16 +393,16 @@ export default function MessageBubble({ msg, senderName }: Props) {
               </div>
             </div>
             {t.buttons && t.buttons.length > 0 && (
-              <div className={cn('border-t', inbound ? 'border-[#e8ebe8] dark:border-gray-600' : 'border-white/20')}>
+              <div className={cn('border-t', inbound ? 'border-[#e8ebe8] dark:border-gray-600' : 'border-black/10 dark:border-white/20')}>
                 {t.buttons.map((btn, i) => (
                   <button
                     key={i}
                     className={cn(
                       'w-full py-2.5 text-sm font-medium text-center last:rounded-b-2xl',
-                      i < t.buttons!.length - 1 && (inbound ? 'border-b border-[#e8ebe8] dark:border-gray-600' : 'border-b border-white/20'),
+                      i < t.buttons!.length - 1 && (inbound ? 'border-b border-[#e8ebe8] dark:border-gray-600' : 'border-b border-black/10 dark:border-white/20'),
                       inbound
                         ? 'text-[#1a5c3a] hover:bg-[#f7f8f6] dark:hover:bg-gray-700'
-                        : 'text-white/90 hover:bg-white/10'
+                        : 'text-gray-800 dark:text-white/90 hover:bg-black/5 dark:hover:bg-white/10'
                     )}
                   >
                     {btn.text}
@@ -445,9 +434,9 @@ export default function MessageBubble({ msg, senderName }: Props) {
           )}
           <div className={cn(
             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 mt-2',
-            inbound ? 'bg-black/5 dark:bg-white/10' : 'bg-white/20'
+            inbound ? 'bg-black/5 dark:bg-white/10' : 'bg-black/10 dark:bg-white/20'
           )}>
-            <span className={cn('text-2xs opacity-60', inbound ? 'text-gray-600 dark:text-gray-300' : 'text-white')}>
+            <span className={cn('text-2xs opacity-60', inbound ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white')}>
               📋 {msg.templateName ?? 'template'}
             </span>
           </div>
@@ -469,15 +458,15 @@ export default function MessageBubble({ msg, senderName }: Props) {
           <div
             className={cn(
               'h-28 rounded-xl flex items-center justify-center',
-              inbound ? 'bg-[#e8f5ee] dark:bg-green-900/30' : 'bg-white/10'
+              inbound ? 'bg-[#e8f5ee] dark:bg-green-900/30' : 'bg-black/5 dark:bg-white/10'
             )}
           >
-            <MapPin size={28} className={inbound ? 'text-[#1a5c3a]' : 'text-white/80'} />
+            <MapPin size={28} className={inbound ? 'text-[#1a5c3a]' : 'text-[#1a5c3a] dark:text-white/80'} />
           </div>
           <p
             className={cn(
               'text-xs font-medium mt-2 px-1',
-              inbound ? 'text-[#1a5c3a]' : 'text-white'
+              inbound ? 'text-[#1a5c3a]' : 'text-gray-900 dark:text-white'
             )}
           >
             📍 Location shared
@@ -496,7 +485,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
         <div className="flex items-center justify-end gap-1 mt-1">
           {msg.status === 'SENDING' ? (
-            <span className="text-2xs text-white/50 italic">Sending…</span>
+            <span className="text-2xs text-gray-500 dark:text-white/50 italic">Sending…</span>
           ) : (
             <span className={cn('text-2xs', timeColor)}>{time}</span>
           )}

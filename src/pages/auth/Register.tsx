@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
 import { useElementWidth } from '@/hooks/useElementWidth'
 import { cn, stripEmojis } from '@/lib/utils'
+import type { RegisterFormPayload, RawAuthResponseDTO, ApiResponse } from '@/types'
 import FormError from '@/components/shared/FormError'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -74,7 +75,7 @@ export default function Register() {
 
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
-  const [pendingAuthData, setPendingAuthData] = useState<any>(null)
+  const [pendingAuthData, setPendingAuthData] = useState<RawAuthResponseDTO | null>(null)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [cooldown, setCooldown] = useState(0)
   const otpCode = otpDigits.join('')
@@ -86,8 +87,8 @@ export default function Register() {
   }, [cooldown])
 
   const onSubmitForm = (d: FormData) => {
-    reg.mutate(d as any, {
-      onSuccess: (res: any) => {
+    reg.mutate(d as RegisterFormPayload, {
+      onSuccess: (res: ApiResponse<RawAuthResponseDTO>) => {
         setPendingEmail(d.email)
         setPendingAuthData(res.data)
         setOtpDigits(['', '', '', '', '', ''])
@@ -107,10 +108,16 @@ export default function Register() {
     }
   }
 
+  const handleOtpKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[i] && i > 0) {
+      document.getElementById(`otp-${i - 1}`)?.focus()
+    }
+  }
+
   const handleVerifyOtp = () => {
     if (otpCode.length !== 6) return
     verifyOtp.mutate({ email: pendingEmail, otp: otpCode }, {
-      onSuccess: () => finalizeSignup(pendingAuthData),
+      onSuccess: () => pendingAuthData && finalizeSignup(pendingAuthData),
     })
   }
 
@@ -147,6 +154,7 @@ export default function Register() {
                 inputMode="numeric"
                 value={digit}
                 onChange={(e) => handleOtpChange(i, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(i, e)}
                 className="w-11 h-12 text-center text-lg font-bold border border-[var(--card-border)] rounded-xl"
               />
             ))}
@@ -169,7 +177,7 @@ export default function Register() {
             {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
           </button>
 
-          <p className="text-xs text-gray-300 mt-8">Macropage Connect · Email Verification</p>
+          <p className="text-xs text-gray-600 mt-8">Macropage Connect · Email Verification</p>
         </div>
       </div>
     )
@@ -177,12 +185,12 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="relative w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 lg:px-12 flex flex-col justify-center overflow-y-auto">
-        <div className="mb-4 lg:absolute lg:top-6 lg:left-12 lg:mb-0">
+      <div className="w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 lg:px-12 flex flex-col overflow-y-auto">
+        <div className="mb-4 lg:mb-8">
           <img src={logo} alt="Macropage Connect" className="h-8 sm:h-9" />
         </div>
 
-        <div>
+        <div className="flex-1 flex flex-col justify-center">
           <h2 className="text-2xl font-black text-gray-900">Create your <span className="text-[var(--primary)]">account</span></h2>
           <p className="text-sm text-gray-400 mt-1 mb-4">Start your 14-day free trial. No credit card required.</p>
 
@@ -191,14 +199,14 @@ export default function Register() {
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">First name</div>
                 <input {...r('firstName')} maxLength={50}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.firstName && 'border-red-400')} />
                 <FormError message={errors.firstName?.message} />
               </div>
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Last name</div>
                 <input {...r('lastName')} maxLength={50}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.lastName && 'border-red-400')} />
                 <FormError message={errors.lastName?.message} />
               </div>
@@ -208,14 +216,14 @@ export default function Register() {
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Work email</div>
                 <input {...r('email')} type="email" maxLength={254}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.email && 'border-red-400')} />
                 <FormError message={errors.email?.message} />
               </div>
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Company name</div>
                 <input {...r('companyName')} maxLength={100}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.companyName && 'border-red-400')} />
                 <FormError message={errors.companyName?.message} />
               </div>
@@ -242,7 +250,7 @@ export default function Register() {
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Password</div>
               <div className="relative">
                 <input {...r('password')} type={showPassword ? 'text' : 'password'} maxLength={64}
-                  onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                   className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-10', errors.password && 'border-red-400')} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
@@ -252,7 +260,7 @@ export default function Register() {
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Confirm password</div>
               <input {...r('confirmPassword')} type="password" maxLength={64}
-                onInput={(e) => { e.currentTarget.value = stripEmojis(e.currentTarget.value) }}
+                onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
                 className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
               <FormError message={errors.confirmPassword?.message} />
             </div>
@@ -299,8 +307,8 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="hidden lg:block lg:w-1/2 relative h-screen overflow-hidden">
-        <img src={heroImage} alt="Macropage Connect" className="w-full h-full object-cover" />
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <img src={heroImage} alt="Macropage Connect" className="absolute inset-0 w-full h-full object-cover" />
 
         <div className="absolute bottom-0 left-0 right-0 p-8 text-center bg-gradient-to-t from-black/50 to-transparent">
           <h3 className="font-bold text-lg text-white">Reach customers on WhatsApp</h3>

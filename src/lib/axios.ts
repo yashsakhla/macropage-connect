@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
+import type { ApiErrorResponse } from '@/types'
 
 const DEFAULT_BASE = 'https://macropage-connect.onrender.com/api/v1'
 
@@ -47,7 +48,8 @@ function handleLogout() {
 // ever shows one toast (once it finally settles as an error), instead of one
 // per retry attempt, and mutations that already handle their own onError don't
 // get a second, duplicate toast layered on top of this one.
-export function getErrorToastMessage(error: any): string | null {
+export function getErrorToastMessage(error: unknown): string | null {
+  if (!axios.isAxiosError<ApiErrorResponse>(error)) return null
   const status = error?.response?.status
   if (status === 401) return null // handled by the refresh/logout flow below
   if (status === 422) return null // validation — let the calling UI handle it

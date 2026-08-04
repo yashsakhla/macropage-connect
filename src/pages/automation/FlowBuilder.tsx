@@ -68,17 +68,7 @@ function FlowBuilderInner() {
     }
   }, [existingFlow, setFlowId, setFlowName, setFlowStatus, setNodes, setEdges, setDirty])
 
-  // Auto-save every 30 seconds if dirty
-  useEffect(() => {
-    autoSaveRef.current = setInterval(() => {
-      if (isDirty && !isReadOnly) {
-        handleSave(true)
-      }
-    }, 30000)
-    return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current) }
-  }, [isDirty, nodes, edges, flowName, isReadOnly])
-
-  function handleSave(silent = false) {
+  const handleSave = useCallback((silent = false) => {
     if (isReadOnly) return
     saveFlow.mutate(
       { id: id !== 'new' ? id : undefined, data: { name: flowName, nodes, edges } },
@@ -94,7 +84,17 @@ function FlowBuilderInner() {
         },
       }
     )
-  }
+  }, [isReadOnly, saveFlow, id, flowName, nodes, edges, navigate, setFlowId, setDirty])
+
+  // Auto-save every 30 seconds if dirty
+  useEffect(() => {
+    autoSaveRef.current = setInterval(() => {
+      if (isDirty && !isReadOnly) {
+        handleSave(true)
+      }
+    }, 30000)
+    return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current) }
+  }, [isDirty, isReadOnly, handleSave])
 
   function validateAndPublish() {
     if (isReadOnly) return

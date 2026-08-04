@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
+import type { RawConversationDTO } from '@/types'
 
 export function useOpenConversation() {
   const navigate = useNavigate()
@@ -22,7 +23,7 @@ export function useOpenConversation() {
       // Don't trust the contactId filter blindly — if the backend ignores it and
       // just returns the most recently active conversation, list[0] can belong
       // to a different contact entirely. Match on the contact id ourselves.
-      const existing = candidates.find((c: any) => {
+      const existing = candidates.find((c: RawConversationDTO) => {
         const cId = c.contact?._id ?? c.contact?.id ?? c.contactId
         return cId === contactId
       })

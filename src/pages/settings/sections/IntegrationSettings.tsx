@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Loader2, Plug } from 'lucide-react'
 import SettingsSection from '@/components/settings/SettingsSection'
 import IntegrationCard, { type Integration } from '@/components/settings/IntegrationCard'
+import IntegrationConnectModal from '@/components/settings/IntegrationConnectModal'
 import { useIntegrationPlatforms } from '@/hooks/useSettings'
 import type { IntegrationPlatform } from '@/types'
 import toast from 'react-hot-toast'
@@ -26,6 +27,7 @@ function toIntegration(platform: IntegrationPlatform, index: number): Integratio
     isConnected: false,
     isSoon: platform.isComingSoon || !platform.isActive,
     logoText: platform.logoText ?? platform.name.slice(0, 2).toUpperCase(),
+    logoUrl: platform.logoUrl,
     logoBg: style.bg,
     logoColor: style.color,
   }
@@ -35,6 +37,7 @@ export default function IntegrationSettings() {
   const { data: platforms, isLoading, error } = useIntegrationPlatforms()
   const [category, setCategory] = useState('All')
   const [connectedIds, setConnectedIds] = useState<string[]>([])
+  const [connectTarget, setConnectTarget] = useState<Integration | null>(null)
 
   const integrations = useMemo(
     () => (platforms ?? [])
@@ -49,8 +52,9 @@ export default function IntegrationSettings() {
   const categories = useMemo(() => ['All', ...Array.from(new Set(integrations.map(i => i.category)))], [integrations])
   const filtered = category === 'All' ? integrations : integrations.filter(i => i.category === category)
 
-  function connect(id: string) {
+  function finishConnect(id: string) {
     setConnectedIds(p => [...p, id])
+    setConnectTarget(null)
     toast.success('Integration connected')
   }
 
@@ -84,10 +88,19 @@ export default function IntegrationSettings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(int => (
-              <IntegrationCard key={int.id} integration={int} onConnect={connect} onConfigure={() => toast.success('Opening configuration…')} />
+              <IntegrationCard key={int.id} integration={int} onConnect={() => setConnectTarget(int)} onConfigure={() => toast.success('Opening configuration…')} />
             ))}
           </div>
         </>
+      )}
+
+      {connectTarget && (
+        <IntegrationConnectModal
+          integration={connectTarget}
+          connectUrl={platforms?.find(p => p.id === connectTarget.id)?.connectUrl}
+          onClose={() => setConnectTarget(null)}
+          onConnected={finishConnect}
+        />
       )}
     </SettingsSection>
   )

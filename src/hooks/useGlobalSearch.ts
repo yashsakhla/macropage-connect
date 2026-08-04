@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { Campaign, Contact, Template } from '@/types'
+import type { Campaign, Contact, Template, RawTemplateDTO, RawCampaignDTO, RawContactDTO } from '@/types'
 import { useAuthStore } from '@/store/authStore'
-import { ROLE_PERMISSIONS, PLAN_FEATURES, normalisePlan } from '@/lib/permissions'
-import type { Role } from '@/lib/permissions'
+import { ROLE_PERMISSIONS, PLAN_FEATURES, normalisePlan } from '@/lib/permissionsConstants'
+import type { Role } from '@/lib/permissionsConstants'
 import { STATIC_SEARCH_ITEMS, type SearchItem } from '@/lib/searchIndex'
 
 const MIN_QUERY_LENGTH = 2
@@ -55,9 +55,9 @@ export function useGlobalSearch(query: string, open: boolean) {
 
   const user = useAuthStore((s) => s.user)
   const role = (((user?.role as string) ?? 'AGENT').toUpperCase() as Role)
-  const perms = ROLE_PERMISSIONS[role] ?? []
+  const perms = useMemo(() => ROLE_PERMISSIONS[role] ?? [], [role])
   const plan = normalisePlan(user?.plan as string | undefined)
-  const planFeatures = PLAN_FEATURES[plan] ?? []
+  const planFeatures = useMemo(() => PLAN_FEATURES[plan] ?? [], [plan])
 
   const allowedStaticItems = useMemo(
     () =>
@@ -73,8 +73,8 @@ export function useGlobalSearch(query: string, open: boolean) {
     queryKey: ['global-search', 'templates'],
     queryFn: () =>
       api.get('/templates').then((r) => {
-        const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
-        return items.map((t) => ({ ...t, id: t._id ?? t.id })) as Template[]
+        const items: RawTemplateDTO[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
+        return items.map((t) => ({ ...t, id: t._id ?? t.id })) as unknown as Template[]
       }),
     enabled: ready && perms.includes('view_templates'),
     staleTime: 60_000,
@@ -84,8 +84,8 @@ export function useGlobalSearch(query: string, open: boolean) {
     queryKey: ['global-search', 'campaigns'],
     queryFn: () =>
       api.get('/campaigns').then((r) => {
-        const raw: any[] = r.data?.data ?? r.data ?? []
-        return raw.map((c) => ({ ...c, id: c.id ?? c._id, status: (c.status as string).toLowerCase() })) as Campaign[]
+        const raw: RawCampaignDTO[] = r.data?.data ?? r.data ?? []
+        return raw.map((c) => ({ ...c, id: c.id ?? c._id, status: (c.status as string).toLowerCase() })) as unknown as Campaign[]
       }),
     enabled: ready && perms.includes('view_campaigns'),
     staleTime: 60_000,
@@ -97,8 +97,8 @@ export function useGlobalSearch(query: string, open: boolean) {
       api
         .get('/contacts', { params: { search: debounced, page: 1, limit: 6 } })
         .then((r) => {
-          const items: any[] = r.data?.data ?? []
-          return items.map((c) => ({ ...c, id: c._id ?? c.id, tags: c.tags ?? [] })) as Contact[]
+          const items: RawContactDTO[] = r.data?.data ?? []
+          return items.map((c) => ({ ...c, id: c._id ?? c.id, tags: c.tags ?? [] })) as unknown as Contact[]
         }),
     enabled: ready && perms.includes('view_contacts'),
     staleTime: 15_000,

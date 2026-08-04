@@ -5,6 +5,7 @@ import {
   useResendInvite,
   useCancelInvite,
 } from '@/hooks/useTeam'
+import type { PendingInvite } from '@/types'
 import { cn } from '@/lib/utils'
 import {
   Mail, RefreshCw, X,
@@ -52,16 +53,17 @@ export default function PendingInvites() {
     )
   }
 
-  if (!invites || (invites as any[]).length === 0) return null
+  const inviteList = invites as PendingInvite[] | undefined
+  if (!inviteList || inviteList.length === 0) return null
 
   return (
     <div className="mt-6">
       <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-        Pending invites ({(invites as any[]).length})
+        Pending invites ({inviteList.length})
       </p>
 
       <div className="space-y-2">
-        {(invites as any[]).map((invite: any) => (
+        {inviteList.map((invite) => (
           <div
             key={invite._id}
             className="bg-[#f7f8f6] dark:bg-[#0f1724] border border-[#e8ebe8] dark:border-white/10 rounded-2xl px-4 py-3"

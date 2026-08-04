@@ -1,5 +1,6 @@
 import { Bot } from 'lucide-react'
-import { usePlanFeature, UpgradePrompt } from '@/lib/permissions'
+import { usePlanFeature } from '@/lib/permissionsConstants'
+import { UpgradePrompt } from '@/lib/permissions'
 
 // AI Chatbot Configuration is temporarily disabled for all plans. The real
 // page (AISettings.tsx) is untouched and will be wired back up here once the

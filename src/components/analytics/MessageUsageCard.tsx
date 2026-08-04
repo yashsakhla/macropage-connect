@@ -74,19 +74,23 @@ export default function MessageUsageCard({ compact = false }: Props) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-2xl px-4 py-3">
-            <p className="text-2xs text-gray-400 dark:text-gray-500 mb-1">Sent</p>
+          <div className="rounded-2xl bg-white dark:bg-[#0b1220] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200 px-4 py-3">
+            <div className="w-9 h-9 rounded-xl bg-[#1a5c3a] text-white flex items-center justify-center shadow-lg shadow-[#1a5c3a]/25 mb-2.5">
+              <Send size={15} />
+            </div>
             <p className="text-xl font-black text-gray-900 dark:text-white">
               {(current?.totalOutbound ?? 0).toLocaleString('en-IN')}
             </p>
-            <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">outbound messages</p>
+            <p className="text-2xs text-gray-500 dark:text-gray-400 mt-0.5">Sent · outbound</p>
           </div>
-          <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-2xl px-4 py-3">
-            <p className="text-2xs text-gray-400 dark:text-gray-500 mb-1">Received</p>
+          <div className="rounded-2xl bg-white dark:bg-[#0b1220] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200 px-4 py-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-2.5">
+              <Inbox size={15} />
+            </div>
             <p className="text-xl font-black text-gray-900 dark:text-white">
               {(current?.totalInbound ?? 0).toLocaleString('en-IN')}
             </p>
-            <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">inbound messages</p>
+            <p className="text-2xs text-gray-500 dark:text-gray-400 mt-0.5">Received · inbound</p>
           </div>
         </div>
 

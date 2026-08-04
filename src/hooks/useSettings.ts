@@ -1,12 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { AccountSettings, IntegrationPlatform, NotificationPreferences, Webhook } from '@/types'
+import type {
+  AccountSettings,
+  ApiErrorResponse,
+  IntegrationPlatform,
+  NotificationPreferences,
+  RawIntegrationPlatformDTO,
+  RawWebhookDTO,
+  Webhook,
+} from '@/types'
 
-function normalizeIntegrationPlatform(raw: any): IntegrationPlatform {
+function normalizeIntegrationPlatform(raw: RawIntegrationPlatformDTO): IntegrationPlatform {
   return {
-    id: raw._id ?? raw.id,
-    name: raw.name,
+    id: raw._id ?? raw.id ?? '',
+    name: raw.name ?? '',
     description: raw.description ?? '',
     category: raw.category ?? 'Other',
     logoUrl: raw.logoUrl ?? raw.logo,
@@ -14,18 +23,18 @@ function normalizeIntegrationPlatform(raw: any): IntegrationPlatform {
     isActive: raw.isActive ?? true,
     isComingSoon: raw.isComingSoon ?? raw.isSoon ?? false,
     connectUrl: raw.connectUrl ?? raw.url,
-    createdAt: raw.createdAt,
+    createdAt: raw.createdAt ?? '',
   }
 }
 
-function normalizeWebhook(raw: any): Webhook {
+function normalizeWebhook(raw: RawWebhookDTO): Webhook {
   return {
-    id: raw._id ?? raw.id,
-    url: raw.url,
+    id: raw._id ?? raw.id ?? '',
+    url: raw.url ?? '',
     description: raw.description,
     events: raw.events ?? [],
     isEnabled: raw.isEnabled ?? raw.enabled ?? true,
-    createdAt: raw.createdAt,
+    createdAt: raw.createdAt ?? '',
     // A freshly created webhook has no delivery history yet — the backend
     // omits `stats`/`recentDeliveries` entirely rather than sending zeros.
     stats: raw.stats ?? { totalDeliveries: 0, successRate: 0 },
@@ -64,7 +73,7 @@ export function useUploadAccountLogo() {
       )
       toast.success('Logo updated')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to upload logo'),
   })
 }
@@ -73,7 +82,7 @@ export function useUpdateAccountSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: Partial<AccountSettings>) => {
-      const { companyName, ...rest } = data as any
+      const { companyName, ...rest } = data as Partial<AccountSettings> & Record<string, unknown>
       const payload = { ...rest, ...(companyName !== undefined ? { company: companyName } : {}) }
       return api.patch('/settings/account', payload).then((r) => r.data)
     },
@@ -81,7 +90,7 @@ export function useUpdateAccountSettings() {
       qc.invalidateQueries({ queryKey: ['settings', 'account'] })
       toast.success('Settings saved')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to save settings'),
   })
 }
@@ -101,7 +110,7 @@ export function useCreateAPIKey() {
     // created key's record isn't guaranteed to be readable via GET yet, and
     // the create response already carries what we need to show the user.
     // The list picks up the new key next time this page is (re)mounted.
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to create key'),
   })
 }
@@ -115,7 +124,7 @@ export function useRevokeAPIKey() {
       qc.invalidateQueries({ queryKey: ['api-keys'] })
       toast.success('API key revoked')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to revoke key'),
   })
 }
@@ -126,7 +135,7 @@ export function useWebhooks() {
     queryFn: () =>
       api.get('/settings/webhooks').then((r) => {
         const body = r.data?.data ?? r.data
-        const list: any[] = Array.isArray(body) ? body : (body?.webhooks ?? [])
+        const list: RawWebhookDTO[] = Array.isArray(body) ? body : (body?.webhooks ?? [])
         return list.map(normalizeWebhook)
       }),
   })
@@ -141,7 +150,7 @@ export function useCreateWebhook() {
       qc.invalidateQueries({ queryKey: ['webhooks'] })
       toast.success('Webhook added')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to add webhook'),
   })
 }
@@ -152,7 +161,7 @@ export function useUpdateWebhook() {
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       api.patch(`/settings/webhooks/${id}`, data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['webhooks'] }),
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to update webhook'),
   })
 }
@@ -166,7 +175,7 @@ export function useDeleteWebhook() {
       qc.invalidateQueries({ queryKey: ['webhooks'] })
       toast.success('Webhook removed')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to delete webhook'),
   })
 }
@@ -187,7 +196,7 @@ export function useUpdateNotifications() {
       qc.invalidateQueries({ queryKey: ['notification-preferences'] })
       toast.success('Preferences saved')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to save preferences'),
   })
 }
@@ -200,7 +209,7 @@ export function useIntegrationPlatforms() {
         .get('/integration-platforms')
         .then((r) => {
           const body = r.data?.data ?? r.data
-          const list: any[] = Array.isArray(body) ? body : (body?.platforms ?? [])
+          const list: RawIntegrationPlatformDTO[] = Array.isArray(body) ? body : (body?.platforms ?? [])
           return list.map(normalizeIntegrationPlatform)
         }),
   })
@@ -228,7 +237,7 @@ export function useCreateIntegrationPlatform() {
       qc.invalidateQueries({ queryKey: ['integration-platforms'] })
       toast.success('Integration platform added')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to add integration platform'),
   })
 }
@@ -244,7 +253,7 @@ export function useUpdateIntegrationPlatform() {
       qc.invalidateQueries({ queryKey: ['integration-platforms'] })
       toast.success('Integration platform updated')
     },
-    onError: (err: any) =>
+    onError: (err: AxiosError<ApiErrorResponse>) =>
       toast.error(err.response?.data?.message ?? 'Failed to update integration platform'),
   })
 }

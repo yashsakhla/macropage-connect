@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { CreateTemplatePayload, TemplateCategory } from '@/types'
+import type { CreateTemplatePayload, TemplateCategory, RawSampleTemplateDTO } from '@/types'
 
 export interface SampleTemplate {
   id: string
@@ -10,21 +10,23 @@ export interface SampleTemplate {
   payload: CreateTemplatePayload
 }
 
-function normalizeSampleTemplate(raw: any): SampleTemplate {
+function normalizeSampleTemplate(raw: RawSampleTemplateDTO): SampleTemplate {
   const payloadSrc = raw.payload ?? raw
   return {
-    id: raw._id ?? raw.id,
+    id: raw._id ?? raw.id ?? '',
     title: raw.title ?? raw.name ?? payloadSrc.name ?? 'Untitled template',
     description: raw.description ?? '',
-    category: raw.category ?? payloadSrc.category,
+    category: (raw.category ?? payloadSrc.category) as TemplateCategory,
     payload: {
-      name: payloadSrc.name ?? raw.name,
-      category: raw.category ?? payloadSrc.category,
+      name: payloadSrc.name ?? raw.name ?? '',
+      category: (raw.category ?? payloadSrc.category) as TemplateCategory,
       language: payloadSrc.language ?? raw.language ?? 'en_US',
       body: payloadSrc.body ?? raw.body ?? '',
       header: payloadSrc.header ?? raw.header,
       footer: payloadSrc.footer ?? raw.footer,
-      buttons: payloadSrc.buttons ?? raw.buttons,
+      buttons: Array.isArray(payloadSrc.buttons)
+        ? { buttons: payloadSrc.buttons }
+        : payloadSrc.buttons ?? (raw.buttons ? { buttons: raw.buttons } : undefined),
       sampleVariables: payloadSrc.sampleVariables ?? raw.sampleVariables ?? {},
       variableTypes: payloadSrc.variableTypes ?? raw.variableTypes,
     },
@@ -39,7 +41,7 @@ export function useSampleTemplates(category?: TemplateCategory) {
         .get('/sample-templates', { params: category ? { category } : undefined })
         .then((r) => {
           const body = r.data?.data ?? r.data
-          const list: any[] = Array.isArray(body) ? body : (body?.sampleTemplates ?? body?.templates ?? [])
+          const list: RawSampleTemplateDTO[] = Array.isArray(body) ? body : (body?.sampleTemplates ?? body?.templates ?? [])
           return list.map(normalizeSampleTemplate)
         }),
   })

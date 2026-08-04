@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { Plus, Users, Search, SlidersHorizontal } from 'lucide-react'
 import { differenceInCalendarDays } from 'date-fns'
 import { cn } from '@/lib/utils'
-import type { UserRole } from '@/types'
-import { useTeamMembers } from '@/hooks/useTeam'
+import type { UserRole, PendingInvite } from '@/types'
+import { useTeamMembers, usePendingInvites } from '@/hooks/useTeam'
 import TeamMemberCard from '@/components/team/TeamMemberCard'
 import InviteMemberModal from '@/components/team/InviteMemberModal'
 import PendingInvites from '@/components/team/PendingInvites'
@@ -23,6 +23,8 @@ export default function Team() {
   const location = useLocation()
   const { data: teamData } = useTeamMembers()
   const members = teamData ?? []
+  const { data: pendingInvitesData } = usePendingInvites()
+  const pendingInvites = (pendingInvitesData as PendingInvite[]) ?? []
   const [showInvite, setShowInvite] = useState(false)
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [activeTab, setActiveTab] = useState<TabView>('members')
@@ -68,14 +70,15 @@ export default function Team() {
       {/* header banner */}
       <div className="relative rounded-3xl overflow-hidden mb-4 sm:mb-6">
         <img src={teamHero} alt="" className="hidden sm:block w-full aspect-[2200/500] object-cover object-center" />
+        <div className="hidden sm:block absolute inset-y-0 left-0 w-[45%] bg-gradient-to-r from-[#d7f5e3] via-[#d7f5e3]/70 to-transparent pointer-events-none" />
         <div
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-10 py-5 sm:py-8 sm:absolute sm:inset-0 bg-gradient-to-br from-[#d7f5e3] to-[#bdeccf] sm:bg-none"
+          className="flex flex-col items-start gap-3 sm:gap-4 px-4 sm:px-10 py-5 sm:py-8 sm:absolute sm:inset-0 sm:justify-center bg-gradient-to-br from-[#d7f5e3] to-[#bdeccf] sm:bg-none"
         >
           <div>
             <h1 className="page-title">Team</h1>
-            <p className="page-subtitle mt-0.5">Manage who can access your Macropage Connect account</p>
+            <p className="page-subtitle mt-0.5 text-gray-600 dark:text-gray-300">Manage who can access your Macropage Connect account</p>
           </div>
-          <button className="btn btn-primary h-10 sm:h-11 px-5 sm:px-6 gap-2 rounded-full flex-shrink-0 w-full sm:w-auto justify-center" onClick={() => setShowInvite(true)}>
+          <button className="btn btn-primary h-10 sm:h-11 px-5 sm:px-6 gap-2 rounded-full flex-shrink-0 w-full sm:w-auto justify-center shadow-sm hover:shadow-md transition-shadow" onClick={() => setShowInvite(true)}>
             <Plus size={16} /> Invite member
           </button>
         </div>
@@ -193,7 +196,16 @@ export default function Team() {
         <TeamActivityPanel newMembers={newThisWeek} activeSessions={activeNowCount} pendingInvites={counts.pending} />
       </div>
 
-      {showInvite && <InviteMemberModal onClose={() => setShowInvite(false)} />}
+      {showInvite && (
+        <InviteMemberModal
+          onClose={() => setShowInvite(false)}
+          existingMemberEmails={members.filter(m => m.status !== 'pending').map(m => m.email).filter(Boolean) as string[]}
+          pendingInviteEmails={[
+            ...members.filter(m => m.status === 'pending').map(m => m.email),
+            ...pendingInvites.map(i => i.email),
+          ].filter(Boolean) as string[]}
+        />
+      )}
     </div>
   )
 }

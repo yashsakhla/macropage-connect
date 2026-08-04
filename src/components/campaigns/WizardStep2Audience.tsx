@@ -242,7 +242,7 @@ export default function WizardStep2Audience({
             ) : !tagsError && (tagsData ?? []).length === 0 ? (
               <p className="text-xs text-gray-400 dark:text-gray-500">No tags found. Add tags to contacts first.</p>
             ) : !tagsError ? (
-              (tagsData ?? []).map((tag: any) => {
+              (tagsData ?? []).map((tag: string | { name?: string; _id?: string; count?: number }) => {
                 const tagName = typeof tag === 'string' ? tag : (tag.name ?? tag._id ?? String(tag))
                 const isActive = selectedTags.includes(tagName)
                 return (
@@ -255,7 +255,7 @@ export default function WizardStep2Audience({
                     )}
                   >
                     {tagName}
-                    {tag?.count != null && (
+                    {typeof tag !== 'string' && tag.count != null && (
                       <span className="ml-1 opacity-60">({tag.count})</span>
                     )}
                   </button>

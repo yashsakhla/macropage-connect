@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import type { TeamMember } from '@/types'
 import { getInitials } from '@/lib/utils'
-import { ROLE_STYLE } from './RoleBadge'
+import { ROLE_STYLE } from '@/data/roleStyle'
 
 const MOCK_PERF_DATA: { name: string; conversations: number; avgResponse: number }[] = []
 const MOCK_RADAR_DATA: { subject: string; B: number; C: number; D: number }[] = []

@@ -8,6 +8,7 @@ export interface Integration {
   isConnected: boolean
   isSoon?: boolean
   logoText: string
+  logoUrl?: string
   logoBg: string
   logoColor: string
   connectedEmail?: string
@@ -26,8 +27,12 @@ export default function IntegrationCard({ integration, onConnect, onConfigure }:
         <span className={cn('w-2 h-2 rounded-full block', integration.isConnected ? 'bg-green-500' : 'bg-gray-300')} />
       </div>
 
-      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold', integration.logoBg, integration.logoColor)}>
-        {integration.logoText}
+      <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center text-base font-bold overflow-hidden', integration.logoBg, integration.logoColor)}>
+        {integration.logoUrl ? (
+          <img src={integration.logoUrl} alt={integration.name} className="w-full h-full object-contain p-1.5" />
+        ) : (
+          integration.logoText
+        )}
       </div>
 
       <p className="text-sm font-semibold text-gray-900 dark:text-white mt-3">{integration.name}</p>

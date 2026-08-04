@@ -22,7 +22,7 @@ interface ActivityLogProps {
 export default function ActivityLog({ memberId, compact }: ActivityLogProps) {
   const [filters, setFilters] = useState<ActivityFilters>({ memberId })
   const { data: activityData } = useTeamActivity(filters)
-  const logs = (activityData as any)?.data ?? []
+  const logs = (activityData as { data?: AL[] } | undefined)?.data ?? []
   const [shown, setShown] = useState(10)
 
   const displayedLogs = logs.slice(0, shown)

@@ -43,7 +43,7 @@ export interface User {
   avatarUrl?: string
   companyId?: string
   companyName?: string
-  companyLogoUrl?: string
+  logoUrl?: string
   wabaId?: string
   phone?: string
   whatsappSetupDone?: boolean
@@ -236,6 +236,57 @@ export interface ActivityLog {
   ipAddress?: string
   location?: string
   createdAt: string
+}
+
+export interface UserActivityItem {
+  _id?: string
+  id?: string
+  type: string
+  description: string
+  device?: 'mobile' | 'tablet' | 'desktop' | 'unknown' | string
+  ipAddress?: string
+  status?: 'success' | 'failed' | string
+  createdAt: string
+}
+
+export interface UserActivityData {
+  activities: UserActivityItem[]
+  totalPages?: number
+  page?: number
+}
+
+export interface RawNotificationDTO {
+  _id?: string
+  id?: string
+  type?: string
+  kind?: string
+  title?: string
+  body?: string
+  message?: string
+  read?: boolean
+  isRead?: boolean
+  link?: string
+  actionUrl?: string
+  createdAt: string
+}
+
+export interface AssignableMember {
+  _id: string
+  id?: string
+  name: string
+  email: string
+  avatarUrl?: string
+  role?: UserRole | string
+  status?: 'online' | 'offline' | string
+}
+
+export interface PendingInvite {
+  _id: string
+  id?: string
+  email: string
+  role: UserRole | string
+  createdAt: string
+  expiresAt: string
 }
 
 export interface ActivityFilters {
@@ -758,13 +809,8 @@ export interface FAQ {
 export interface VideoTutorial {
   id: string
   title: string
-  description: string
-  duration: string
-  thumbnailUrl?: string
   videoUrl: string
-  category: string
-  views: number
-  publishedAt: string
+  order: number
 }
 
 export interface SystemStatus {
@@ -794,6 +840,19 @@ export interface TicketPayload {
   attachments?: string[]
 }
 
+export interface SupportTicket {
+  id: string
+  ticketNumber: string
+  subject: string
+  category: string
+  priority: 'low' | 'medium' | 'high'
+  status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  description: string
+  attachments: string[]
+  createdAt: string
+  updatedAt?: string
+}
+
 export interface SearchResult {
   id: string
   type: 'article' | 'faq' | 'video'
@@ -803,4 +862,319 @@ export interface SearchResult {
   url: string
   relevanceScore: number
   meta: Record<string, unknown>
+}
+
+// ---------------------------------------------------------------------------
+// Raw API DTOs — loosely-typed shapes as returned by the backend, before the
+// various `normalize*` helpers in the hooks massage them into the strict
+// frontend types above. Field names/casing intentionally mirror what the
+// backend sends (which sometimes differs from our normalized types, e.g.
+// `_id` vs `id`).
+// ---------------------------------------------------------------------------
+
+export interface ApiErrorResponse {
+  message?: string
+  code?: string
+  error?: { message?: string; code?: string }
+}
+
+export interface RawContactDTO {
+  _id?: string
+  id?: string
+  status?: string
+  customFields?: Record<string, unknown>
+  tags?: string[]
+  [key: string]: unknown
+}
+
+export interface RawConversationDTO {
+  _id?: string
+  id?: string
+  contact?: RawContactDTO
+  contactId?: string
+  contactName?: string
+  contactPhone?: string
+  status?: string
+  assignedAgent?: { _id?: string; id?: string; name?: string; avatarUrl?: string }
+  labels?: string[]
+  lastMessage?: unknown
+  unreadCount?: number
+  botActive?: boolean
+  isBot?: boolean
+  createdAt?: string
+  updatedAt?: string
+  [key: string]: unknown
+}
+
+export interface RawContactSegmentDTO {
+  id?: string
+  _id?: string
+  name?: string
+  color?: string
+  filters?: Record<string, unknown>
+  contactIds?: string[]
+  count?: number
+  contactCount?: number
+  type?: string
+  isBuiltIn?: boolean
+  createdAt?: string
+}
+
+export interface RawWebhookDTO {
+  _id?: string
+  id?: string
+  url?: string
+  description?: string
+  events?: string[]
+  isEnabled?: boolean
+  enabled?: boolean
+  createdAt?: string
+  stats?: { totalDeliveries: number; successRate: number; lastDeliveredAt?: string }
+  recentDeliveries?: Array<{ id: string; event: string; statusCode: number; responseTime: number; createdAt: string }>
+}
+
+export interface RawIntegrationPlatformDTO {
+  _id?: string
+  id?: string
+  name?: string
+  description?: string
+  category?: string
+  logoUrl?: string
+  logo?: string
+  logoText?: string
+  isActive?: boolean
+  isComingSoon?: boolean
+  isSoon?: boolean
+  connectUrl?: string
+  url?: string
+  createdAt?: string
+}
+
+export interface RawVideoTutorialDTO {
+  _id?: string
+  id?: string
+  title?: string
+  url?: string
+  videoUrl?: string
+  order?: number
+}
+
+export interface RawTicketDTO {
+  _id?: string
+  id?: string
+  status?: string
+  ticketNumber?: string
+  number?: string
+  subject?: string
+  category?: string
+  priority?: string
+  description?: string
+  attachments?: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface RawSystemStatusServiceDTO {
+  name?: string
+  status?: string
+  uptime?: number
+  history?: string[]
+}
+
+export interface RawSystemStatusIncidentDTO {
+  id?: string
+  _id?: string
+  title?: string
+  subject?: string
+  status?: string
+  createdAt?: string
+  resolvedAt?: string
+  updatedAt?: string
+}
+
+export interface RawSystemStatusTicketDTO {
+  _id?: string
+  id?: string
+  subject?: string
+  status?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface RawFAQResultDTO {
+  _id?: string
+  id?: string
+  question?: string
+  answer?: string
+  category?: string
+  score?: number
+}
+
+export interface RawDocResultDTO {
+  _id?: string
+  id?: string
+  title?: string
+  content?: string
+  category?: string
+  slug?: string
+  score?: number
+}
+
+export interface RawCampaignDTO {
+  id?: string
+  _id?: string
+  status?: string
+  [key: string]: unknown
+}
+
+export interface RawCampaignRecipientDTO {
+  id?: string
+  _id?: string
+  phone?: string
+  phoneNumber?: string
+  waId?: string
+  contactName?: string
+  name?: string
+  recipientName?: string
+  recipient_name?: string
+  contact?: { name?: string; displayName?: string; phone?: string }
+  status?: string
+  [key: string]: unknown
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+
+export interface RawAuthUserDTO {
+  id?: string
+  _id?: string
+  role?: string
+  plan?: string
+  emailVerified?: boolean
+  provider?: string
+  whatsappSetupDone?: boolean
+  [key: string]: unknown
+}
+
+export interface RawAuthResponseDTO {
+  accessToken?: string
+  token?: string
+  refreshToken?: string
+  user?: RawAuthUserDTO
+  [key: string]: unknown
+}
+
+export interface RegisterFormPayload {
+  name?: string
+  firstName?: string
+  lastName?: string
+  company?: string
+  companyName?: string
+  email: string
+  password: string
+  phone?: string
+  terms?: boolean
+  termsAccepted?: boolean
+  updates?: boolean
+  marketingOptIn?: boolean
+}
+
+// ── Team ──────────────────────────────────────────────────────────────────
+
+export interface RawTeamMemberDTO {
+  id?: string
+  _id?: string
+  role?: string
+  status?: string
+  onlineStatus?: string
+  permissions?: string[]
+  openConversations?: number
+  [key: string]: unknown
+}
+
+export interface InviteVerifyData {
+  name?: string
+  email?: string
+  invitedByName?: string
+  tenantName?: string
+  role?: UserRole | string
+}
+
+export interface ApiErrorResponseWithCode extends ApiErrorResponse {
+  code?: string
+}
+
+// ── Automation ────────────────────────────────────────────────────────────
+
+export interface RawAutomationRuleDTO {
+  id?: string
+  _id?: string
+  trigger?: { type?: string; [key: string]: unknown }
+  stats?: { totalTriggered: number; lastTriggeredAt?: string }
+  totalTriggered?: number
+  lastTriggeredAt?: string
+  [key: string]: unknown
+}
+
+export interface RawFlowDTO {
+  id?: string
+  _id?: string
+  stats?: { totalTriggered: number; completionRate: number; avgSteps: number }
+  totalTriggered?: number
+  completionRate?: number
+  [key: string]: unknown
+}
+
+// ── Templates ─────────────────────────────────────────────────────────────
+
+export interface RawTemplateDTO {
+  id?: string
+  _id?: string | { $oid: string }
+  header?: { type?: string; format?: string; text?: string; mediaUrl?: string }
+  buttons?: TemplateButton[] | { buttons?: TemplateButton[] }
+  [key: string]: unknown
+}
+
+export interface RawSampleTemplateDTO {
+  id?: string
+  _id?: string
+  title?: string
+  name?: string
+  description?: string
+  category?: TemplateCategory
+  language?: string
+  body?: string
+  header?: CreateTemplatePayload['header']
+  footer?: string
+  buttons?: TemplateButton[]
+  sampleVariables?: Record<string, string>
+  variableTypes?: Record<string, string>
+  payload?: Partial<CreateTemplatePayload> & { name?: string; category?: TemplateCategory }
+  [key: string]: unknown
+}
+
+// ── Billing ───────────────────────────────────────────────────────────────
+
+export interface RawBillingPlanDTO {
+  id?: string
+  _id?: string
+  features?: string[]
+  notIncluded?: string[]
+  [key: string]: unknown
+}
+
+// ── WhatsApp connect (Embedded Signup) ───────────────────────────────────
+
+export interface RawWabaConnectDTO {
+  wabaId?: string
+  wabaName?: string
+  phoneNumberId?: string
+  phoneNumber?: string
+  displayName?: string
+  qualityRating?: string
+  messagingTier?: string
+  isVerified?: boolean
+  currency?: string
+  timezone?: string
+  connectedAt?: string
+  [key: string]: unknown
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, HelpCircle, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ChevronDown, ChevronRight, HelpCircle, ThumbsUp, ThumbsDown } from 'lucide-react'
 import type { FAQ } from '@/types'
 import { cn, getCategoryColor, getCategoryLabel } from '@/lib/utils'
 
@@ -11,6 +11,7 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
   const [activeCategory, setActiveCategory] = useState('All')
   const [openId, setOpenId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, 'yes' | 'no'>>({})
+  const [isOpen, setIsOpen] = useState(true)
 
   const CATEGORIES = ['All', ...Array.from(new Set(allFaqs.map(f => f.category)))]
 
@@ -20,10 +21,24 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-10">
-      <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
+      <div className="flex items-center mb-6 gap-2">
+        <button
+          onClick={() => setIsOpen(v => !v)}
+          className="flex items-center gap-2 group"
+          aria-expanded={isOpen}
+        >
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
+          <ChevronRight
+            size={18}
+            className={cn('text-gray-400 dark:text-gray-500 group-hover:text-[#1a5c3a] dark:group-hover:text-emerald-400 transition-transform', isOpen && 'rotate-90')}
+          />
+        </button>
+      </div>
 
+      {isOpen && (
+      <>
       {/* Category pills */}
-      <div className="flex items-center gap-2 flex-wrap mt-4 mb-6">
+      <div className="flex items-center gap-2 flex-wrap mb-6">
         {CATEGORIES.map(cat => (
           <button
             key={cat}
@@ -98,6 +113,8 @@ export default function FAQAccordion({ faqs: allFaqs = [] }: Props) {
           )
         })}
       </div>
+      </>
+      )}
     </div>
   )
 }

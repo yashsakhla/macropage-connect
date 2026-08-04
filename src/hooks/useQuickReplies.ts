@@ -1,14 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
-import type { QuickReply } from '@/types'
+import type { AxiosError } from 'axios'
+import type { QuickReply, ApiErrorResponse } from '@/types'
+
+type MutationError = AxiosError<ApiErrorResponse>
+
+interface RawQuickReplyDTO {
+  _id?: string
+  id?: string
+  title?: string
+  shortcode?: string
+  content?: string
+  tags?: string[]
+  [key: string]: unknown
+}
 
 export function useQuickReplies() {
   return useQuery<QuickReply[]>({
     queryKey: ['quick-replies'],
     queryFn: () =>
       api.get('/quick-replies').then((r) => {
-        const items: any[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
+        const items: RawQuickReplyDTO[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? [])
         return items.map((q) => ({
           ...q,
           id: q._id ?? q.id,
@@ -28,7 +41,7 @@ export function useCreateQuickReply() {
       qc.invalidateQueries({ queryKey: ['quick-replies'] })
       toast.success('Quick reply created')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(
         err?.response?.data?.message ??
         err?.response?.data?.error?.message ??
@@ -46,7 +59,7 @@ export function useUpdateQuickReply() {
       qc.invalidateQueries({ queryKey: ['quick-replies'] })
       toast.success('Quick reply updated')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err?.response?.data?.message ?? 'Could not update quick reply'),
   })
 }
@@ -59,7 +72,7 @@ export function useDeleteQuickReply() {
       qc.invalidateQueries({ queryKey: ['quick-replies'] })
       toast.success('Quick reply deleted')
     },
-    onError: (err: any) =>
+    onError: (err: MutationError) =>
       toast.error(err?.response?.data?.message ?? 'Failed to delete quick reply'),
   })
 }
