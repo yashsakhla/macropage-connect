@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import type { CreateTemplatePayload, TemplateCategory, TemplateStatus } from '@/types'
 import TemplatePreview from './TemplatePreview'
 import { useCreateTemplate, useUpdateTemplate, useSaveDraft, useUpdateDraft } from '@/hooks/useTemplates'
-import { useUploadImage, useUploadDocument, useDeleteFile, UPLOAD_LIMITS } from '@/hooks/useUpload'
+import { useUploadImage, useUploadDocument, useDeleteFile } from '@/hooks/useUpload'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 
 const LANGUAGES = [
@@ -150,11 +150,16 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
 
   const headerUploading = uploadImage.isPending || uploadDocument.isPending
 
+  // Templates cap header media at 5MB regardless of type — stricter than the
+  // 20MB generic document limit used elsewhere (inbox attachments, tickets),
+  // since Meta-approved templates should stay lightweight.
+  const TEMPLATE_MEDIA_MAX_BYTES = 5 * 1024 * 1024
+  const TEMPLATE_MEDIA_MAX_LABEL = 'Max 5MB'
+
   const handleHeaderFile = (file: File) => {
     const kind = values.headerType === 'IMAGE' ? 'image' : 'document'
-    const limit = UPLOAD_LIMITS[kind]
-    if (file.size > limit.maxBytes) {
-      toast.error(`${kind === 'image' ? 'Image' : 'Document'} is too large — ${limit.label}`)
+    if (file.size > TEMPLATE_MEDIA_MAX_BYTES) {
+      toast.error(`${kind === 'image' ? 'Image' : 'Document'} is too large — ${TEMPLATE_MEDIA_MAX_LABEL}`)
       return
     }
     const upload = kind === 'image' ? uploadImage : uploadDocument
@@ -378,7 +383,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                             <UploadCloud size={20} />
                             Click to upload {values.headerType.toLowerCase()}
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                              {values.headerType === 'IMAGE' ? UPLOAD_LIMITS.image.label : UPLOAD_LIMITS.document.label}
+                              {TEMPLATE_MEDIA_MAX_LABEL}
                             </span>
                           </button>
                         )}
