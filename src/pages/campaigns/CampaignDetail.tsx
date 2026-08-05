@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  Pause, XCircle, Copy, Download, MoreHorizontal, ChevronRight, ChevronDown,
+  Pause, XCircle, Download, MoreHorizontal, ChevronRight, ChevronDown,
   Send, CheckCheck, Eye, Reply, MousePointerClick,
   FileText, Users, Calendar, Zap,
 } from 'lucide-react'
@@ -123,7 +123,6 @@ export default function CampaignDetail() {
   const { data: allCampaignsData } = useCampaigns()
   const allCampaigns: Campaign[] = (allCampaignsData as { data?: Campaign[] } | undefined)?.data ?? []
   const pause = usePauseCampaign()
-  const duplicate = useDuplicateCampaign()
 
   useEffect(() => {
     function handler(e: MouseEvent) {
