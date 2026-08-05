@@ -49,7 +49,7 @@ export default function WhatsAppCompletionStep({
     data: status,
     refetch: refetchStatus,
     isFetching,
-  } = useWhatsAppSetupStatus()
+  } = useWhatsAppSetupStatus({ poll: true })
 
   const { data: templates = [] } = useTemplates()
   const { data: sampleTemplates = [] } = useSampleTemplates()

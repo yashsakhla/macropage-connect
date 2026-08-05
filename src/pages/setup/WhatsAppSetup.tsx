@@ -46,9 +46,9 @@ export default function WhatsAppSetup() {
     qualityRating: string
   } | null>(null)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BusinessInfoPayload>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<BusinessInfoPayload>({
     resolver: zodResolver(businessSchema),
-    defaultValues: { businessName: '', category: '', description: '', website: '', email: '', address: '', logoFile: null }
+    defaultValues: { businessName: '', category: '', description: '', website: '', email: '', address: '' }
   })
 
   const watched = watch()
@@ -67,7 +67,12 @@ export default function WhatsAppSetup() {
   // so there's no separate manual phone step to gate on. A returning user
   // (e.g. after a refresh) lands on whichever step their status says is next —
   // if phoneRegistered is already true, step 3 is skipped entirely.
-  const currentStep = (() => {
+  // Lets the Back button on step 2 return to editing business info even
+  // though the server already has businessInfoSaved=true — cleared again as
+  // soon as the user re-saves, so the step then advances off server truth.
+  const [stepOverride, setStepOverride] = useState<number | null>(null)
+
+  const currentStep = stepOverride ?? (() => {
     if (!status) return 1
     if (!status.businessInfoSaved) return 1
     if (!status.metaConnected)     return 2
@@ -137,6 +142,7 @@ export default function WhatsAppSetup() {
       {
         onSuccess: () => {
           toast.success('Business info saved!')
+          setStepOverride(null)
           refetchStatus()
         },
       }
@@ -262,24 +268,6 @@ export default function WhatsAppSetup() {
                         {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address.message}</p>}
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium">Business profile photo</label>
-                        <div className="border-dashed border-2 border-[#e8ebe8] rounded-2xl p-6 text-center mt-2">
-                          <div className="text-gray-300 text-3xl">📷</div>
-                          <div className="text-sm font-medium text-gray-700 mt-2">Upload your business logo</div>
-                          <div className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB · Recommended 640×640px</div>
-                          <div className="mt-3">
-                            <input
-                              type="file"
-                              id="logoFile"
-                              className="hidden"
-                              onChange={(e) => setValue('logoFile', e.target.files?.[0] ?? null)}
-                            />
-                            <label htmlFor="logoFile" className="inline-flex items-center cursor-pointer btn-outline text-xs h-8 px-4">Choose file</label>
-                          </div>
-                        </div>
-                      </div>
-
                       {saveError && (
                         <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
                           <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
@@ -336,8 +324,6 @@ export default function WhatsAppSetup() {
                             website={watch('website')}
                             email={watch('email')}
                             address={watch('address')}
-                            logoFile={watch('logoFile') ?? null}
-                            onRemoveLogo={() => setValue('logoFile', null)}
                             phone={"+91 98765 43210"}
                           />
                         </div>
@@ -386,7 +372,7 @@ export default function WhatsAppSetup() {
                 )}
 
                 <div className="flex items-center justify-between pt-2">
-                  <button onClick={() => {}} className="btn-ghost h-9 px-4">← Back</button>
+                  <button onClick={() => setStepOverride(1)} className="btn-ghost h-9 px-4">← Back</button>
                   <button
                     onClick={() => { refetchStatus() }}
                     disabled={!isMetaConnected}
@@ -424,8 +410,6 @@ export default function WhatsAppSetup() {
                   website={watched.website}
                   email={watched.email}
                   address={watched.address}
-                  logoFile={watch('logoFile') ?? null}
-                  onRemoveLogo={() => setValue('logoFile', null)}
                   phone={connectedWaba?.phoneNumber || '+91 98765 43210'}
                   isVerified={false}
                 />

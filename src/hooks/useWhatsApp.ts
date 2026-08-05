@@ -32,7 +32,13 @@ export function useShareWABADetails() {
   })
 }
 
-export function useWhatsAppSetupStatus() {
+// `poll: true` keeps refetching every 10s so template approval status (Meta
+// review) updates automatically without a manual refresh — only the
+// completion step needs that; the rest of the setup wizard advances via
+// explicit refetchStatus() calls at each step transition, so it stays off
+// by default to avoid hitting /whatsapp/status continuously everywhere else
+// this hook is used (sidebar, layout, banners, etc).
+export function useWhatsAppSetupStatus(options?: { poll?: boolean }) {
   return useQuery<SetupStatus>({
     queryKey: ['whatsapp-setup-status'],
     queryFn: () =>
@@ -41,9 +47,7 @@ export function useWhatsAppSetupStatus() {
         return r.data?.data ?? r.data
       }),
     staleTime: 30000,
-    // Poll so template approval status (Meta review) updates automatically
-    // without the user needing to refresh the completion step.
-    refetchInterval: 10000,
+    refetchInterval: options?.poll ? 10000 : false,
     retry: 2,
   })
 }
