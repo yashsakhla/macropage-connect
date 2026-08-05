@@ -137,8 +137,8 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
       {isLoading ? (
         <div className="p-10 text-center text-gray-400 dark:text-gray-500 text-sm">Loading recipients...</div>
       ) : (
-        <div>
-        <table className="data-table w-full table-fixed">
+        <div className="overflow-x-auto">
+        <table className="data-table w-full table-fixed min-w-[640px]">
           <colgroup>
             <col style={{ width: '26%' }} />
             <col style={{ width: '16%' }} />

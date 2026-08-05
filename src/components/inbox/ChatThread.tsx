@@ -27,6 +27,7 @@ import { getInitials, cn } from '@/lib/utils'
 import { useInboxStore } from '@/store/inboxStore'
 import { useAuthStore }  from '@/store/authStore'
 import { useConversation, useMessages, useSendMessage, useAddNote, useUpdateConversation, useResolveConversation } from '@/hooks/useConversations'
+import { useTemplates } from '@/hooks/useTemplates'
 import { usePermissions } from '@/lib/permissionsConstants'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 import { avatarGradient } from '@/lib/avatarGradient'
@@ -383,6 +384,8 @@ export default function ChatThread({ mobileBack }: Props) {
     refetch: refetchMsgs,
   } = useMessages(selectedConversationId ?? null)
   const rawMessages: Message[] = (messagesData as { data?: Message[] } | undefined)?.data ?? []
+  const { data: allTemplates } = useTemplates()
+  const templateByName = new Map((allTemplates ?? []).map((t) => [t.name, t]))
   const sendMessage = useSendMessage()
   const { requireConnected } = useRequireWhatsApp()
   const addNote = useAddNote()
@@ -400,15 +403,36 @@ export default function ChatThread({ mobileBack }: Props) {
       seenKeys.add(key)
       return true
     })
-    .map((m: Message) => ({
-      ...m,
-      id: m.id ?? m._id ?? m.metaMessageId ?? '',
-      direction: (m.direction ?? '').toString().toLowerCase() as Message['direction'],
-      // Historical messages from the REST API aren't guaranteed to be lowercase
-      // the way socket.io's message:new normalizes them — without this, past
-      // media messages (type "IMAGE" etc.) fall through to the text bubble.
-      type: (m.type ?? 'text').toString().toLowerCase() as Message['type'],
-    }))
+    .map((m: Message) => {
+      const type = (m.type ?? 'text').toString().toLowerCase() as Message['type']
+      // Historical template messages come back from the REST API with just
+      // templateName (no header/footer/buttons), so they'd otherwise fall
+      // back to a plain text bubble instead of looking like what was sent.
+      // Reconstruct the same shape from the template library when possible.
+      let templateData = m.templateData
+      if (!templateData && type === 'template' && m.templateName) {
+        const tpl = templateByName.get(m.templateName)
+        if (tpl) {
+          templateData = {
+            name: tpl.name,
+            header: tpl.header?.text,
+            body: m.content || tpl.body,
+            footer: tpl.footer,
+            buttons: tpl.buttons?.map((b) => ({ text: b.text })),
+          }
+        }
+      }
+      return {
+        ...m,
+        id: m.id ?? m._id ?? m.metaMessageId ?? '',
+        direction: (m.direction ?? '').toString().toLowerCase() as Message['direction'],
+        // Historical messages from the REST API aren't guaranteed to be lowercase
+        // the way socket.io's message:new normalizes them — without this, past
+        // media messages (type "IMAGE" etc.) fall through to the text bubble.
+        type,
+        templateData,
+      }
+    })
     .filter((m: Message) => {
       const type = (m.type ?? 'text').toLowerCase()
       if (['image', 'document', 'audio', 'video', 'sticker', 'location', 'template'].includes(type)) return true

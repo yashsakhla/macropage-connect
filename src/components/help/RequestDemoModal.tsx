@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, addDays } from 'date-fns'
-import { X, CalendarClock, Clock, Building2, User, CheckCircle2 } from 'lucide-react'
+import { X, CalendarClock, Clock, Building2, User, Phone, CheckCircle2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { useRequestDemo } from '@/hooks/useHelp'
@@ -15,6 +15,7 @@ const maxDate = format(addDays(today, 7), 'yyyy-MM-dd')
 const schema = z.object({
   name: z.string().min(2, 'Enter your name'),
   companyName: z.string().min(2, 'Enter your company name'),
+  phone: z.string().min(7, 'Enter a valid phone number').max(15, 'Enter a valid phone number'),
   description: z.string().min(10, 'Tell us a bit about what you need (min 10 characters)').max(500, 'Max 500 characters'),
   date: z.string()
     .min(1, 'Select a date')
@@ -35,6 +36,7 @@ export default function RequestDemoModal() {
     defaultValues: {
       name: user?.name ?? '',
       companyName: user?.companyName ?? '',
+      phone: '',
       description: '',
       date: '',
       time: '',
@@ -65,7 +67,7 @@ export default function RequestDemoModal() {
               </span>{' '}
               at <span className="font-semibold text-gray-900 dark:text-white">{booked.time}</span>.
             </p>
-            <button onClick={onClose} className="btn-primary w-full mt-6">Done</button>
+            <button onClick={onClose} className="btn-primary w-full h-11 px-6 mt-6">Done</button>
           </div>
         ) : (
           <>
@@ -98,6 +100,14 @@ export default function RequestDemoModal() {
                   <input {...register('companyName')} className="input w-full" placeholder="Company name" />
                   {errors.companyName && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.companyName.message}</p>}
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <Phone size={12} /> Phone number
+                </label>
+                <input {...register('phone')} type="tel" className="input w-full" placeholder="Your phone number" />
+                {errors.phone && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.phone.message}</p>}
               </div>
 
               <div>

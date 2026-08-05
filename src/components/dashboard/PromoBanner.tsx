@@ -66,10 +66,10 @@ export default function PromoBanner() {
     <div
       className={cn(
         'relative overflow-hidden rounded-2xl shadow-card transition-all duration-300 ease-out',
-        entered && !closing ? 'opacity-100 translate-y-0 max-h-[200px]' : 'opacity-0 -translate-y-2 max-h-0'
+        entered && !closing ? 'opacity-100 translate-y-0 max-h-[110px] sm:max-h-[200px]' : 'opacity-0 -translate-y-2 max-h-0'
       )}
     >
-      <div className="relative bg-gradient-to-r from-[#123724] via-[#1a5c3a] to-[#2d7a4f] px-6 py-6 sm:px-8 sm:py-7 flex items-center gap-6 flex-wrap lg:flex-nowrap">
+      <div className="relative bg-gradient-to-r from-[#123724] via-[#1a5c3a] to-[#2d7a4f] px-3 py-3 sm:px-8 sm:py-7 flex items-center gap-3 sm:gap-6 flex-nowrap">
         {/* Decorative floating shapes */}
         <div className="pointer-events-none absolute -right-10 -top-16 w-48 h-48 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="pointer-events-none absolute right-24 -bottom-10 w-24 h-24 rounded-full bg-white/5" />
@@ -85,41 +85,63 @@ export default function PromoBanner() {
         <button
           onClick={handleClose}
           aria-label="Dismiss"
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center"
+          className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center"
         >
-          <X size={15} className="text-white" />
+          <X size={13} className="text-white sm:hidden" />
+          <X size={15} className="hidden sm:block text-white" />
         </button>
 
-        {/* "Image" — rocket illustration */}
-        <div className="group relative shrink-0 w-16 h-16 sm:w-20 sm:h-20">
-          <div className="absolute inset-0 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm rotate-6 transition-transform duration-500 group-hover:rotate-0" />
-          <div className="absolute inset-0 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden p-2">
+        {/* "Image" — rocket illustration (left) */}
+        <div className="group relative shrink-0 w-9 h-9 sm:w-20 sm:h-20">
+          <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm rotate-6 transition-transform duration-500 group-hover:rotate-0" />
+          <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden p-1 sm:p-2">
             <img src={rocketIcon} alt="" className="w-full h-full object-contain" />
           </div>
-          <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#ffd166] flex items-center justify-center shadow-lg animate-bounce-once">
+          <div className="hidden sm:flex absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#ffd166] items-center justify-center shadow-lg animate-bounce-once">
             <Sparkles size={13} className="text-[#123724]" />
           </div>
         </div>
 
-        {/* Copy */}
-        <div className="flex-1 min-w-[200px] pr-6">
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/70 mb-1">
+        {/* Copy (middle) — trimmed down on mobile so the row stays on one line */}
+        <div className="flex-1 min-w-0 pr-6 sm:pr-6">
+          <div className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/70 mb-1">
             <Zap size={11} />
             Welcome back
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
+          <h3 className="text-xs sm:text-xl font-bold text-white leading-snug truncate">
             Do more with Macropage Connect
           </h3>
-          <p className="text-sm text-white/75 mt-1 max-w-xl leading-relaxed">
+          <p className="hidden sm:block text-sm text-white/75 mt-1 max-w-xl leading-relaxed">
             One dashboard for live WhatsApp chat, campaigns, templates and analytics —
             built to help you talk to more customers, faster.
           </p>
         </div>
 
-        {/* Quick actions — S-shaped stepper: 1→2 across, down to 3, 3→4 back across, then 4→1 to loop */}
+        {/* Quick actions — compact icon row on mobile so the animated buttons stay visible */}
+        <div key={cycleKey} className="flex sm:hidden items-center gap-1.5 shrink-0">
+          {QUICK_ACTIONS.map(action => (
+            <button
+              key={action.label}
+              onClick={() => { navigate(action.to, action.state ? { state: action.state } : undefined); handleClose() }}
+              aria-label={action.label}
+              style={entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }}
+              className={cn(
+                'relative flex items-center justify-center w-7 h-7 rounded-lg bg-white/15 border border-white/20 backdrop-blur-sm active:scale-90 transition-all',
+                entered && 'animate-stepper-pop'
+              )}
+            >
+              <action.icon size={13} className="text-white" />
+              <span className={cn('absolute -top-1 -left-1 w-3 h-3 rounded-full border border-white/70 text-white text-[7px] font-bold flex items-center justify-center', action.badge)}>
+                {action.step}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Quick actions — S-shaped stepper: 1→2 across, down to 3, 3→4 back across, then 4→1 to loop (desktop) */}
         <div
-          key={cycleKey}
-          className="relative grid shrink-0 w-full sm:w-auto items-center justify-items-center"
+          key={`grid-${cycleKey}`}
+          className="relative hidden sm:grid shrink-0 w-auto items-center justify-items-center"
           style={{ gridTemplateColumns: 'auto 18px auto', gridTemplateRows: 'auto 18px auto' }}
         >
           {/* connectors — each draws in right after the step before it pops in */}

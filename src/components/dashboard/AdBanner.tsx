@@ -172,7 +172,7 @@ export default function AdBanner({ ads }: { ads: AdItem[] }) {
       {showConfetti && !closing && <Confetti durationMs={6000} />}
       <div
         className={cn(
-          'fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto',
+          'fixed inset-0 z-[100] flex flex-col overflow-y-auto',
           'bg-black/60 backdrop-blur-sm p-4 py-8',
           'transition-opacity duration-[250ms]',
           closing ? 'opacity-0' : 'opacity-100'
@@ -180,8 +180,8 @@ export default function AdBanner({ ads }: { ads: AdItem[] }) {
       >
         <div
           className={cn(
-            'bg-white rounded-3xl shadow-2xl w-full max-w-2xl my-auto',
-            'relative overflow-hidden max-h-full',
+            'bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-auto my-auto',
+            'relative overflow-hidden',
             'transition-all duration-[250ms]',
             closing ? 'opacity-0 scale-95 translate-y-2' : 'opacity-100 scale-100 translate-y-0'
           )}
