@@ -54,50 +54,69 @@ function formatAxisTick(v: number): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ label, value, iconImg, trend, hero, to }: {
+function StatCard({ label, value, iconImg, trend, hero, to, delay = 0 }: {
   label: string
   value: number | string
   iconImg: string
   trend?: { value: number; positive: boolean }
   hero?: boolean
   to: string
+  delay?: number
 }) {
   const navigate = useNavigate()
   return (
     <div
-      className={cn('group relative p-3.5 sm:p-5 overflow-hidden cursor-pointer', hero ? 'rounded-2xl shadow-card' : 'card p-3.5 sm:p-5')}
+      className={cn(
+        'group relative p-3.5 sm:p-5 overflow-hidden cursor-pointer stat-card-interactive hover:z-10',
+        hero
+          ? 'rounded-2xl shadow-card hover:shadow-2xl hover:shadow-[#1a5c3a]/30'
+          : 'card p-3.5 sm:p-5 hover:shadow-xl hover:border-[#1a5c3a]/20'
+      )}
       style={hero ? { background: '#1a5c3a', color: '#fff' } : undefined}
       onClick={() => navigate(to)}
     >
+      <div
+        aria-hidden
+        className={cn(
+          'absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none',
+          hero ? 'stat-card-gradient-hero' : 'stat-card-gradient'
+        )}
+      />
       <button
         onClick={(e) => { e.stopPropagation(); navigate(to) }}
         title={`Go to ${label}`}
         className={cn(
-          'absolute top-2.5 right-2.5 sm:top-3 sm:right-3 rounded-full p-1.5 flex items-center justify-center',
+          'absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-10 rounded-full p-1.5 flex items-center justify-center',
           'opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200',
           hero ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-white/10 dark:hover:bg-white/20 dark:text-gray-300'
         )}
       >
         <ArrowUpRight size={14} />
       </button>
-      <div className="flex items-start justify-between gap-2">
+      <div className="relative z-10 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className={cn('text-xs sm:text-sm font-medium truncate', hero ? 'text-white/90' : 'text-gray-500 dark:text-gray-400')}>
             {label}
           </p>
-          <p className={cn('text-xl sm:text-3xl font-bold mt-1.5 sm:mt-2 truncate', hero ? 'text-white' : 'text-gray-900 dark:text-white')}>
+          <p className={cn(
+            'text-xl sm:text-3xl font-bold mt-1.5 sm:mt-2 truncate transition-transform duration-300 origin-left group-hover:scale-105',
+            hero ? 'text-white' : 'text-gray-900 dark:text-white'
+          )}>
             {typeof value === 'number' ? formatIndian(value) : value}
           </p>
           {trend && (
             <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-2xs sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shrink-0">
+              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-2xs sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shrink-0 transition-transform duration-200 group-hover:scale-110">
                 <TrendingUp size={12} /> {Math.abs(trend.value)}%
               </span>
               <span className="hidden sm:inline text-xs text-gray-500">vs last month</span>
             </div>
           )}
         </div>
-        <div className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl flex items-center justify-center shrink-0 sm:-mt-1 sm:-mr-1">
+        <div
+          className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl flex items-center justify-center shrink-0 sm:-mt-1 sm:-mr-1 animate-stat-bob transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+          style={{ animationDelay: `${delay}s` }}
+        >
           <img src={iconImg} alt="" className="w-full h-full object-contain drop-shadow-md" />
         </div>
       </div>
@@ -106,6 +125,27 @@ function StatCard({ label, value, iconImg, trend, hero, to }: {
 }
 
 function AccountHealthBanner({ health }: { health: import('@/types').DashboardHealthData }) {
+  const navigate = useNavigate()
+
+  if (!health.connected) {
+    return (
+      <div className="rounded-xl border px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-red-500" />
+          <span className="text-sm font-medium text-red-700 dark:text-red-400">
+            WhatsApp is not connected. Please connect your WhatsApp now !!
+          </span>
+        </div>
+        <button
+          onClick={() => navigate('/setup/whatsapp')}
+          className="btn-danger h-8 text-xs px-3 shrink-0 w-full sm:w-auto"
+        >
+          Connect WhatsApp
+        </button>
+      </div>
+    )
+  }
+
   const configMap: Record<string, { label: string; desc: string; bg: string; border: string; dot: string }> = {
     GREEN:  { label: 'High quality',   desc: 'Your account is in good standing. No sending restrictions.',          bg: 'bg-green-50 dark:bg-green-950/30',  border: 'border-green-200 dark:border-green-800',  dot: 'bg-green-500'  },
     YELLOW: { label: 'Medium quality', desc: 'Your account has some flagged messages. Review recent campaigns.',     bg: 'bg-amber-50 dark:bg-amber-950/30',  border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-500'  },
@@ -449,6 +489,7 @@ export default function Dashboard() {
               trend={stats?.conversations?.trend != null ? { value: stats.conversations.trend, positive: stats.conversations.trend >= 0 } : undefined}
               to="/inbox"
               hero
+              delay={0}
             />
             <StatCard
               label="Messages Sent"
@@ -456,6 +497,7 @@ export default function Dashboard() {
               iconImg={rocketIcon}
               trend={stats?.messagesSent?.trend != null ? { value: stats.messagesSent.trend, positive: stats.messagesSent.trend >= 0 } : undefined}
               to="/campaigns"
+              delay={0.3}
             />
             <StatCard
               label="Active Contacts"
@@ -463,6 +505,7 @@ export default function Dashboard() {
               iconImg={peoplesIcon}
               trend={stats?.activeContacts?.trend != null ? { value: stats.activeContacts.trend, positive: stats.activeContacts.trend >= 0 } : undefined}
               to="/contacts"
+              delay={0.6}
             />
             <StatCard
               label="Campaigns"
@@ -470,6 +513,7 @@ export default function Dashboard() {
               iconImg={soundIcon}
               trend={stats?.campaigns?.trend != null ? { value: stats.campaigns.trend, positive: stats.campaigns.trend >= 0 } : undefined}
               to="/campaigns"
+              delay={0.9}
             />
           </>
         )}
@@ -598,7 +642,7 @@ export default function Dashboard() {
             </div>
           ) : !recent?.length ? (
             <div className="card p-4">
-              <h4 className="text-sm font-semibold mb-3">Recent Conversations</h4>
+              <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recent Conversations</h4>
               <div className="text-center py-8 text-gray-400">
                 <MessageSquare size={32} className="mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No recent conversations</p>
@@ -606,7 +650,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="card p-4">
-              <h4 className="text-sm font-semibold mb-3">Recent Conversations</h4>
+              <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recent Conversations</h4>
               <div className="space-y-3">
                 {recent.map(c => {
                   const displayName = c.meta?.name ?? c.title
@@ -623,7 +667,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-gray-900 truncate">{c.title}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.title}</p>
                           <span className={cn('text-2xs font-medium px-2 py-0.5 rounded-full shrink-0', typeColors[c.type] ?? 'bg-gray-50 text-gray-600')}>
                             {c.type}
                           </span>

@@ -36,27 +36,17 @@ function toIntegration(platform: IntegrationPlatform, index: number): Integratio
 export default function IntegrationSettings() {
   const { data: platforms, isLoading, error } = useIntegrationPlatforms()
   const [category, setCategory] = useState('All')
-  const [connectedIds, setConnectedIds] = useState<string[]>([])
   const [connectTarget, setConnectTarget] = useState<Integration | null>(null)
 
   const integrations = useMemo(
     () => (platforms ?? [])
       .filter(p => p.name.trim().toLowerCase() !== 'zapier')
-      .map((p, i) => {
-        const base = toIntegration(p, i)
-        return connectedIds.includes(base.id) ? { ...base, isConnected: true } : base
-      }),
-    [platforms, connectedIds]
+      .map((p, i) => toIntegration(p, i)),
+    [platforms]
   )
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(integrations.map(i => i.category)))], [integrations])
   const filtered = category === 'All' ? integrations : integrations.filter(i => i.category === category)
-
-  function finishConnect(id: string) {
-    setConnectedIds(p => [...p, id])
-    setConnectTarget(null)
-    toast.success('Integration connected')
-  }
 
   return (
     <SettingsSection title="Integrations" subtitle="Connect Macropage Connect with your favourite tools">
@@ -97,9 +87,7 @@ export default function IntegrationSettings() {
       {connectTarget && (
         <IntegrationConnectModal
           integration={connectTarget}
-          connectUrl={platforms?.find(p => p.id === connectTarget.id)?.connectUrl}
           onClose={() => setConnectTarget(null)}
-          onConnected={finishConnect}
         />
       )}
     </SettingsSection>

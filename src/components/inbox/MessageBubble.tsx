@@ -13,6 +13,7 @@ import {
   ZoomIn,
   Loader2,
   AlertCircle,
+  LayoutTemplate,
 } from 'lucide-react'
 import type { Message, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
@@ -155,6 +156,23 @@ function AudioPlayer({
           {playing ? fmtDur(current) : fmtDur(duration)}
         </p>
       </div>
+    </div>
+  )
+}
+
+function TemplateBadge({ inbound, compact }: { inbound: boolean; compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full font-medium uppercase tracking-wide',
+        compact ? 'px-2 py-0.5 text-2xs' : 'px-2 py-0.5 text-2xs',
+        inbound
+          ? 'bg-[#e8f5ee] dark:bg-green-900/30 text-[#1a5c3a] dark:text-green-400'
+          : 'bg-black/10 dark:bg-white/15 text-gray-800 dark:text-white/90'
+      )}
+    >
+      <LayoutTemplate size={10} className="flex-shrink-0" strokeWidth={2.5} />
+      Template
     </div>
   )
 }
@@ -372,6 +390,9 @@ export default function MessageBubble({ msg, senderName }: Props) {
         <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
           {inbound && <InboundAvatar name={contactName} />}
           <div className={cn(bubbleCls, 'max-w-[300px] overflow-hidden')}>
+            <div className="px-4 pt-2.5 pb-1">
+              <TemplateBadge inbound={inbound} />
+            </div>
             {t.header && (
               <div
                 className={cn(
@@ -427,20 +448,20 @@ export default function MessageBubble({ msg, senderName }: Props) {
       <div className={cn('flex items-end gap-2', inbound ? 'justify-start' : 'justify-end')}>
         {inbound && <InboundAvatar name={contactName} />}
         <div className={cn(bubbleCls, 'px-4 py-3')}>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <TemplateBadge inbound={inbound} />
+            {msg.templateName && (
+              <span className={cn('text-2xs truncate', inbound ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-white/60')}>
+                {msg.templateName}
+              </span>
+            )}
+          </div>
           {resolvedContent ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{resolvedContent}</p>
           ) : (
             <p className="text-sm leading-relaxed italic opacity-80">Template message sent</p>
           )}
-          <div className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 mt-2',
-            inbound ? 'bg-black/5 dark:bg-white/10' : 'bg-black/10 dark:bg-white/20'
-          )}>
-            <span className={cn('text-2xs opacity-60', inbound ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white')}>
-              📋 {msg.templateName ?? 'template'}
-            </span>
-          </div>
-          <div className="flex items-center justify-end gap-1 mt-1">
+          <div className="flex items-center justify-end gap-1 mt-1.5">
             <span className={cn('text-2xs', timeColor)}>{time}</span>
             {!inbound && <OutboundTick status={msg.status} />}
           </div>

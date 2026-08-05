@@ -203,6 +203,7 @@ export function useSubmitTicket() {
 export interface DemoRequestPayload {
   name: string
   companyName: string
+  phone: string
   description: string
   date: string // yyyy-MM-dd
   time: string // HH:mm
@@ -211,7 +212,7 @@ export interface DemoRequestPayload {
 export function useRequestDemo() {
   return useMutation({
     mutationFn: (data: DemoRequestPayload) =>
-      api.post('/help/demo-request', data).then(r => r.data),
+      api.post('/demo-requests', data).then(r => r.data),
     onError: () => {
       toast.error('Could not book the demo. Please try again.')
     },

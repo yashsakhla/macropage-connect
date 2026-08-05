@@ -6,6 +6,7 @@ import { AxiosError } from 'axios'
 import api from '@/lib/axios'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { useWABADetails } from '@/hooks/useWhatsApp'
 import type { ApiErrorResponse } from '@/types'
 
 interface DangerAction {
@@ -20,14 +21,25 @@ interface DangerAction {
 export default function DangerZone() {
   const user = useAuthStore(s => s.user)
   const qc = useQueryClient()
+  const { data: waba } = useWABADetails()
+  const whatsappConnected = !!waba?.connected
   const [activeAction, setActiveAction] = useState<DangerAction | null>(null)
   const [step, setStep] = useState(1)
   const [typeValue, setTypeValue] = useState('')
   const [password, setPassword] = useState('')
   const [confirming, setConfirming] = useState(false)
 
-  const ACTIONS: DangerAction[] = [
-    { title: 'Export all data', desc: 'Download everything — contacts, conversations, campaigns — as a ZIP file.', btnLabel: 'Export data' },
+  const ALL_ACTIONS: DangerAction[] = [
+    {
+      title: 'Export all data',
+      desc: 'Data exports are handled by our support team to keep your data secure. Raise a request and we\'ll get your export ready.',
+      btnLabel: 'Raise Request',
+      confirm: 'simple',
+      confirmMessage: 'Raise a support request for exporting your data — contacts, conversations, and campaigns?',
+      onConfirm: async () => {
+        toast.success('Support request raised — our team will email you once your data export is ready.')
+      },
+    },
     {
       title: 'Disconnect WhatsApp',
       desc: 'Remove your WhatsApp Business Account connection. You can reconnect later.',
@@ -38,13 +50,15 @@ export default function DangerZone() {
         await api.delete('/whatsapp/setup/disconnect')
         qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
         qc.invalidateQueries({ queryKey: ['waba-details'] })
+        qc.invalidateQueries({ queryKey: ['dashboard-health'] })
         toast.success('WhatsApp disconnected')
       },
     },
-    { title: 'Delete all contacts', desc: 'Permanently delete all contacts and their conversation history.', btnLabel: 'Delete contacts', confirm: 'type' },
-    { title: 'Reset automation', desc: 'Delete all rules, flows, and AI configuration.', btnLabel: 'Reset automation', confirm: 'simple' },
     { title: 'Delete account', desc: 'Permanently delete your entire Macropage Connect account and all data. This CANNOT be undone.', btnLabel: 'Delete account', confirm: 'multi' },
   ]
+
+  // Nothing to disconnect if WhatsApp isn't connected in the first place.
+  const ACTIONS = ALL_ACTIONS.filter((a) => a.title !== 'Disconnect WhatsApp' || whatsappConnected)
 
   function openAction(action: DangerAction) {
     if (!action.confirm) return

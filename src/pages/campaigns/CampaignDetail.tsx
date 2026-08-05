@@ -270,11 +270,8 @@ export default function CampaignDetail() {
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-10 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { duplicate.mutate(campaign.id); setMenuOpen(false) }}>
-                    <Copy size={12} /> Duplicate campaign
-                  </button>
                   <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { exportRecipients(); setMenuOpen(false) }}>
-                    <Download size={12} /> Export recipients
+                    <Download size={12} className="shrink-0" /> Export recipients
                   </button>
                 </div>
               )}
@@ -413,12 +410,7 @@ export default function CampaignDetail() {
               iconColor="text-blue-600 dark:text-blue-400"
               onClick={exportRecipients}
             />
-            <ActionCard
-              icon={Copy} title="Duplicate campaign" subtitle="Create a copy of this campaign"
-              tint="bg-[#e8f5ee] dark:bg-emerald-950/20 border-[#c8e6d4] dark:border-emerald-900/40"
-              iconColor="text-[#1a5c3a]"
-              onClick={() => duplicate.mutate(campaign.id)}
-            />
+            
           </div>
         </div>
       </div>
