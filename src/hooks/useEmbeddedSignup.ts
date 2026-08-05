@@ -113,8 +113,7 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
         capturedWabaIdRef.current  = data.waba_id
         capturedPhoneIdRef.current = data.phone_number_id
       },
-      (step: string) => {
-        console.log('[Embedded Signup] CANCEL at step:', step)
+      () => {
         setState('cancelled')
         toast('WhatsApp connection cancelled', { icon: 'ℹ️' })
       },

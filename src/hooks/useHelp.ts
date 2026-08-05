@@ -21,8 +21,13 @@ import type {
 
 // Lives on a different path prefix than the rest of /help/* — pass the
 // absolute URL straight through (axios uses it as-is, ignoring baseURL,
-// while still running through the shared auth interceptor).
-const VIDEO_TUTORIALS_URL = 'https://macropage-connect.onrender.com/api/macropage-connect/help/video-tutorials'
+// while still running through the shared auth interceptor). The host is
+// derived from VITE_API_BASE_URL so this follows the same env config as
+// every other request instead of pointing at a fixed backend.
+const API_ORIGIN = new URL(
+  import.meta.env.VITE_API_BASE_URL ?? 'https://macropage-connect.onrender.com/api/v1'
+).origin
+const VIDEO_TUTORIALS_URL = `${API_ORIGIN}/api/macropage-connect/help/video-tutorials`
 
 function normalizeVideoTutorial(raw: RawVideoTutorialDTO, index: number): VideoTutorial {
   return {

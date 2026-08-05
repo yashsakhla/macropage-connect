@@ -65,14 +65,6 @@ export function useSocket() {
 
     // ── CONNECTION ────────────────────────────────────────────
 
-    socket.on('connect', () => {
-      console.log('[Socket] Connected:', socket.id)
-    })
-
-    socket.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason)
-    })
-
     socket.on('connect_error', (err) => {
       console.error('[Socket] Connection error:', err.message)
     })
@@ -83,7 +75,6 @@ export function useSocket() {
     })
 
     socket.io.on('reconnect', () => {
-      console.log('[Socket] Reconnected')
       qc.invalidateQueries({ queryKey: ['conversations'] })
     })
 
@@ -121,8 +112,6 @@ export function useSocket() {
 
       // Use event's conversationId when available; fall back to the open thread
       const targetId = conversationId ?? selectedId ?? undefined
-
-      console.log('[Socket] message:new', { conversationId, targetId, selectedId, msg })
 
       // Push into the React Query cache — triggers an instant re-render in ChatThread
       if (targetId) {

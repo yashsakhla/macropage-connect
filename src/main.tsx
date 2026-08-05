@@ -45,7 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <GoogleOAuthProvider clientId={googleClientId}>
         <App />
         <AppToaster />
-        <ReactQueryDevtools initialIsOpen={false} />
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </GoogleOAuthProvider>
     </QueryClientProvider>
   </React.StrictMode>
