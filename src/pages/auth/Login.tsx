@@ -50,10 +50,10 @@ export default function Login() {
       {/* Left panel - form */}
       <div className="w-full lg:w-1/2 bg-white px-5 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 flex flex-col justify-between">
         <div className="flex items-center justify-between gap-4">
-          <img src={logo} alt="Macropage Connect" className="h-8 sm:h-9" />
+          <img src={logo} alt="Macropage Connect" className="h-11 sm:h-14" />
           <div className="relative flex flex-col items-center leading-none">
             <img src={metaTechProvider} alt="Meta Tech Provider" className="h-11 sm:h-16 object-contain" />
-            <span className="absolute bottom-2 text-xs sm:text-sm font-extrabold text-gray-800 tracking-tight -mt-1.5 sm:-mt-2 -mb-1.5 sm:-mb-2">Tech Provider</span>
+            <span className="absolute bottom-2 text-xs sm:text-sm font-extrabold text-gray-800 tracking-tight -mt-1.5 sm:-mt-2 -mb-1.5 sm:-mb-2">Official Tech Provider</span>
           </div>
         </div>
 

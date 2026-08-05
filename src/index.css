@@ -341,6 +341,21 @@
 .animate-stepper-line-h { transform: scaleX(0); transform-origin: left; animation: stepper-line-h 0.25s ease-out forwards; }
 .animate-stepper-line-v { transform: scaleY(0); transform-origin: top; animation: stepper-line-v 0.25s ease-out forwards; }
 
+/* Dashboard hero banner — two columns of chat bubbles drifting past each
+   other in opposite directions. Each column's track is the bubble list
+   duplicated once and translated by exactly -50%, so the loop point lines
+   up seamlessly with no visible jump/reset. */
+@keyframes scroll-up {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+@keyframes scroll-down {
+  0%   { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+.animate-scroll-up { animation: scroll-up 16s linear infinite; }
+.animate-scroll-down { animation: scroll-down 16s linear infinite; }
+
 /* Support chat launcher — gentle float + occasional wiggle to draw the eye without being annoying */
 @keyframes chat-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }

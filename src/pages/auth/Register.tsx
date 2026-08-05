@@ -61,6 +61,7 @@ export default function Register() {
   const { theme } = useUIStore()
   const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [heroImage] = useState(() => signupImages[Math.floor(Math.random() * signupImages.length)])
   const reg = useRegister()
   const googleAuth = useGoogleAuth()
@@ -75,7 +76,6 @@ export default function Register() {
 
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
-  const [pendingAuthData, setPendingAuthData] = useState<RawAuthResponseDTO | null>(null)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [cooldown, setCooldown] = useState(0)
   const otpCode = otpDigits.join('')
@@ -88,9 +88,8 @@ export default function Register() {
 
   const onSubmitForm = (d: FormData) => {
     reg.mutate(d as RegisterFormPayload, {
-      onSuccess: (res: ApiResponse<RawAuthResponseDTO>) => {
+      onSuccess: () => {
         setPendingEmail(d.email)
-        setPendingAuthData(res.data)
         setOtpDigits(['', '', '', '', '', ''])
         setCooldown(30)
         setStep('otp')
@@ -117,7 +116,7 @@ export default function Register() {
   const handleVerifyOtp = () => {
     if (otpCode.length !== 6) return
     verifyOtp.mutate({ email: pendingEmail, otp: otpCode }, {
-      onSuccess: () => pendingAuthData && finalizeSignup(pendingAuthData),
+      onSuccess: (res: ApiResponse<RawAuthResponseDTO>) => finalizeSignup(res.data),
     })
   }
 
@@ -259,9 +258,12 @@ export default function Register() {
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Confirm password</div>
-              <input {...r('confirmPassword')} type="password" maxLength={64}
-                onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
-                className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
+              <div className="relative">
+                <input {...r('confirmPassword')} type={showConfirmPassword ? 'text' : 'password'} maxLength={64}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-10', errors.confirmPassword && 'border-red-400')} />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+              </div>
               <FormError message={errors.confirmPassword?.message} />
             </div>
 
@@ -304,16 +306,16 @@ export default function Register() {
 
             <p className="text-center text-sm text-gray-500 mt-3">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
           </form>
+
+          <div className="mt-6 max-w-xl text-center">
+            <h3 className="font-bold text-gray-900">Reach customers on WhatsApp</h3>
+            <p className="text-gray-500 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
+          </div>
         </div>
       </div>
 
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
         <img src={heroImage} alt="Macropage Connect" className="absolute inset-0 w-full h-full object-cover" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center bg-gradient-to-t from-black/50 to-transparent">
-          <h3 className="font-bold text-lg text-white">Reach customers on WhatsApp</h3>
-          <p className="text-gray-100 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
-        </div>
       </div>
     </div>
   )

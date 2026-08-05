@@ -1,7 +1,7 @@
 import type { AutomationStats } from '@/types/automation'
-import conversationsIcon from '@/assets/automation/2.svg'
-import rulesIcon from '@/assets/automation/3.svg'
-import aiIcon from '@/assets/automation/4.svg'
+import conversationsIcon from '@/assets/automation/2.png'
+import rulesIcon from '@/assets/automation/3.png'
+import aiIcon from '@/assets/automation/4.png'
 
 interface Props {
   stats: AutomationStats

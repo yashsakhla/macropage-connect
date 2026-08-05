@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Zap, GitBranch, Sparkles, X, MessageSquare } from 'lucide-react'
+import { Zap, GitBranch, Sparkles, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import automationHero from '@/assets/automation/1.svg'
+import quickRepliesIcon from '@/assets/automation/6.png'
+import rulesIcon from '@/assets/automation/7.png'
+import flowsIcon from '@/assets/automation/8.png'
+import aiBotIcon from '@/assets/automation/9.png'
 import AutomationStats from '@/components/automation/AutomationStats'
 import AutomationHub from '@/components/automation/AutomationHub'
 import RuleForm from '@/components/automation/RuleForm'
@@ -24,40 +28,36 @@ interface CreationOption {
   action: () => void
 }
 
-const TAB_META: { id: ActiveTab; icon: React.ElementType; label: string; iconBg: string; iconColor: string; activeColor: string; activeBorder: string }[] = [
+const TAB_META: { id: ActiveTab; image: string; label: string; iconBg: string; activeColor: string; activeBorder: string }[] = [
   {
     id: 'quickReplies',
-    icon: MessageSquare,
+    image: quickRepliesIcon,
     label: 'Quick Replies',
     iconBg: 'bg-[#e8f5ee] dark:bg-emerald-950/30',
-    iconColor: 'text-[#1a5c3a]',
     activeColor: 'text-[#1a5c3a]',
     activeBorder: 'border-[#1a5c3a]',
   },
   {
     id: 'rules',
-    icon: Zap,
+    image: rulesIcon,
     label: 'Rules',
     iconBg: 'bg-amber-50 dark:bg-amber-950/30',
-    iconColor: 'text-amber-500 dark:text-amber-400',
     activeColor: 'text-amber-600 dark:text-amber-400',
     activeBorder: 'border-amber-500',
   },
   {
     id: 'flows',
-    icon: GitBranch,
+    image: flowsIcon,
     label: 'Flows',
     iconBg: 'bg-blue-50 dark:bg-blue-950/30',
-    iconColor: 'text-blue-500 dark:text-blue-400',
     activeColor: 'text-blue-600 dark:text-blue-400',
     activeBorder: 'border-blue-500',
   },
   {
     id: 'ai',
-    icon: Sparkles,
+    image: aiBotIcon,
     label: 'AI Bot',
     iconBg: 'bg-purple-50 dark:bg-purple-950/30',
-    iconColor: 'text-purple-500 dark:text-purple-400',
     activeColor: 'text-purple-600 dark:text-purple-400',
     activeBorder: 'border-purple-500',
   },
@@ -152,7 +152,6 @@ export default function Automation() {
       <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl mb-4 sm:mb-5 overflow-hidden">
         <div className="flex overflow-x-auto no-scrollbar sm:overflow-visible">
           {TAB_META.map((tab, i) => {
-            const Icon = tab.icon
             const count = tabCounts[tab.id]
             const isActive = activeTab === tab.id
             return (
@@ -168,12 +167,9 @@ export default function Automation() {
                     : 'border-b-transparent bg-[#fafafa] dark:bg-white/5 hover:bg-white dark:hover:bg-[#0b1220]'
                 )}
               >
-                {/* icon bubble */}
-                <div className={cn(
-                  'w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
-                  isActive ? tab.iconBg : 'bg-gray-100 dark:bg-white/10'
-                )}>
-                  <Icon size={15} className={isActive ? tab.iconColor : 'text-gray-400 dark:text-gray-500'} />
+                {/* icon */}
+                <div className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center flex-shrink-0">
+                  <img src={tab.image} alt="" className={cn('w-full h-full object-contain transition-opacity', !isActive && 'opacity-50')} />
                 </div>
 
                 <div className="text-left">
