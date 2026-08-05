@@ -9,7 +9,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 import { cn, formatIndian, formatPhone, downloadCSV } from '@/lib/utils'
-import { useCampaign, useCampaigns, useCampaignRecipients, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
+import { useCampaign, useCampaigns, useCampaignRecipients, usePauseCampaign } from '@/hooks/useCampaigns'
 import type { Campaign, CampaignRecipient } from '@/types'
 import RecipientTable from '@/components/campaigns/RecipientTable'
 import { format } from 'date-fns'
