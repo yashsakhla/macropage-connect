@@ -170,7 +170,7 @@ export default function WhatsAppCompletionStep({
     <div className="space-y-6">
 
       {/* Success header */}
-      <div className="bg-gradient-to-br from-[#1a3d2b] to-[#2d7a4f] rounded-3xl px-6 py-6 text-white">
+      <div className="bg-gradient-to-br from-[#1a3d2b] to-[#2d7a4f] rounded-3xl px-4 sm:px-6 py-5 sm:py-6 text-white">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center flex-shrink-0">
             <CheckCircle size={24} className="text-white" />

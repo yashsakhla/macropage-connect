@@ -16,7 +16,7 @@ const testimonials = [
     company: "EdTech",
     avatar: "PM",
     color: "#059669",
-    quote: "We send 50,000+ WhatsApp notifications daily for exam results and fee reminders. The delivery rate is 98% and setup took less than a day. Game changer.",
+    quote: "We send 100+ WhatsApp notifications daily for exam results and fee reminders. The delivery rate is 98% and setup took less than a day. Game changer.",
     stars: 5,
   },
   {

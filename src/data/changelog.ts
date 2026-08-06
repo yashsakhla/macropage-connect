@@ -17,7 +17,7 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.0.0',
-    date: '2026-08-04',
+    date: '2026-08-05',
     changes: [
       { type: 'feature', text: 'Account signup, login, email verification, and password reset' },
       { type: 'feature', text: 'Dashboard with account health, key stats, and a messages trend chart' },
