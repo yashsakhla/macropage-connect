@@ -213,7 +213,7 @@ export default function WhatsAppCompletionStep({
       {/* Journey steps */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-bold text-gray-900">Your next steps</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-white">Your next steps</p>
           <button
             onClick={() => refetchStatus()}
             disabled={isFetching}

@@ -27,8 +27,9 @@ interface SentPreview {
 interface RawConversationCreateResult {
   id?: string
   _id?: string
+  conversationId?: string
   conversation?: { id?: string; _id?: string }
-  data?: { id?: string; _id?: string }
+  data?: { id?: string; _id?: string; conversationId?: string }
 }
 
 function extractConversationId(raw: RawConversationCreateResult | undefined): string | undefined {
@@ -36,10 +37,12 @@ function extractConversationId(raw: RawConversationCreateResult | undefined): st
   return (
     raw.id ??
     raw._id ??
+    raw.conversationId ??
     raw.conversation?.id ??
     raw.conversation?._id ??
     raw.data?.id ??
-    raw.data?._id
+    raw.data?._id ??
+    raw.data?.conversationId
   )
 }
 
@@ -72,26 +75,30 @@ export default function ContactChatPanel({ contact, onClose, onConversationStart
           templateVars: normalizeTemplateVars(variables),
         })
         id = extractConversationId(created) ?? null
-        if (!id) {
-          toast.error('Template sent, but could not open the conversation. Check the inbox.')
-          return
+        if (id) {
+          setConversationId(id)
+          onConversationStarted?.(id)
         }
-        setConversationId(id)
-        onConversationStarted?.(id)
       }
-      await sendMessage.mutateAsync({
-        conversationId: id,
-        data: {
-          content,
-          type: 'TEMPLATE',
-          templateId: tpl.id,
-          templateName: tpl.name,
-          variables,
-          header: tpl.header,
-          footer: tpl.footer,
-          buttons: tpl.buttons,
-        },
-      })
+      // Even if we couldn't resolve a conversation id from the create response, the
+      // template has already been sent server-side — show it as delivered and let
+      // the user fall back to the inbox list (see goToInbox) rather than surfacing
+      // an error for something that actually succeeded.
+      if (id) {
+        await sendMessage.mutateAsync({
+          conversationId: id,
+          data: {
+            content,
+            type: 'TEMPLATE',
+            templateId: tpl.id,
+            templateName: tpl.name,
+            variables,
+            header: tpl.header,
+            footer: tpl.footer,
+            buttons: tpl.buttons,
+          },
+        })
+      }
       setSentPreview({ templateName: tpl.name, content })
     } catch {
       toast.error('Failed to send the template. Please try again.')

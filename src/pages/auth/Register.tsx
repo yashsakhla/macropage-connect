@@ -2,14 +2,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, Navigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
+import type { AxiosError } from 'axios'
 import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
 import { useElementWidth } from '@/hooks/useElementWidth'
 import { cn, stripEmojis } from '@/lib/utils'
-import type { RegisterFormPayload, RawAuthResponseDTO, ApiResponse } from '@/types'
+import type { RegisterFormPayload, RawAuthResponseDTO, ApiResponse, ApiErrorResponse } from '@/types'
 import FormError from '@/components/shared/FormError'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -74,6 +75,7 @@ export default function Register() {
   const verifyOtp = useVerifyOtp()
   const resend = useResendVerification()
 
+  const [registerError, setRegisterError] = useState('')
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
@@ -87,12 +89,16 @@ export default function Register() {
   }, [cooldown])
 
   const onSubmitForm = (d: FormData) => {
+    setRegisterError('')
     reg.mutate(d as RegisterFormPayload, {
       onSuccess: () => {
         setPendingEmail(d.email)
         setOtpDigits(['', '', '', '', '', ''])
         setCooldown(30)
         setStep('otp')
+      },
+      onError: (err: AxiosError<ApiErrorResponse>) => {
+        setRegisterError(err.response?.data?.message ?? 'Registration failed. Please try again.')
       },
     })
   }
@@ -280,6 +286,13 @@ export default function Register() {
               <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-xs">I agree to the <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Privacy Policy</a></span></label>
               <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-xs text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
+
+            {registerError && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
+                <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700 leading-snug">{registerError}</p>
+              </div>
+            )}
 
             <button type="submit" disabled={reg.isPending || !isValid} className="w-full h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
 

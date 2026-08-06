@@ -113,7 +113,7 @@ export default function WhatsAppPinStep({
         <div className="w-16 h-16 bg-[#e8f5ee] rounded-3xl flex items-center justify-center mx-auto mb-4">
           <Shield size={28} className="text-[#1a5c3a]" />
         </div>
-        <h2 className="text-lg font-black text-gray-900">2-Step Verification</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-white">2-Step Verification</h2>
         <p className="text-sm text-gray-500 mt-2 leading-relaxed max-w-sm mx-auto">
           Enter the 6-digit PIN for your WhatsApp Business number to complete registration.
         </p>

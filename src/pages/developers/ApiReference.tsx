@@ -321,7 +321,7 @@ export default function ApiReference() {
 
       <div className="min-w-0 flex-1">
         <div className="mb-6">
-          <h1 className="text-2xl font-black text-gray-900">API Reference</h1>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white">API Reference</h1>
           <p className="mt-1 text-sm text-gray-500">
             Base URL:{' '}
             <code className="rounded bg-[#f7f8f6] px-2 py-0.5 font-mono text-xs">{BASE_URL}</code>
@@ -347,7 +347,7 @@ export default function ApiReference() {
 
         {filteredGroups.map((group) => (
           <section key={group.id} id={group.id} className="mb-10 scroll-mt-8">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">{group.name}</h2>
+            <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">{group.name}</h2>
 
             <div className="space-y-3">
               {group.endpoints.map((endpoint) => {
@@ -407,7 +407,7 @@ export default function ApiReference() {
         ))}
 
         <section id="webhook-events" className="scroll-mt-8">
-          <h2 className="mb-4 text-lg font-bold text-gray-900">Webhook Events</h2>
+          <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">Webhook Events</h2>
           <div className="overflow-hidden rounded-2xl border border-[#e8ebe8] bg-white divide-y divide-[#f0f0f0]">
             {WEBHOOK_EVENTS.map((event) => (
               <div key={event.event} className="flex items-center gap-4 px-5 py-3">

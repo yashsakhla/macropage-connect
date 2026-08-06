@@ -214,13 +214,13 @@ export default function Plans() {
 
         {/* Trial status banner */}
         {isTrial && user?.trialEndsAt && (
-          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] rounded-2xl px-4 sm:px-5 py-4 mb-8 flex flex-wrap items-center gap-3">
+          <div className="bg-[#e8f5ee] dark:bg-emerald-950/30 border border-[#c8e6d4] dark:border-emerald-800/40 rounded-2xl px-4 sm:px-5 py-4 mb-8 flex flex-wrap items-center gap-3">
             <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center flex-shrink-0">
               <Sparkles size={18} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#085041]">Free trial active</p>
-              <p className="text-xs text-[#1a5c3a]/70 mt-0.5">
+              <p className="text-sm font-semibold text-[#085041] dark:text-emerald-300">Free trial active</p>
+              <p className="text-xs text-[#1a5c3a]/70 dark:text-emerald-100/70 mt-0.5">
                 You have full Growth access until{' '}
                 <strong>{format(new Date(user.trialEndsAt), 'MMMM d, yyyy')}</strong>.
                 Select a plan to continue after that.

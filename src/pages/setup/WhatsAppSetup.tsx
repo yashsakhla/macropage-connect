@@ -6,7 +6,7 @@ import { BusinessInfoPayload } from '@/types/setup'
 import type { AxiosError } from 'axios'
 import type { ApiErrorResponse } from '@/types'
 import { useNavigate } from 'react-router-dom'
-import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw, CreditCard } from 'lucide-react'
 import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
 import { cn } from '@/lib/utils'
 import EmbeddedSignupFlow, { type EmbeddedSignupConnectedData } from '@/components/setup/EmbeddedSignupFlow'
@@ -197,6 +197,19 @@ export default function WhatsAppSetup() {
         </div>
       </div>
 
+      <div className="w-full px-6 pt-5">
+        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl px-4 py-3">
+          <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+            <CreditCard size={14} className="text-amber-600 dark:text-amber-400" />
+          </div>
+          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+            <strong className="font-semibold">Add a payment method to your Meta Business Portfolio.</strong>{' '}
+            Meta requires an active payment method on file to deliver WhatsApp messages — without one, your messages
+            will fail to send once your free tier is used up. Add it in Meta Business Manager under Business Settings → Payments.
+          </p>
+        </div>
+      </div>
+
       <div className="w-full px-6 py-10">
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 w-full">
@@ -205,7 +218,7 @@ export default function WhatsAppSetup() {
                 <div className="lg:col-span-3">
                   <div className="mb-4">
                     <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 4</div>
-                    <h2 className="text-2xl font-bold text-gray-900">Tell us about your business</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tell us about your business</h2>
                     <p className="text-sm text-gray-500 mt-1 mb-8">This information will appear on your WhatsApp Business profile and is shown to your customers.</p>
                   </div>
 
@@ -340,7 +353,7 @@ export default function WhatsAppSetup() {
               <div className="animate-fade-in space-y-6">
                 <div>
                   <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 4</div>
-                  <h2 className="text-2xl font-bold text-gray-900">Connect your Meta Business Account</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Connect your Meta Business Account</h2>
                   <p className="text-sm text-gray-500 mt-1">This authorises Macropage Connect to send and receive WhatsApp messages on behalf of your business.</p>
                 </div>
 
