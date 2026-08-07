@@ -45,7 +45,7 @@ export default function APIKeyItem({ apiKey, onRevoke }: Props) {
             {isOldKey ? 'Old key' : apiKey.isActive ? 'Active' : 'Expired'}
           </span>
           <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 p-0 flex items-center justify-center rounded-lg">
               <MoreVertical size={14} className="text-gray-400 dark:text-gray-500" />
             </button>
             {menuOpen && (

@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from 'reactflow'
-import { MessageSquare, Image as ImageIcon, FileText, Video, List } from 'lucide-react'
-import type { FlowNodeData } from '@/types/flow'
+import { MessageSquare, Image as ImageIcon, FileText, Video, List, Link2, Phone } from 'lucide-react'
+import type { FlowNodeData, FlowButton } from '@/types/flow'
+import { normalizeFlowButtons } from '../flowButtons'
 import NodeActions from './NodeActions'
 
 interface ListSection { title: string; rows: { title: string }[] }
@@ -9,7 +10,7 @@ const MEDIA_ICONS: Record<string, React.ElementType> = { image: ImageIcon, video
 
 export default function MessageNode({ id, data, selected }: NodeProps<FlowNodeData>) {
   const text = (data.config?.text as string) ?? ''
-  const buttons = (data.config?.buttons as string[]) ?? []
+  const buttons: FlowButton[] = normalizeFlowButtons(data.config?.buttons)
   const mediaType = (data.config?.mediaType as string) ?? ''
   const mediaUrl = (data.config?.mediaUrl as string) ?? ''
   const caption = (data.config?.caption as string) ?? ''
@@ -59,7 +60,21 @@ export default function MessageNode({ id, data, selected }: NodeProps<FlowNodeDa
         {buttons.length > 0 && (
           <div className="mt-2 space-y-1">
             {buttons.map((btn, i) => (
-              <div key={i} className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center">{btn}</div>
+              <div key={i} className="relative bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 text-center flex items-center justify-center gap-1.5">
+                {btn.type === 'URL' && <Link2 size={11} />}
+                {btn.type === 'PHONE_NUMBER' && <Phone size={11} />}
+                <span className="truncate">{btn.text}</span>
+                {/* Only quick-reply taps generate an inbound reply to branch on —
+                    URL/call buttons don't produce a webhook, so they get no handle. */}
+                {btn.type === 'QUICK_REPLY' && (
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`btn-${i}`}
+                    style={{ width: 10, height: 10, background: '#1a5c3a', right: -22, top: '50%', transform: 'translateY(-50%)' }}
+                  />
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -72,15 +87,6 @@ export default function MessageNode({ id, data, selected }: NodeProps<FlowNodeDa
       </div>
 
       <Handle type="source" position={Position.Bottom} id="continue" style={{ width: 10, height: 10, background: '#94a3b8', bottom: -6 }} />
-      {buttons.map((_, i) => (
-        <Handle
-          key={i}
-          type="source"
-          position={Position.Right}
-          id={`btn-${i}`}
-          style={{ width: 10, height: 10, background: '#1a5c3a', right: -6, top: `${60 + i * 32}%` }}
-        />
-      ))}
     </div>
   )
 }

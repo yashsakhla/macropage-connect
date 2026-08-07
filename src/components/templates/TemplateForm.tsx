@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -112,7 +112,6 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   const { fields: qrFields, append: appendQR, remove: removeQR } = useFieldArray({ control, name: 'quickReplies' })
   const { fields: ctaFields, append: appendCTA, remove: removeCTA } = useFieldArray({ control, name: 'ctaButtons' })
 
-  const [varCount, setVarCount] = useState(0)
   const [sampleVars, setSampleVars] = useState<Record<string, string>>(initialData?.sampleVariables ?? {})
   const [varTypes, setVarTypes] = useState<Record<string, string>>(initialData?.variableTypes ?? {})
   const [showVarErrors, setShowVarErrors] = useState(false)
@@ -128,15 +127,15 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   const insertVariable = useCallback(() => {
     const el = bodyRef.current
     if (!el) return
-    const next = varCount + 1
+    const existingNums = (el.value.match(/{{(\d+)}}/g) ?? []).map(v => parseInt(v.replace(/\D/g, ''), 10))
+    const next = (existingNums.length > 0 ? Math.max(...existingNums) : 0) + 1
     const insertion = `{{${next}}}`
     const start = el.selectionStart ?? el.value.length
     const end = el.selectionEnd ?? el.value.length
     const newVal = el.value.slice(0, start) + insertion + el.value.slice(end)
     setValue('body', newVal)
-    setVarCount(next)
     setTimeout(() => { el.focus(); el.setSelectionRange(start + insertion.length, start + insertion.length) }, 0)
-  }, [varCount, setValue])
+  }, [setValue])
 
   const insertFormat = useCallback((wrap: string) => {
     const el = bodyRef.current
@@ -170,9 +169,23 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   }
 
   const detectedVars = Array.from(new Set((values.body || '').match(/{{(\d+)}}/g) ?? []))
-  const missingVarKeys = detectedVars
-    .map(v => v.replace(/\{\{(\d+)\}\}/, '$1'))
+  const detectedKeys = detectedVars.map(v => v.replace(/\{\{(\d+)\}\}/, '$1'))
+  const missingVarKeys = detectedKeys
     .filter(key => varTypes[key] && !(sampleVars[key] ?? '').trim())
+
+  // Drop sample/type entries for variables no longer present in the body —
+  // otherwise a removed {{n}} lingers in state and gets submitted anyway.
+  useEffect(() => {
+    setSampleVars(prev => {
+      const next = Object.fromEntries(Object.entries(prev).filter(([k]) => detectedKeys.includes(k)))
+      return Object.keys(next).length === Object.keys(prev).length ? prev : next
+    })
+    setVarTypes(prev => {
+      const next = Object.fromEntries(Object.entries(prev).filter(([k]) => detectedKeys.includes(k)))
+      return Object.keys(next).length === Object.keys(prev).length ? prev : next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.body])
 
   const previewTemplate = {
     header: values.hasHeader && values.headerType && (values.headerType === 'TEXT' ? { type: 'TEXT' as const, text: values.headerText } : { type: values.headerType as 'IMAGE' | 'DOCUMENT', mediaUrl: headerMedia?.url }) || undefined,
@@ -405,7 +418,7 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                   ))}
                   <button type="button" onClick={insertVariable}
                     className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-xs px-3 py-1 rounded-lg flex items-center gap-1 font-medium hover:bg-[#d1eedd] transition-colors">
-                    <Tag size={12} /> Add variable · {varCount} used
+                    <Tag size={12} /> Add variable · {detectedVars.length} used
                   </button>
                 </div>
                 <textarea

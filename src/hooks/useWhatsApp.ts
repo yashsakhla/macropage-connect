@@ -47,7 +47,23 @@ export function useWhatsAppSetupStatus(options?: { poll?: boolean }) {
         return r.data?.data ?? r.data
       }),
     staleTime: 30000,
-    refetchInterval: options?.poll ? 10000 : false,
+    // Stop the 10s poll once the request is failing — otherwise a down/
+    // erroring backend gets hammered forever instead of backing off.
+    refetchInterval: (query) => {
+      if (!options?.poll) return false
+      return query.state.status === 'error' ? false : 10000
+    },
+    retry: 2,
+  })
+}
+
+export function useBusinessInfo(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['whatsapp-business-info'],
+    queryFn: () =>
+      api.get('/whatsapp/setup/business-info').then(r => r.data?.data ?? r.data),
+    enabled: options?.enabled ?? true,
+    staleTime: 30000,
     retry: 2,
   })
 }
@@ -68,6 +84,7 @@ export function useSaveBusinessInfo() {
 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-setup-status'] })
+      qc.invalidateQueries({ queryKey: ['whatsapp-business-info'] })
     },
 
     onError: (err: MutationError) => {

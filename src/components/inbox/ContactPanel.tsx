@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Plus,
   User,
-  Bot,
   X,
   Pencil,
   ExternalLink,
@@ -101,25 +100,6 @@ function InfoRow({
   )
 }
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!value)}
-      className={cn(
-        'w-8 h-5 rounded-full transition-colors flex items-center flex-shrink-0',
-        value ? 'bg-[#1a5c3a]' : 'bg-gray-200 dark:bg-gray-600'
-      )}
-    >
-      <span
-        className={cn(
-          'w-4 h-4 rounded-full bg-white shadow-sm transition-transform mx-0.5',
-          value ? 'translate-x-3' : 'translate-x-0'
-        )}
-      />
-    </button>
-  )
-}
-
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function ContactPanelSkeleton() {
@@ -167,7 +147,6 @@ export default function ContactPanel({ conversation: convProp }: Props) {
   )
   const conv = convProp ?? fetchedConv ?? null
   const [localTags, setLocalTags] = useState<string[]>([])
-  const [botEnabled, setBotEnabled] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [addTagOpen, setAddTagOpen] = useState(false)
   const [tagInput, setTagInput] = useState('')
@@ -546,15 +525,6 @@ export default function ContactPanel({ conversation: convProp }: Props) {
               <span className="text-xs text-gray-700 dark:text-gray-300">
                 {safeFormat(updatedAt, 'dd MMM, h:mm a')}
               </span>
-            </div>
-
-            {/* Bot toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Bot size={13} className="text-gray-400 dark:text-gray-500" />
-                <span className="text-xs text-gray-500 dark:text-gray-400">Bot enabled</span>
-              </div>
-              <Toggle value={botEnabled} onChange={setBotEnabled} />
             </div>
           </div>
         </Section>

@@ -756,7 +756,7 @@ export interface UpdateProfilePayload {
 export interface ChangePasswordPayload { currentPassword: string; newPassword: string }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-export type NotificationKind = 'message' | 'campaign' | 'template' | 'system' | 'billing' | 'team'
+export type NotificationKind = 'message' | 'campaign' | 'template' | 'system' | 'billing' | 'team' | 'broadcast'
 
 export interface AppNotification {
   id: string

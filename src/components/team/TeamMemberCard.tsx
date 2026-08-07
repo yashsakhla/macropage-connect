@@ -265,7 +265,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
       <div className="flex justify-end">
         {!isCurrentUser && (
           <div className="relative">
-            <button className="btn-ghost w-8 h-8" onClick={() => setMenuOpen(v => !v)}>
+            <button className="btn-ghost w-8 h-8 p-0" onClick={() => setMenuOpen(v => !v)}>
               <MoreVertical size={14} />
             </button>
             {menuOpen && (

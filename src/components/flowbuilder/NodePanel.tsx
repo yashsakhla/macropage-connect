@@ -1,8 +1,15 @@
 import { useState } from 'react'
-import { X, Trash2, Copy, Paperclip } from 'lucide-react'
+import { X, Trash2, Copy, Paperclip, MessageSquareText, Link2, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFlowStore } from '@/store/flowStore'
-import type { FlowNodeData, FlowNodeType } from '@/types/flow'
+import type { FlowNodeData, FlowNodeType, FlowButton } from '@/types/flow'
+import { normalizeFlowButtons, FLOW_BUTTON_TYPE_OPTIONS } from './flowButtons'
+
+const BUTTON_TYPE_ICONS: Record<FlowButton['type'], typeof MessageSquareText> = {
+  QUICK_REPLY: MessageSquareText,
+  URL: Link2,
+  PHONE_NUMBER: Phone,
+}
 
 interface ListRow {
   id: string
@@ -40,6 +47,8 @@ export default function NodePanel({ nodeId, onClose }: Props) {
 
   const [msgTab, setMsgTab] = useState<'text' | 'media' | 'buttons' | 'list' | 'template'>('text')
   const [btnInput, setBtnInput] = useState('')
+  const [btnValueInput, setBtnValueInput] = useState('')
+  const [btnTypeInput, setBtnTypeInput] = useState<FlowButton['type']>('QUICK_REPLY')
 
   if (!node) return null
   const data = node.data as FlowNodeData
@@ -54,7 +63,9 @@ export default function NodePanel({ nodeId, onClose }: Props) {
   }
 
   const text = (data.config?.text as string) ?? ''
-  const buttons = (data.config?.buttons as string[]) ?? []
+  const buttons = normalizeFlowButtons(data.config?.buttons)
+  const hasUrlButton = buttons.some((b) => b.type === 'URL')
+  const hasPhoneButton = buttons.some((b) => b.type === 'PHONE_NUMBER')
   const mediaType = (data.config?.mediaType as string) ?? 'image'
   const mediaUrl = (data.config?.mediaUrl as string) ?? ''
   const caption = (data.config?.caption as string) ?? ''
@@ -105,10 +116,10 @@ export default function NodePanel({ nodeId, onClose }: Props) {
           value={data.label}
           onChange={(e) => update({ label: e.target.value })}
         />
-        <button onClick={() => deleteNode(nodeId)} className="btn-ghost w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 dark:hover:text-red-400 rounded">
+        <button onClick={() => deleteNode(nodeId)} className="btn-ghost w-7 h-7 p-0 flex items-center justify-center text-red-400 hover:text-red-600 dark:hover:text-red-400 rounded">
           <Trash2 size={13} />
         </button>
-        <button onClick={onClose} className="btn-ghost w-7 h-7 flex items-center justify-center rounded">
+        <button onClick={onClose} className="btn-ghost w-7 h-7 p-0 flex items-center justify-center rounded">
           <X size={13} />
         </button>
       </div>
@@ -196,25 +207,86 @@ export default function NodePanel({ nodeId, onClose }: Props) {
                   <textarea className="input w-full text-xs min-h-16 resize-none" value={text} onChange={(e) => updateCfg({ text: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Reply buttons (max 3):</label>
-                  <div className="space-y-1.5 mb-2">
-                    {buttons.map((btn, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <input
-                          className="input flex-1 h-7 text-xs"
-                          value={btn}
-                          onChange={(e) => { const nb = [...buttons]; nb[i] = e.target.value; updateCfg({ buttons: nb }) }}
-                        />
-                        <button onClick={() => updateCfg({ buttons: buttons.filter((_, idx) => idx !== i) })}><X size={11} className="text-gray-400 dark:text-gray-500" /></button>
-                      </div>
-                    ))}
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Buttons (max 3):</label>
+                  <div className="space-y-2 mb-2">
+                    {buttons.map((btn, i) => {
+                      const Icon = BUTTON_TYPE_ICONS[btn.type]
+                      return (
+                        <div key={i} className="flex items-center gap-1.5 bg-[#f7f8f6] dark:bg-[#0f1724] rounded-lg p-1.5">
+                          <Icon size={12} className="text-gray-400 dark:text-gray-500 shrink-0" />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <input
+                              className="input h-7 text-xs w-full"
+                              placeholder="Button text..."
+                              value={btn.text}
+                              onChange={(e) => {
+                                const nb = [...buttons]; nb[i] = { ...btn, text: e.target.value }; updateCfg({ buttons: nb })
+                              }}
+                            />
+                            {btn.type !== 'QUICK_REPLY' && (
+                              <input
+                                className="input h-7 text-xs w-full"
+                                placeholder={btn.type === 'URL' ? 'https://example.com' : '+91 98765 43210'}
+                                value={btn.value ?? ''}
+                                onChange={(e) => {
+                                  const nb = [...buttons]; nb[i] = { ...btn, value: e.target.value }; updateCfg({ buttons: nb })
+                                }}
+                              />
+                            )}
+                          </div>
+                          <button onClick={() => updateCfg({ buttons: buttons.filter((_, idx) => idx !== i) })}><X size={11} className="text-gray-400 dark:text-gray-500" /></button>
+                        </div>
+                      )
+                    })}
                   </div>
                   {buttons.length < 3 && (
-                    <div className="flex gap-2">
-                      <input className="input flex-1 h-7 text-xs" placeholder="Button text..." value={btnInput} onChange={(e) => setBtnInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (btnInput.trim()) { updateCfg({ buttons: [...buttons, btnInput.trim()] }); setBtnInput('') } } }}
-                      />
-                      <button className="btn-outline h-7 px-2 text-2xs" onClick={() => { if (btnInput.trim()) { updateCfg({ buttons: [...buttons, btnInput.trim()] }); setBtnInput('') } }}>Add</button>
+                    <div className="space-y-1.5 border-t border-[#e8ebe8] dark:border-white/10 pt-2">
+                      <div className="flex gap-1.5">
+                        {FLOW_BUTTON_TYPE_OPTIONS.map((opt) => {
+                          const disabled = (opt.value === 'URL' && hasUrlButton) || (opt.value === 'PHONE_NUMBER' && hasPhoneButton)
+                          const Icon = BUTTON_TYPE_ICONS[opt.value]
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => setBtnTypeInput(opt.value)}
+                              className={cn(
+                                'flex-1 flex items-center justify-center gap-1 text-2xs px-2 py-1 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                                btnTypeInput === opt.value
+                                  ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]'
+                                  : 'border-[#e8ebe8] dark:border-white/10 text-gray-500 dark:text-gray-400'
+                              )}
+                            >
+                              <Icon size={11} /> {opt.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <div className="flex gap-2">
+                        <input className="input flex-1 h-7 text-xs" placeholder="Button text..." value={btnInput} onChange={(e) => setBtnInput(e.target.value)} />
+                        {btnTypeInput !== 'QUICK_REPLY' && (
+                          <input
+                            className="input flex-1 h-7 text-xs"
+                            placeholder={btnTypeInput === 'URL' ? 'https://example.com' : 'Phone number'}
+                            value={btnValueInput}
+                            onChange={(e) => setBtnValueInput(e.target.value)}
+                          />
+                        )}
+                        <button
+                          className="btn-outline h-7 px-2 text-2xs shrink-0"
+                          onClick={() => {
+                            if (!btnInput.trim()) return
+                            const newBtn: FlowButton = { type: btnTypeInput, text: btnInput.trim(), value: btnTypeInput !== 'QUICK_REPLY' ? btnValueInput.trim() : undefined }
+                            updateCfg({ buttons: [...buttons, newBtn] })
+                            setBtnInput('')
+                            setBtnValueInput('')
+                            setBtnTypeInput('QUICK_REPLY')
+                          }}
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

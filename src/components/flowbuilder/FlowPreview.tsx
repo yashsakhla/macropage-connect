@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Send, RotateCcw } from 'lucide-react'
+import { X, Send, RotateCcw, Link2, Phone } from 'lucide-react'
 import { useFlowStore } from '@/store/flowStore'
-import type { FlowNodeData } from '@/types/flow'
+import type { FlowNodeData, FlowButton } from '@/types/flow'
+import { normalizeFlowButtons } from './flowButtons'
 import type { Node, Edge } from 'reactflow'
 
 interface PreviewMsg {
   from: 'user' | 'bot'
   text: string
-  buttons?: string[]
+  buttons?: FlowButton[]
   mediaType?: string
   mediaUrl?: string
   listButtonText?: string
@@ -34,13 +35,14 @@ function resolveNextId(
   waitNodeId: string,
   waitNodeType: string,
   userText: string,
-  buttons: string[],
+  buttons: FlowButton[],
 ): string | null {
   const out = edgesFrom(edges, waitNodeId)
   if (!out.length) return null
 
-  // Button tap/type match → btn-N edge
-  const btnIdx = buttons.findIndex(b => b.toLowerCase() === userText.trim().toLowerCase())
+  // Button tap/type match → btn-N edge (only quick replies branch; URL/call
+  // buttons don't generate an inbound reply in real WhatsApp)
+  const btnIdx = buttons.findIndex(b => b.type === 'QUICK_REPLY' && b.text.toLowerCase() === userText.trim().toLowerCase())
   if (btnIdx >= 0) {
     const e = out.find(e => e.sourceHandle === `btn-${btnIdx}`)
     if (e) return e.target
@@ -98,7 +100,7 @@ function runFlow(nodes: Node[], edges: Edge[], startId: string, userInput = ''):
         const mediaUrl = (cfg.mediaUrl as string) || undefined
         const mediaType = (cfg.mediaType as string) || undefined
         const caption = (cfg.caption as string) || ''
-        const buttons = (cfg.buttons as string[]) || []
+        const buttons = normalizeFlowButtons(cfg.buttons)
         const listSections = (cfg.listSections as Array<{ title: string; rows: Array<{ title: string }> }>) || []
         const listOptions = listSections.flatMap((s) => s.rows.map((r) => r.title).filter(Boolean))
         const listButtonText = listOptions.length ? ((cfg.listButtonText as string) || 'View options') : undefined
@@ -233,7 +235,7 @@ export default function FlowPreview({ onClose }: Props) {
 
     const waitNode = nodeById(nodes, waitNodeId)
     const waitNodeType = waitNode ? (waitNode.data as FlowNodeData).nodeType : 'message'
-    const buttons = waitNode ? ((waitNode.data as FlowNodeData).config?.buttons as string[] ?? []) : []
+    const buttons = waitNode ? normalizeFlowButtons((waitNode.data as FlowNodeData).config?.buttons) : []
 
     setMessages(prev => [...prev, { from: 'user', text }])
     setInput('')
@@ -325,11 +327,16 @@ export default function FlowPreview({ onClose }: Props) {
                   {msg.buttons.map((btn, bi) => (
                     <button
                       key={bi}
-                      onClick={() => send(btn)}
+                      onClick={() => {
+                        if (btn.type === 'QUICK_REPLY') send(btn.text)
+                        else if (btn.type === 'URL' && btn.value) window.open(btn.value, '_blank', 'noopener,noreferrer')
+                      }}
                       disabled={done || isTyping}
-                      className="w-full text-center bg-white dark:bg-[#0b1220] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] dark:hover:bg-emerald-950/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-1.5 text-center bg-white dark:bg-[#0b1220] text-[#1a5c3a] text-xs rounded-lg px-3 py-1.5 border border-[#c8e6d4] hover:bg-[#f0faf5] dark:hover:bg-emerald-950/30 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {btn}
+                      {btn.type === 'URL' && <Link2 size={11} />}
+                      {btn.type === 'PHONE_NUMBER' && <Phone size={11} />}
+                      {btn.text}
                     </button>
                   ))}
                 </div>

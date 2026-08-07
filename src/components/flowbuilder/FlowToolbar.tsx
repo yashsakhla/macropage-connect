@@ -45,21 +45,21 @@ export default function FlowToolbar({
 
       {/* Center */}
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
-        <button onClick={undo} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center" title="Undo (Ctrl+Z)">
+        <button onClick={undo} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center" title="Undo (Ctrl+Z)">
           <RotateCcw size={14} />
         </button>
-        <button onClick={redo} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center" title="Redo">
+        <button onClick={redo} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center" title="Redo">
           <RotateCw size={14} />
         </button>
         <div className="h-5 w-px bg-[#e8ebe8] dark:bg-white/10 mx-1" />
-        <button onClick={onZoomOut} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center">
+        <button onClick={onZoomOut} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center">
           <ZoomOut size={14} />
         </button>
         <span className="text-xs text-gray-500 dark:text-gray-400 w-11 text-center">{Math.round(zoom * 100)}%</span>
-        <button onClick={onZoomIn} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center">
+        <button onClick={onZoomIn} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center">
           <ZoomIn size={14} />
         </button>
-        <button onClick={onFit} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center" title="Fit to screen">
+        <button onClick={onFit} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center" title="Fit to screen">
           <Maximize2 size={14} />
         </button>
       </div>

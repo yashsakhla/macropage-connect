@@ -16,6 +16,7 @@ import toast from 'react-hot-toast'
 import { useUIStore } from '@/store/uiStore'
 import {
   useWhatsAppSetupStatus,
+  useBusinessInfo,
   useSaveBusinessInfo,
   useCompleteSetup,
 } from '@/hooks/useWhatsApp'
@@ -24,8 +25,8 @@ const businessSchema = z.object({
   businessName: z.string().min(2).max(60),
   category: z.string().min(1),
   description: z.string().max(256).optional(),
-  website: z.string().url().optional(),
-  email: z.string().email().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
   address: z.string().max(256).optional(),
 })
 
@@ -46,10 +47,28 @@ export default function WhatsAppSetup() {
     qualityRating: string
   } | null>(null)
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<BusinessInfoPayload>({
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<BusinessInfoPayload>({
     resolver: zodResolver(businessSchema),
     defaultValues: { businessName: '', category: '', description: '', website: '', email: '', address: '' }
   })
+
+  // Fetches whatever business info was previously saved so step 1 shows it
+  // again — e.g. a user who logs out on step 2 and comes back, then hits
+  // Back, would otherwise see a blank form even though the data is saved.
+  const { data: businessInfo } = useBusinessInfo()
+
+  useEffect(() => {
+    if (businessInfo) {
+      reset({
+        businessName: businessInfo.businessName ?? '',
+        category: businessInfo.category ?? '',
+        description: businessInfo.description ?? '',
+        website: businessInfo.website ?? '',
+        email: businessInfo.email ?? '',
+        address: businessInfo.address ?? '',
+      })
+    }
+  }, [businessInfo, reset])
 
   const watched = watch()
 

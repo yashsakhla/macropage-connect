@@ -31,7 +31,11 @@ const companyNameRegex = /^[A-Za-z0-9][A-Za-z0-9&.,'\- ]*$/;
 const schema = z.object({
   firstName: z.string().min(2, 'First name is required').max(50, 'First name must be at most 50 characters').regex(nameRegex, 'First name can only contain letters, spaces, hyphens and apostrophes'),
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name must be at most 50 characters').regex(nameRegex, 'Last name can only contain letters, spaces, hyphens and apostrophes'),
-  email: z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email'),
+  email: z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email')
+    .refine((v) => {
+      const tld = v.split('.').pop() ?? ''
+      return !/^com+$/i.test(tld) || tld.toLowerCase() === 'com'
+    }, 'Enter a valid email'),
   companyName: z.string().min(2, 'Company name is required').max(100, 'Company name must be at most 100 characters').regex(companyNameRegex, 'Company name contains invalid characters'),
   phone: z.string().optional().refine((v) => !v || /^\d{10}$/.test(v), 'Enter a valid 10-digit number'),
   password: z.string().min(8, 'Password must be at least 8 characters').max(64, 'Password must be at most 64 characters').regex(passwordRegex, 'Password must contain uppercase, lowercase, number and special character'),

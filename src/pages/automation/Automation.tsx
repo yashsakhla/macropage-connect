@@ -214,7 +214,7 @@ export default function Automation() {
           <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl w-full max-w-sm p-4 sm:p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">What would you like to create?</h3>
-              <button onClick={() => setShowCreationPicker(false)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">
+              <button onClick={() => setShowCreationPicker(false)} className="btn-ghost w-7 h-7 p-0 flex items-center justify-center rounded-lg">
                 <X size={14} />
               </button>
             </div>

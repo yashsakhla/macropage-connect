@@ -281,7 +281,7 @@ export default function CampaignDetail() {
               </button>
             )}
             <div className="relative" ref={menuRef}>
-              <button className="btn-ghost w-9 h-9 flex items-center justify-center" onClick={() => setMenuOpen(v => !v)}>
+              <button className="btn-ghost w-9 h-9 p-0 flex items-center justify-center" onClick={() => setMenuOpen(v => !v)}>
                 <MoreHorizontal size={16} />
               </button>
               {menuOpen && (

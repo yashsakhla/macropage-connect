@@ -6,9 +6,8 @@ import { X, Phone, Mail, Building2, MapPin, Briefcase, Globe, Trash2 } from 'luc
 import { cn } from '@/lib/utils'
 import type { Contact, CreateContactPayload } from '@/types'
 import { useCreateContact, useUpdateContact, useDeleteContact } from '@/hooks/useContacts'
+import { useCampaignTags } from '@/hooks/useCampaigns'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-
-const ALL_TAGS: string[] = []
 
 function stripCountryCode(phone?: string): string {
   if (!phone) return ''
@@ -41,7 +40,9 @@ export default function ContactForm({ contact, onClose, mode, onDeleted }: Conta
   const createContact = useCreateContact()
   const updateContact = useUpdateContact()
   const deleteContact = useDeleteContact()
+  const { data: existingTags = [] } = useCampaignTags()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [tagInput, setTagInput] = useState('')
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -63,6 +64,15 @@ export default function ContactForm({ contact, onClose, mode, onDeleted }: Conta
   const toggleTag = (tag: string) => {
     setValue('tags', selectedTags.includes(tag) ? selectedTags.filter(t => t !== tag) : [...selectedTags, tag])
   }
+
+  const addTag = () => {
+    const tag = tagInput.trim()
+    if (!tag || selectedTags.includes(tag)) { setTagInput(''); return }
+    setValue('tags', [...selectedTags, tag])
+    setTagInput('')
+  }
+
+  const allTagOptions = Array.from(new Set([...existingTags.map(t => t.name), ...selectedTags]))
 
   const onSubmit = (data: FormValues) => {
     const payload: CreateContactPayload = {
@@ -153,17 +163,29 @@ export default function ContactForm({ contact, onClose, mode, onDeleted }: Conta
             {/* tags */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tags</p>
-              <div className="flex flex-wrap gap-1.5">
-                {ALL_TAGS.map(tag => (
-                  <button key={tag} type="button" onClick={() => toggleTag(tag)}
-                    className={cn('text-xs rounded-full px-3 py-1 transition-all border',
-                      selectedTags.includes(tag)
-                        ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]'
-                        : 'bg-white dark:bg-[#0b1220] text-gray-600 dark:text-gray-400 border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]')}>
-                    {tag}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+                  className="input flex-1"
+                  placeholder="Type a tag and press Enter"
+                />
+                <button type="button" onClick={addTag} className="btn btn-outline h-9 px-3 shrink-0">Add</button>
               </div>
+              {allTagOptions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {allTagOptions.map(tag => (
+                    <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                      className={cn('text-xs rounded-full px-3 py-1 transition-all border',
+                        selectedTags.includes(tag)
+                          ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]'
+                          : 'bg-white dark:bg-[#0b1220] text-gray-600 dark:text-gray-400 border-[#e8ebe8] dark:border-white/10 hover:border-[#c8e6d4]')}>
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* preferences */}

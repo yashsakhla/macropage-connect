@@ -214,7 +214,7 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
           </p>
           <div className="flex items-center gap-1">
             <button
-              className="btn-ghost w-8 h-8 disabled:opacity-40"
+              className="btn-ghost w-8 h-8 p-0 disabled:opacity-40"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
             >
@@ -224,7 +224,7 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
               Page {page} of {totalPages}
             </span>
             <button
-              className="btn-ghost w-8 h-8 disabled:opacity-40"
+              className="btn-ghost w-8 h-8 p-0 disabled:opacity-40"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >

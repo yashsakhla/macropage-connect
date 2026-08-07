@@ -199,7 +199,7 @@ export default function WizardStep2Audience({
                   {onRemoveSelectedContact && (
                     <button
                       onClick={() => onRemoveSelectedContact(c.id)}
-                      className="btn-ghost w-6 h-6 flex-shrink-0 text-gray-400 dark:text-gray-500"
+                      className="btn-ghost w-6 h-6 p-0 flex-shrink-0 text-gray-400 dark:text-gray-500"
                     >
                       <X size={12} />
                     </button>
@@ -305,7 +305,7 @@ export default function WizardStep2Audience({
                   <p className="text-xs text-gray-500 dark:text-gray-400">{(csvFile.size / 1024).toFixed(1)} KB · <span className="font-medium text-[#1a5c3a]">{csvRowCount.toLocaleString()} rows detected</span></p>
                 </div>
                 <button onClick={() => { onCsvFileChange(null); setCsvHeaders([]); setCsvPreviewRows([]); setCsvRowCount(0) }}
-                  className="btn-ghost w-7 h-7 text-gray-400 dark:text-gray-500">
+                  className="btn-ghost w-7 h-7 p-0 text-gray-400 dark:text-gray-500">
                   <X size={14} />
                 </button>
               </div>

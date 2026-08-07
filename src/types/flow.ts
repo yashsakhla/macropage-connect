@@ -1,5 +1,11 @@
 import type { Node, Edge, XYPosition } from 'reactflow'
 
+export interface FlowButton {
+  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'
+  text: string
+  value?: string
+}
+
 export type FlowNodeType =
   | 'start'
   | 'message'
