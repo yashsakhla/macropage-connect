@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  Pause, XCircle, Copy, Download, MoreHorizontal, ChevronRight, ChevronDown,
+  Pause, XCircle, Download, MoreHorizontal, ChevronRight, ChevronDown,
   Send, CheckCheck, Eye, Reply, MousePointerClick,
   FileText, Users, Calendar, Zap,
 } from 'lucide-react'
@@ -9,7 +9,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 import { cn, formatIndian, formatPhone, downloadCSV } from '@/lib/utils'
-import { useCampaign, useCampaigns, useCampaignRecipients, usePauseCampaign, useDuplicateCampaign } from '@/hooks/useCampaigns'
+import { useCampaign, useCampaigns, useCampaignRecipients, usePauseCampaign } from '@/hooks/useCampaigns'
 import type { Campaign, CampaignRecipient } from '@/types'
 import RecipientTable from '@/components/campaigns/RecipientTable'
 import { format } from 'date-fns'
@@ -19,6 +19,16 @@ import checkCircleIcon from '@/assets/campaign-detail/circle-check.png'
 import eyeIcon from '@/assets/campaign-detail/eye.png'
 import messageIcon from '@/assets/campaign-detail/message.png'
 import arrowIcon from '@/assets/campaign-detail/arrow.png'
+
+function capitalize(value: string | undefined): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : '—'
+}
+
+function formatDate(value: string | undefined, pattern: string): string {
+  if (!value) return '—'
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? '—' : format(d, pattern)
+}
 
 function formatAxisTick(v: number): string {
   if (v >= 1000) {
@@ -123,7 +133,6 @@ export default function CampaignDetail() {
   const { data: allCampaignsData } = useCampaigns()
   const allCampaigns: Campaign[] = (allCampaignsData as { data?: Campaign[] } | undefined)?.data ?? []
   const pause = usePauseCampaign()
-  const duplicate = useDuplicateCampaign()
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -153,59 +162,66 @@ export default function CampaignDetail() {
     downloadCSV(`${campaign.name}-recipients.csv`, [header, ...rows])
   }
 
-  const s = STATUS_CONFIG[campaign.status]
+  const s = STATUS_CONFIG[campaign.status] ?? STATUS_CONFIG.draft
+
+  const sent = campaign.sent ?? 0
+  const delivered = campaign.delivered ?? 0
+  const read = campaign.read ?? 0
+  const replied = campaign.replied ?? 0
+  const failed = campaign.failed ?? 0
 
   // real per-recipient counts only — no fabricated deltas or timeseries
   const siblings = allCampaigns.filter(c => c.id !== campaign.id && c.sent > 0)
   const avgOf = (key: 'sent' | 'delivered' | 'read' | 'replied') =>
-    siblings.length > 0 ? siblings.reduce((a, c) => a + c[key], 0) / siblings.length : null
+    siblings.length > 0 ? siblings.reduce((a, c) => a + (c[key] ?? 0), 0) / siblings.length : null
   const trendVs = (value: number, avg: number | null) =>
     avg == null || avg <= 0 ? null : Math.round(((value - avg) / avg) * 100)
 
-  const ctrValue = campaign.clicked != null && campaign.delivered > 0
-    ? Math.round((campaign.clicked / campaign.delivered) * 1000) / 10
+  const ctrValue = campaign.clicked != null && delivered > 0
+    ? Math.round((campaign.clicked / delivered) * 1000) / 10
     : null
 
   const statPills = [
-    { icon: contactIcon,      label: 'Reach',     value: formatIndian(campaign.sent),     trend: trendVs(campaign.sent, avgOf('sent')) },
-    { icon: checkCircleIcon,  label: 'Delivered', value: formatIndian(campaign.delivered), trend: trendVs(campaign.delivered, avgOf('delivered')) },
-    { icon: eyeIcon,          label: 'Read',      value: formatIndian(campaign.read),      trend: trendVs(campaign.read, avgOf('read')) },
-    { icon: messageIcon,      label: 'Replies',   value: formatIndian(campaign.replied),   trend: trendVs(campaign.replied, avgOf('replied')) },
+    { icon: contactIcon,      label: 'Reach',     value: formatIndian(sent),     trend: trendVs(sent, avgOf('sent')) },
+    { icon: checkCircleIcon,  label: 'Delivered', value: formatIndian(delivered), trend: trendVs(delivered, avgOf('delivered')) },
+    { icon: eyeIcon,          label: 'Read',      value: formatIndian(read),      trend: trendVs(read, avgOf('read')) },
+    { icon: messageIcon,      label: 'Replies',   value: formatIndian(replied),   trend: trendVs(replied, avgOf('replied')) },
     { icon: arrowIcon,        label: 'CTR',       value: ctrValue != null ? `${ctrValue}%` : '—', trend: null },
   ]
 
-  const pctOf = (v: number) => campaign.sent > 0 ? Math.round((v / campaign.sent) * 100) : 0
+  const pctOf = (v: number) => sent > 0 ? Math.round((v / sent) * 100) : 0
   const funnelRows: { icon: React.ElementType; color: string; label: string; value: number; pct: number }[] = [
-    { icon: Send,     color: '#3b82f6', label: 'Sent',      value: campaign.sent, pct: 100 },
-    { icon: CheckCheck, color: '#1a5c3a', label: 'Delivered', value: campaign.delivered, pct: pctOf(campaign.delivered) },
-    { icon: Eye,      color: '#7c3aed', label: 'Read',      value: campaign.read, pct: pctOf(campaign.read) },
+    { icon: Send,     color: '#3b82f6', label: 'Sent',      value: sent, pct: 100 },
+    { icon: CheckCheck, color: '#1a5c3a', label: 'Delivered', value: delivered, pct: pctOf(delivered) },
+    { icon: Eye,      color: '#7c3aed', label: 'Read',      value: read, pct: pctOf(read) },
     ...(campaign.clicked != null
       ? [{ icon: MousePointerClick, color: '#f97316', label: 'Clicked', value: campaign.clicked, pct: pctOf(campaign.clicked) }]
       : []),
-    { icon: Reply,    color: '#10b981', label: 'Replies',   value: campaign.replied, pct: pctOf(campaign.replied) },
+    { icon: Reply,    color: '#10b981', label: 'Replies',   value: replied, pct: pctOf(replied) },
   ]
 
   // No per-day telemetry exists for a single campaign — this is a linear
   // interpolation from 0 up to the real final totals, anchored to the
   // campaign's own end date, not recorded daily snapshots.
-  const perfChartEnd = campaign.completedAt ? new Date(campaign.completedAt) : new Date(campaign.createdAt)
+  const rawPerfChartEnd = campaign.completedAt ? new Date(campaign.completedAt) : new Date(campaign.createdAt)
+  const perfChartEnd = isNaN(rawPerfChartEnd.getTime()) ? new Date() : rawPerfChartEnd
   const perfChartData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(perfChartEnd)
     d.setDate(d.getDate() - (6 - i))
     const t = (i + 1) / 7
     return {
       date: format(d, 'dd MMM'),
-      sent: Math.round(campaign.sent * t),
-      delivered: Math.round(campaign.delivered * t),
-      read: Math.round(campaign.read * t),
+      sent: Math.round(sent * t),
+      delivered: Math.round(delivered * t),
+      read: Math.round(read * t),
     }
   })
 
-  const score = campaign.sent > 0 ? Math.round((campaign.delivered / campaign.sent) * 100) : 0
+  const score = sent > 0 ? Math.round((delivered / sent) * 100) : 0
   const scoreColor = score >= 90 ? '#1a5c3a' : score >= 75 ? '#f97316' : '#ef4444'
   const scoreLabel = score >= 90 ? 'Excellent' : score >= 75 ? 'Good' : score >= 50 ? 'Fair' : 'Needs attention'
   const betterThanPct = siblings.length > 0
-    ? Math.round((siblings.filter(c => (c.sent > 0 ? (c.delivered / c.sent) * 100 : 0) < score).length / siblings.length) * 100)
+    ? Math.round((siblings.filter(c => (c.sent > 0 ? ((c.delivered ?? 0) / c.sent) * 100 : 0) < score).length / siblings.length) * 100)
     : null
 
   return (
@@ -235,15 +251,15 @@ export default function CampaignDetail() {
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{campaign.name}</h1>
             <div className="flex items-center gap-2.5 sm:gap-4 mt-1.5 flex-wrap">
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <Calendar size={12} /> {format(new Date(campaign.createdAt), 'dd MMM yyyy, h:mm a')}
+                <Calendar size={12} /> {formatDate(campaign.createdAt, 'dd MMM yyyy, h:mm a')}
               </span>
               <span className="text-gray-300 dark:text-gray-700 hidden sm:inline">·</span>
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <Send size={12} /> {campaign.scheduledAt ? format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a') : 'Immediate'}
+                <Send size={12} /> {campaign.scheduledAt ? formatDate(campaign.scheduledAt, 'dd MMM, h:mm a') : 'Immediate'}
               </span>
               <span className="text-gray-300 dark:text-gray-700 hidden sm:inline">·</span>
               <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <Zap size={12} /> {campaign.sendSpeed.charAt(0).toUpperCase() + campaign.sendSpeed.slice(1)} speed
+                <Zap size={12} /> {capitalize(campaign.sendSpeed)} speed
               </span>
             </div>
           </div>
@@ -265,7 +281,7 @@ export default function CampaignDetail() {
               </button>
             )}
             <div className="relative" ref={menuRef}>
-              <button className="btn-ghost w-9 h-9 flex items-center justify-center" onClick={() => setMenuOpen(v => !v)}>
+              <button className="btn-ghost w-9 h-9 p-0 flex items-center justify-center" onClick={() => setMenuOpen(v => !v)}>
                 <MoreHorizontal size={16} />
               </button>
               {menuOpen && (
@@ -348,10 +364,7 @@ export default function CampaignDetail() {
         <div className="lg:col-span-2">
           <RecipientTable
             recipients={recipients}
-            campaignTotals={{
-              sent: campaign.sent, delivered: campaign.delivered, read: campaign.read,
-              replied: campaign.replied, failed: campaign.failed,
-            }}
+            campaignTotals={{ sent, delivered, read, replied, failed }}
             onRefresh={() => refetchRecipients()}
             isRefreshing={recipientsFetching}
           />
@@ -364,10 +377,10 @@ export default function CampaignDetail() {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Campaign details</p>
             {[
               { icon: FileText, label: 'Template', value: campaign.templateName },
-              { icon: Users, label: 'Created by', value: campaign.createdBy.name },
-              { icon: Calendar, label: 'Created', value: format(new Date(campaign.createdAt), 'dd MMM yyyy, h:mm a') },
-              { icon: Calendar, label: 'Scheduled', value: campaign.scheduledAt ? format(new Date(campaign.scheduledAt), 'dd MMM, h:mm a') : 'Immediate' },
-              { icon: Zap, label: 'Speed', value: campaign.sendSpeed.charAt(0).toUpperCase() + campaign.sendSpeed.slice(1) },
+              { icon: Users, label: 'Created by', value: campaign.createdBy?.name ?? '—' },
+              { icon: Calendar, label: 'Created', value: formatDate(campaign.createdAt, 'dd MMM yyyy, h:mm a') },
+              { icon: Calendar, label: 'Scheduled', value: campaign.scheduledAt ? formatDate(campaign.scheduledAt, 'dd MMM, h:mm a') : 'Immediate' },
+              { icon: Zap, label: 'Speed', value: capitalize(campaign.sendSpeed) },
             ].map(row => {
               const Icon = row.icon
               return (
@@ -385,9 +398,9 @@ export default function CampaignDetail() {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">Audience</p>
             {[
               ['Source', campaign.audienceType === 'all' ? 'All contacts' : campaign.audienceType === 'tag' ? `Tag: ${campaign.audienceTags?.join(', ')}` : campaign.audienceType === 'csv' ? 'CSV upload' : 'Selected contacts'],
-              ['Total contacts', campaign.totalContacts.toLocaleString()],
-              ['Valid', campaign.validContacts.toLocaleString()],
-              ['Excluded', (campaign.totalContacts - campaign.validContacts).toLocaleString()],
+              ['Total contacts', (campaign.totalContacts ?? 0).toLocaleString()],
+              ['Valid', (campaign.validContacts ?? 0).toLocaleString()],
+              ['Excluded', ((campaign.totalContacts ?? 0) - (campaign.validContacts ?? 0)).toLocaleString()],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between text-sm py-1">
                 <span className="text-gray-500 dark:text-gray-400">{label}</span>

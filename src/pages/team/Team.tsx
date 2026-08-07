@@ -75,8 +75,8 @@ export default function Team() {
           className="flex flex-col items-start gap-3 sm:gap-4 px-4 sm:px-10 py-5 sm:py-8 sm:absolute sm:inset-0 sm:justify-center bg-gradient-to-br from-[#d7f5e3] to-[#bdeccf] sm:bg-none"
         >
           <div>
-            <h1 className="page-title">Team</h1>
-            <p className="page-subtitle mt-0.5 text-gray-600 dark:text-gray-300">Manage who can access your Macropage Connect account</p>
+            <h1 className="page-title !text-[#0f2b1c] dark:!text-[#0f2b1c]">Team</h1>
+            <p className="page-subtitle mt-0.5 !text-gray-600 dark:!text-gray-600">Manage who can access your Macropage Connect account</p>
           </div>
           <button className="btn btn-primary h-10 sm:h-11 px-5 sm:px-6 gap-2 rounded-full flex-shrink-0 w-full sm:w-auto justify-center shadow-sm hover:shadow-md transition-shadow" onClick={() => setShowInvite(true)}>
             <Plus size={16} /> Invite member

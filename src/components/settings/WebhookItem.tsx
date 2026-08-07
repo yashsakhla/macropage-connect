@@ -30,7 +30,7 @@ export default function WebhookItem({ webhook, onDelete, onToggle }: Props) {
             <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform mt-0.5', webhook.isEnabled ? 'translate-x-[18px]' : 'translate-x-0.5')} />
           </button>
           <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 flex items-center justify-center rounded-lg">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost w-7 h-7 p-0 flex items-center justify-center rounded-lg">
               <MoreVertical size={14} className="text-gray-400 dark:text-gray-500" />
             </button>
             {menuOpen && (

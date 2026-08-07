@@ -57,13 +57,26 @@ export default function ConversationList() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const { data: conversationsData, isLoading, isError, refetch, isFetching } = useConversations({
-    search: searchQuery || undefined,
-  })
+  // Status/label/sort filters are all applied client-side below (the full
+  // list is fetched unfiltered) — search follows the same approach instead
+  // of relying on the backend's `search` param, which doesn't reliably
+  // match on contact name.
+  const { data: conversationsData, isLoading, isError, refetch, isFetching } = useConversations()
 
   const allConversations: Conversation[] = (conversationsData as { data?: Conversation[] } | undefined)?.data ?? []
 
   let data: Conversation[] = allConversations
+
+  // Filter by contact name/phone client-side too — the backend `search`
+  // param doesn't reliably match on contact name, so relying on it alone
+  // left the search bar looking broken.
+  const q = searchQuery.trim().toLowerCase()
+  if (q) {
+    data = data.filter((c) =>
+      c.contact?.name?.toLowerCase().includes(q) || c.contact?.phone?.toLowerCase().includes(q)
+    )
+  }
+
   if (activeFilter === 'open') data = data.filter((c) => c.status === 'open')
   else if (activeFilter === 'pending') data = data.filter((c) => c.status === 'pending')
   else if (activeFilter === 'resolved') data = data.filter((c) => c.status === 'resolved')

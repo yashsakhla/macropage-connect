@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 import { useRegisterPhone } from '@/hooks/useWhatsApp'
 import {
   Shield, Loader2, AlertCircle,
-  CheckCircle, Eye, EyeOff, Info,
+  CheckCircle, Eye, EyeOff, Info, KeyRound, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AxiosError } from 'axios'
 import type { ApiErrorResponse } from '@/types'
+
+type PinMode = 'existing' | 'new'
 
 type PinErrorResponse = ApiErrorResponse & { code?: string; error?: { code?: string; message?: string } }
 
@@ -24,6 +26,9 @@ export default function WhatsAppPinStep({
   const [showPin, setShowPin]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)
+  // The Meta API call is identical either way — this only drives the copy/labels
+  // so users aren't left guessing whether to type an old PIN or make up a new one.
+  const [pinMode, setPinMode]   = useState<PinMode>('existing')
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -113,9 +118,9 @@ export default function WhatsAppPinStep({
         <div className="w-16 h-16 bg-[#e8f5ee] rounded-3xl flex items-center justify-center mx-auto mb-4">
           <Shield size={28} className="text-[#1a5c3a]" />
         </div>
-        <h2 className="text-lg font-black text-gray-900">2-Step Verification</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-white">2-Step Verification</h2>
         <p className="text-sm text-gray-500 mt-2 leading-relaxed max-w-sm mx-auto">
-          Enter the 6-digit PIN for your WhatsApp Business number to complete registration.
+          WhatsApp requires a 6-digit security PIN for this number to complete registration.
         </p>
         {phoneNumber && (
           <div className="inline-flex items-center gap-2 bg-[#f7f8f6] border border-[#e8ebe8] rounded-full px-4 py-2 mt-3">
@@ -125,19 +130,75 @@ export default function WhatsAppPinStep({
         )}
       </div>
 
+      {/* Which scenario applies? */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 text-center">
+          Does this number already have a PIN?
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => { setPinMode('existing'); setError(null) }}
+            className={cn(
+              'flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3 text-center transition-colors',
+              pinMode === 'existing'
+                ? 'border-[#1a5c3a] bg-[#e8f5ee]'
+                : 'border-[#e8ebe8] bg-white hover:border-gray-300'
+            )}
+          >
+            <KeyRound size={16} className={pinMode === 'existing' ? 'text-[#1a5c3a]' : 'text-gray-400'} />
+            <span className={cn('text-xs font-bold', pinMode === 'existing' ? 'text-[#1a5c3a]' : 'text-gray-600')}>
+              Yes, it has a PIN
+            </span>
+            <span className="text-2xs text-gray-400 leading-snug">I'll enter the existing PIN</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPinMode('new'); setError(null) }}
+            className={cn(
+              'flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3 text-center transition-colors',
+              pinMode === 'new'
+                ? 'border-[#1a5c3a] bg-[#e8f5ee]'
+                : 'border-[#e8ebe8] bg-white hover:border-gray-300'
+            )}
+          >
+            <Sparkles size={16} className={pinMode === 'new' ? 'text-[#1a5c3a]' : 'text-gray-400'} />
+            <span className={cn('text-xs font-bold', pinMode === 'new' ? 'text-[#1a5c3a]' : 'text-gray-600')}>
+              No, it's new
+            </span>
+            <span className="text-2xs text-gray-400 leading-snug">I'll create a new PIN now</span>
+          </button>
+        </div>
+      </div>
+
       {/* Info box */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 flex items-start gap-3">
         <Info size={15} className="text-blue-500 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-xs font-semibold text-blue-800">
-            What is the 2-step verification PIN?
-          </p>
-          <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-            This is the 6-digit PIN you set when you registered your WhatsApp Business
-            number. It is NOT an OTP — it's a security PIN you created yourself. If you
-            haven't set one, Meta may have assigned a default PIN or you can set it at
-            business.facebook.com → WhatsApp Accounts → your number → Two-Step Verification.
-          </p>
+          {pinMode === 'existing' ? (
+            <>
+              <p className="text-xs font-semibold text-blue-800">
+                Enter the PIN this number already has
+              </p>
+              <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                This is NOT an OTP — it's the 6-digit security PIN that was set the last
+                time this number was registered with WhatsApp. If you're not sure what it
+                is, check at business.facebook.com → WhatsApp Accounts → your number →
+                Two-Step Verification.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs font-semibold text-blue-800">
+                Make up a new 6-digit PIN
+              </p>
+              <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                Since this number has never been registered before, whatever you type below
+                becomes its new security PIN going forward. Pick 6 digits you'll remember —
+                write them down, you'll need this PIN again if you ever re-register this number.
+              </p>
+            </>
+          )}
         </div>
       </div>
 
@@ -145,7 +206,7 @@ export default function WhatsAppPinStep({
       <div>
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-700">
-            Enter your 6-digit PIN
+            {pinMode === 'existing' ? 'Enter the existing 6-digit PIN' : 'Create a new 6-digit PIN'}
           </label>
           <button
             type="button"
@@ -204,7 +265,7 @@ export default function WhatsAppPinStep({
         {isPinComplete && !error && !registering && (
           <p className="text-center text-xs text-[#1a5c3a] font-medium mt-3 flex items-center justify-center gap-1.5">
             <CheckCircle size={13} />
-            PIN entered — click Verify to continue
+            {pinMode === 'existing' ? 'PIN entered — click Verify to continue' : 'New PIN set — click Verify to continue'}
           </p>
         )}
       </div>
@@ -216,14 +277,16 @@ export default function WhatsAppPinStep({
       >
         {registering ? (
           <><Loader2 size={16} className="animate-spin" /> Verifying PIN...</>
-        ) : (
+        ) : pinMode === 'existing' ? (
           <><Shield size={16} /> Verify & Complete Registration</>
+        ) : (
+          <><Shield size={16} /> Set PIN & Complete Registration</>
         )}
       </button>
 
       <p className="text-center text-xs text-gray-400">
-        This PIN was set when you registered your WhatsApp Business number with Meta.
-        It is separate from your Facebook password.
+        This PIN is separate from your Facebook password — it's used only to protect this
+        WhatsApp Business number.
       </p>
     </div>
   )

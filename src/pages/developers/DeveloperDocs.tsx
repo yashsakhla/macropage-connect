@@ -220,7 +220,7 @@ print(response.json())`,
             Developer Documentation
           </span>
         </div>
-        <h1 className="text-3xl font-black text-gray-900">Build with Macropage Connect</h1>
+        <h1 className="text-3xl font-black text-gray-900 dark:text-white">Build with Macropage Connect</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-500">
           Integrate WhatsApp messaging into your own website, CRM, or application using our REST
           API, webhooks, and no-code Zapier connector.
@@ -263,7 +263,7 @@ print(response.json())`,
       </div>
 
       <section className="mb-12">
-        <h2 className="mb-4 text-xl font-black text-gray-900">Quick start</h2>
+        <h2 className="mb-4 text-xl font-black text-gray-900 dark:text-white">Quick start</h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-500">
           Get your first API request working in under 2 minutes.
         </p>
@@ -297,7 +297,7 @@ print(response.json())`,
                 <span className="text-xs font-bold text-[#1a5c3a]">{s.step}</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800">{s.title}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{s.title}</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{s.body}</p>
                 {s.cta && (
                   <button
@@ -333,7 +333,7 @@ print(response.json())`,
       </section>
 
       <section id="authentication" className="mb-12 scroll-mt-20">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900">
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white">
           <Key size={18} className="text-[#1a5c3a]" />
           Authentication
         </h2>
@@ -381,7 +381,7 @@ Authorization: Bearer mc_live_your_key_here`}
       </section>
 
       <section id="webhooks" className="mb-12 scroll-mt-20">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900">
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white">
           <Webhook size={18} className="text-purple-600" />
           Webhooks
         </h2>
@@ -455,7 +455,7 @@ app.post('/macropage-webhook', (req, res) => {
       </section>
 
       <section id="zapier" className="mb-12 scroll-mt-20">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900">
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white">
           <Zap size={18} className="text-amber-500" />
           Zapier — no code required
         </h2>
@@ -485,7 +485,7 @@ app.post('/macropage-webhook', (req, res) => {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-4 text-xl font-black text-gray-900">Rate limits</h2>
+        <h2 className="mb-4 text-xl font-black text-gray-900 dark:text-white">Rate limits</h2>
         <div className="rounded-2xl border border-[#e8ebe8] bg-white px-5 py-5">
           <div className="flex items-center justify-between border-b border-[#f0f0f0] py-2">
             <span className="text-sm text-gray-600">Requests per API key</span>
@@ -503,7 +503,7 @@ app.post('/macropage-webhook', (req, res) => {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-4 text-xl font-black text-gray-900">Error codes</h2>
+        <h2 className="mb-4 text-xl font-black text-gray-900 dark:text-white">Error codes</h2>
         <div className="space-y-2">
           {[
             { code: 'MISSING_API_KEY', status: 401, desc: 'No API key provided in the request headers' },

@@ -57,7 +57,7 @@ export default function ContactCard({ contact, selected, onSelect, onClick, onMe
 
       {/* menu */}
       <div className="absolute top-4 right-4" onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}>
-        <button className="btn-ghost w-7 h-7"><MoreVertical size={14} /></button>
+        <button className="btn-ghost w-7 h-7 p-0"><MoreVertical size={14} /></button>
         {menuOpen && (
           <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
             <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { onClick(contact); setMenuOpen(false) }}>View profile</button>

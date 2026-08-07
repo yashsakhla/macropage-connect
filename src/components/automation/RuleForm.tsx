@@ -52,7 +52,7 @@ export default function RuleForm({ rule, onClose, onSave }: Props) {
       <div className="bg-white dark:bg-[#0b1220] rounded-none sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-w-[700px] sm:max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e8ebe8] dark:border-white/10 flex-shrink-0">
           <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{rule ? 'Edit rule' : 'Create auto-reply rule'}</h2>
-          <button onClick={onClose} className="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center">
+          <button onClick={onClose} className="btn-ghost w-8 h-8 p-0 rounded-lg flex items-center justify-center">
             <X size={16} />
           </button>
         </div>

@@ -72,13 +72,13 @@ export default function PlanExpiredModal() {
         >
           <button
             onClick={dismiss}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/70 hover:bg-white
+            className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/70 hover:bg-white
               backdrop-blur-sm transition-colors flex items-center justify-center shadow-sm"
           >
             <X size={14} className="text-gray-700" />
           </button>
 
-          <div className="relative ml-auto w-[70%] sm:w-1/2 pr-8 sm:pr-2 text-right">
+          <div className="relative ml-auto w-[70%] sm:w-1/2 pr-8 sm:pr-10 text-right">
             <div className="inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm border border-brand-300/30
               rounded-full px-2.5 sm:px-3 py-1 mb-2 sm:mb-3">
               <Clock size={11} className="text-brand-300" />

@@ -37,7 +37,7 @@ export default function InvoiceTable({ invoices }: Props) {
                     href={inv.downloadUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-ghost w-8 h-8 flex items-center justify-center rounded-lg"
+                    className="btn-ghost w-8 h-8 p-0 flex items-center justify-center rounded-lg"
                     title="Download PDF"
                   >
                     <Download size={14} className="text-gray-400 dark:text-gray-500" />

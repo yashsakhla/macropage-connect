@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import MainLayout from '@/components/layout/MainLayout'
 import AuthLayout from '@/components/layout/AuthLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
+import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary'
 
 // Auth pages
 const Login          = lazy(() => import('@/pages/auth/Login'))
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
   // Public auth routes
   {
     element: <AuthLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: '/login',           element: <Login /> },
       { path: '/register',        element: <Register /> },
@@ -60,6 +62,7 @@ const router = createBrowserRouter([
         <MainLayout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: '/',          element: <Navigate to="/dashboard" replace /> },
       { path: '/dashboard',    element: <Dashboard /> },
@@ -105,6 +108,7 @@ const router = createBrowserRouter([
         </Suspense>
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/automation/flows/:id',
@@ -115,6 +119,7 @@ const router = createBrowserRouter([
         </Suspense>
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   // Email verification — public, no auth required (user may click link before logging in)
   {
@@ -124,6 +129,7 @@ const router = createBrowserRouter([
         <VerifyEmail />
       </Suspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/verify-email',
@@ -132,6 +138,7 @@ const router = createBrowserRouter([
         <VerifyEmail />
       </Suspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   // OTP verification for accounts that registered but never completed the
   // signup OTP step — reached only via the emailVerified:false login redirect.
@@ -142,6 +149,7 @@ const router = createBrowserRouter([
         <VerifyOtp />
       </Suspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   // Accept team invite — public, invitee has no account yet
   {
@@ -151,6 +159,7 @@ const router = createBrowserRouter([
         <AcceptInvite />
       </Suspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/accept-invite',
@@ -159,6 +168,7 @@ const router = createBrowserRouter([
         <AcceptInvite />
       </Suspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   // Catch-all
   { path: '*', element: <Navigate to="/" replace /> },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Share2, Search, Globe, Info, MapPin, Mail, Check } from 'lucide-react'
+import { Phone, Video, Search, Globe, Info, MapPin, Mail, Check, BadgeCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface WhatsAppProfilePreviewProps {
@@ -92,7 +92,7 @@ export default function WhatsAppProfilePreview({
         <div style={{ background: '#fff', borderRadius: 26, height: 520, overflowY: 'auto' }} className="relative">
           {/* STATUS BAR */}
           <div className="flex items-center justify-between px-4" style={{ height: 20, background: '#fff' }}>
-            <div className="text-2xs font-semibold text-gray-900 dark:text-white">9:41</div>
+            <div className="text-2xs font-semibold" style={{ color: '#111b21' }}>9:41</div>
             <div className="flex items-center gap-2">
               <svg width="12" height="10" viewBox="0 0 12 10"><rect x="0" y="7" width="2" height="3" rx="0.5" fill="#1a1a1a"/><rect x="3" y="5" width="2" height="5" rx="0.5" fill="#1a1a1a"/><rect x="6" y="3" width="2" height="7" rx="0.5" fill="#1a1a1a"/><rect x="9" y="1" width="2" height="9" rx="0.5" fill="#1a1a1a"/></svg>
               <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 8.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" fill="#1a1a1a"/><path d="M4.5 6.5C5.2 5.8 6.05 5.5 7 5.5s1.8.3 2.5 1" stroke="#1a1a1a" fill="none" strokeWidth="1.2" strokeLinecap="round"/></svg>
@@ -101,123 +101,120 @@ export default function WhatsAppProfilePreview({
           </div>
 
           {/* NAV BAR */}
-          <div className="flex items-center px-3 gap-2" style={{ height: 44, background: '#f0f0f0', borderBottom: '1px solid #e0e0e0' }}>
-            <div className="text-[#007AFF] text-xs flex items-center gap-2">
+          <div className="flex items-center px-3 gap-2" style={{ height: 44, background: '#008069' }}>
+            <div className="text-white text-xs flex items-center gap-2">
               <span style={{ fontSize: 16, transform: 'translateY(1px)' }}>←</span>
-              <span className="text-xs">Back</span>
             </div>
             <div className="flex-1 text-center">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">Business Info</div>
+              <div className="text-sm font-semibold text-white">Contact info</div>
             </div>
+            <div style={{ width: 16 }} />
           </div>
 
           {/* PROFILE HEADER */}
-          <div className="pb-4 bg-white dark:bg-[#0b1220] relative">
-            <div style={{ height: 72, borderRadius: 12, background: 'linear-gradient(135deg, #1a5c3a 0%, #2d7a4f 50%, #4caf50 100%)' }} className="relative" />
-
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 28 }}>
-              <div className="w-20 h-20 rounded-full bg-white dark:bg-[#0b1220] p-1 shadow-md relative">
-                  <div className="w-18 h-18 rounded-full overflow-hidden" style={{ width: 72, height: 72 }}>
-                    {logoPreview ? (
-                      <img src={logoPreview} alt="logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold" style={{ background: 'linear-gradient(135deg, #1a5c3a, #2d7a4f)', fontSize: 28 }}>
-                        {initial}
-                      </div>
-                    )}
-                  </div>
-
-                  {logoPreview && typeof onRemoveLogo === 'function' && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onRemoveLogo(); }}
-                      title="Remove logo"
-                      className="absolute -top-2 -right-2 bg-white dark:bg-[#0b1220] rounded-full p-1 text-xs shadow border border-gray-200 dark:border-gray-800"
-                    >
-                      ×
-                    </button>
+          <div className="pb-4 relative" style={{ background: '#fff' }}>
+            <div className="flex flex-col items-center pt-6 pb-2" style={{ background: '#f7f8f6' }}>
+              <div className="relative">
+                <div className="rounded-full overflow-hidden shadow-sm" style={{ width: 96, height: 96 }}>
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white font-bold" style={{ background: 'linear-gradient(135deg, #1a5c3a, #2d7a4f)', fontSize: 34 }}>
+                      {initial}
+                    </div>
                   )}
                 </div>
-            </div>
 
-            <div className="mt-8 pt-3 text-center">
-              <div className={cn('text-base font-bold', !nameDisplay ? 'text-gray-300 dark:text-gray-600 italic' : 'text-gray-900 dark:text-white')}>{nameDisplay || 'Your Business Name'}</div>
-
-              <div className="flex items-center justify-center gap-1.5 mt-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400">{phone || '+91 XXXXX XXXXX'}</div>
-                <div className={`w-2 h-2 rounded-full ${isVerified ? 'bg-[#25D366]' : 'bg-gray-300'}`} />
-                {isVerified && <div className="text-2xs text-[#25D366] font-medium">✓ Verified</div>}
-              </div>
-            </div>
-          </div>
-
-          {/* ACTIONS */}
-          <div className="mt-2" style={{ background: '#fff', borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0' }}>
-            <div className="grid grid-cols-3 gap-px bg-[#f0f0f0] dark:bg-white/10">
-              <div className="bg-white dark:bg-[#0b1220] flex flex-col items-center gap-1 py-3">
-                <Share2 size={18} className="text-[#007AFF]" />
-                <div className="text-2xs text-[#007AFF]">share</div>
-              </div>
-              <div className="bg-white dark:bg-[#0b1220] flex flex-col items-center gap-1 py-3">
-                <Search size={18} className="text-[#007AFF]" />
-                <div className="text-2xs text-[#007AFF]">search</div>
-              </div>
-              <div className="bg-white dark:bg-[#0b1220] flex flex-col items-center gap-1 py-3">
-                {(website || email) ? (
-                  <Globe size={18} className="text-[#007AFF]" />
-                ) : (
-                  <Info size={18} className="text-[#007AFF]" />
+                {isVerified && (
+                  <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow">
+                    <BadgeCheck size={20} style={{ color: '#008069' }} fill="#e8f5ee" />
+                  </div>
                 )}
-                <div className="text-2xs text-[#007AFF]">{(website || email) ? 'website' : 'info'}</div>
+
+                {logoPreview && typeof onRemoveLogo === 'function' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRemoveLogo(); }}
+                    title="Remove logo"
+                    className="absolute -top-1 -right-1 bg-white rounded-full p-1 text-xs shadow border border-gray-200"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <div className={cn('text-base font-semibold mt-3 text-center px-6', !nameDisplay ? 'text-gray-300 italic' : 'text-gray-900')}>{nameDisplay || 'Your Business Name'}</div>
+              <div className="text-xs mt-0.5" style={{ color: '#667781' }}>{phone || '+91 XXXXX XXXXX'}</div>
+              {isVerified && (
+                <div className="flex items-center gap-1 mt-1 text-2xs font-medium" style={{ color: '#008069' }}>
+                  <BadgeCheck size={12} /> Verified business
+                </div>
+              )}
+            </div>
+
+            {/* ACTIONS */}
+            <div className="grid grid-cols-3 gap-px mt-2" style={{ background: '#f0f0f0' }}>
+              <div className="bg-white flex flex-col items-center gap-1 py-3">
+                <Phone size={17} style={{ color: '#008069' }} />
+                <div className="text-2xs" style={{ color: '#008069' }}>Audio</div>
+              </div>
+              <div className="bg-white flex flex-col items-center gap-1 py-3">
+                <Video size={17} style={{ color: '#008069' }} />
+                <div className="text-2xs" style={{ color: '#008069' }}>Video</div>
+              </div>
+              <div className="bg-white flex flex-col items-center gap-1 py-3">
+                <Search size={17} style={{ color: '#008069' }} />
+                <div className="text-2xs" style={{ color: '#008069' }}>Search</div>
               </div>
             </div>
           </div>
 
           {/* CATEGORY */}
-          <div className="mt-2 bg-white dark:bg-[#0b1220] px-4 py-3" style={{ borderTop: '1px solid #f0f0f0' }}>
-            <div className={cn('text-xs font-medium', category ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600 italic')}>{category || 'Category not set'}</div>
-            <div className="flex items-center gap-1 mt-1 text-2xs text-gray-500 dark:text-gray-400"><Info size={12} /> <span>This is a business account.</span></div>
+          <div className="mt-2 bg-white px-4 py-3" style={{ borderTop: '6px solid #f7f8f6', borderBottom: '1px solid #f0f0f0' }}>
+            <div className="text-2xs font-medium mb-1" style={{ color: '#667781' }}>Business info</div>
+            <div className={cn('text-xs', category ? '' : 'text-gray-300 italic')} style={category ? { color: '#111b21' } : undefined}>{category || 'Category not set'}</div>
+            <div className="flex items-center gap-1 mt-1 text-2xs" style={{ color: '#667781' }}><Info size={12} /> <span>This is a business account.</span></div>
           </div>
 
           {/* DESCRIPTION */}
-          <div className={cn('mt-2 bg-white dark:bg-[#0b1220] px-4 py-3', lastChanged === 'description' && 'border-l-2 border-[#1a5c3a] pl-2 transition-all duration-200')}>
+          <div className={cn('mt-2 bg-white px-4 py-3', lastChanged === 'description' && 'border-l-2 border-[#1a5c3a] pl-2 transition-all duration-200')}>
             {description ? (
-              <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3">{description}</div>
+              <div className="text-xs leading-relaxed line-clamp-3" style={{ color: '#111b21' }}>{description}</div>
             ) : (
-              <div className="text-xs text-gray-300 dark:text-gray-600 italic">Add a description...</div>
+              <div className="text-xs text-gray-300 italic">Add a description...</div>
             )}
           </div>
 
           {/* CONTACT DETAILS */}
-          <div className="mt-2 bg-white dark:bg-[#0b1220]" style={{ borderTop: '1px solid #f0f0f0' }}>
+          <div className="mt-2 bg-white" style={{ borderTop: '6px solid #f7f8f6' }}>
             {email ? (
               <div className="flex items-center h-10 px-4 gap-3 border-b border-[#f9f9f9]">
                 <Mail size={14} className="text-[#8696a0]" />
-                <div className="text-xs text-[#25D366]">{email}</div>
+                <div className="text-xs" style={{ color: '#008069' }}>{email}</div>
               </div>
             ) : null}
 
             {website ? (
               <div className="flex items-center h-10 px-4 gap-3 border-b border-[#f9f9f9]">
                 <Globe size={14} className="text-[#8696a0]" />
-                <div className="text-xs text-[#25D366]">{website.length > 28 ? website.slice(0, 25) + '...' : website}</div>
+                <div className="text-xs" style={{ color: '#008069' }}>{website.length > 28 ? website.slice(0, 25) + '...' : website}</div>
               </div>
             ) : null}
 
             {address ? (
               <div className="flex items-start px-4 py-3 gap-3">
                 <MapPin size={14} className="text-[#8696a0] mt-1" />
-                <div className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{address}</div>
+                <div className="text-xs line-clamp-2" style={{ color: '#111b21' }}>{address}</div>
               </div>
             ) : null}
 
             {!(email || website || address) && (
-              <div className="px-4 py-3 text-2xs text-gray-300 dark:text-gray-600 italic">Contact details will appear here...</div>
+              <div className="px-4 py-3 text-2xs text-gray-300 italic">Contact details will appear here...</div>
             )}
           </div>
 
           {/* ADD TO CONTACTS */}
-          <div className="mt-2 bg-white dark:bg-[#0b1220] px-4 py-3">
-            <div className="text-xs text-[#25D366] font-medium cursor-pointer active:opacity-70">Add {displayName || 'Business'} to Contacts</div>
+          <div className="mt-2 bg-white px-4 py-3" style={{ borderTop: '6px solid #f7f8f6' }}>
+            <div className="text-xs font-medium cursor-pointer active:opacity-70" style={{ color: '#008069' }}>Add {displayName || 'Business'} to Contacts</div>
           </div>
 
           <div style={{ height: 20, background: '#fff' }} />

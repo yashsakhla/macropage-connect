@@ -87,8 +87,6 @@ export function listenToMetaMessages(
 
     if (data?.type !== 'WA_EMBEDDED_SIGNUP') return
 
-    console.log('[Meta Embedded Signup] Event:', data.event, data.data)
-
     switch (data.event) {
       case 'FINISH':
         onFinish(data.data as WAEmbeddedSignupFinishData)

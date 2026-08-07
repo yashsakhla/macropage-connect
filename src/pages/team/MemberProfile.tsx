@@ -76,7 +76,7 @@ export default function MemberProfile() {
           <button className="btn btn-outline h-9 gap-2" onClick={() => setShowEdit(true)}>
             <Edit2 size={14} /> <span className="hidden sm:inline">Edit member</span><span className="sm:hidden">Edit</span>
           </button>
-          <button className="btn-ghost w-9 h-9 shrink-0"><MoreVertical size={16} /></button>
+          <button className="btn-ghost w-9 h-9 p-0 shrink-0"><MoreVertical size={16} /></button>
         </div>
       </div>
 

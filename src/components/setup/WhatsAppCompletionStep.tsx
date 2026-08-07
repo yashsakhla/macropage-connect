@@ -49,7 +49,7 @@ export default function WhatsAppCompletionStep({
     data: status,
     refetch: refetchStatus,
     isFetching,
-  } = useWhatsAppSetupStatus()
+  } = useWhatsAppSetupStatus({ poll: true })
 
   const { data: templates = [] } = useTemplates()
   const { data: sampleTemplates = [] } = useSampleTemplates()
@@ -170,7 +170,7 @@ export default function WhatsAppCompletionStep({
     <div className="space-y-6">
 
       {/* Success header */}
-      <div className="bg-gradient-to-br from-[#1a3d2b] to-[#2d7a4f] rounded-3xl px-6 py-6 text-white">
+      <div className="bg-gradient-to-br from-[#1a3d2b] to-[#2d7a4f] rounded-3xl px-4 sm:px-6 py-5 sm:py-6 text-white">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center flex-shrink-0">
             <CheckCircle size={24} className="text-white" />
@@ -213,7 +213,7 @@ export default function WhatsAppCompletionStep({
       {/* Journey steps */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-bold text-gray-900">Your next steps</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-white">Your next steps</p>
           <button
             onClick={() => refetchStatus()}
             disabled={isFetching}

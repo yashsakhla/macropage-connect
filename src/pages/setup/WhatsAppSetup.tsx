@@ -6,7 +6,7 @@ import { BusinessInfoPayload } from '@/types/setup'
 import type { AxiosError } from 'axios'
 import type { ApiErrorResponse } from '@/types'
 import { useNavigate } from 'react-router-dom'
-import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Check, ArrowRight, Eye, ChevronDown, Loader2, AlertCircle, RefreshCw, CreditCard } from 'lucide-react'
 import WhatsAppProfilePreview from '@/components/shared/WhatsAppProfilePreview'
 import { cn } from '@/lib/utils'
 import EmbeddedSignupFlow, { type EmbeddedSignupConnectedData } from '@/components/setup/EmbeddedSignupFlow'
@@ -16,6 +16,7 @@ import toast from 'react-hot-toast'
 import { useUIStore } from '@/store/uiStore'
 import {
   useWhatsAppSetupStatus,
+  useBusinessInfo,
   useSaveBusinessInfo,
   useCompleteSetup,
 } from '@/hooks/useWhatsApp'
@@ -24,8 +25,8 @@ const businessSchema = z.object({
   businessName: z.string().min(2).max(60),
   category: z.string().min(1),
   description: z.string().max(256).optional(),
-  website: z.string().url().optional(),
-  email: z.string().email().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
   address: z.string().max(256).optional(),
 })
 
@@ -46,10 +47,28 @@ export default function WhatsAppSetup() {
     qualityRating: string
   } | null>(null)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BusinessInfoPayload>({
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<BusinessInfoPayload>({
     resolver: zodResolver(businessSchema),
-    defaultValues: { businessName: '', category: '', description: '', website: '', email: '', address: '', logoFile: null }
+    defaultValues: { businessName: '', category: '', description: '', website: '', email: '', address: '' }
   })
+
+  // Fetches whatever business info was previously saved so step 1 shows it
+  // again — e.g. a user who logs out on step 2 and comes back, then hits
+  // Back, would otherwise see a blank form even though the data is saved.
+  const { data: businessInfo } = useBusinessInfo()
+
+  useEffect(() => {
+    if (businessInfo) {
+      reset({
+        businessName: businessInfo.businessName ?? '',
+        category: businessInfo.category ?? '',
+        description: businessInfo.description ?? '',
+        website: businessInfo.website ?? '',
+        email: businessInfo.email ?? '',
+        address: businessInfo.address ?? '',
+      })
+    }
+  }, [businessInfo, reset])
 
   const watched = watch()
 
@@ -67,7 +86,12 @@ export default function WhatsAppSetup() {
   // so there's no separate manual phone step to gate on. A returning user
   // (e.g. after a refresh) lands on whichever step their status says is next —
   // if phoneRegistered is already true, step 3 is skipped entirely.
-  const currentStep = (() => {
+  // Lets the Back button on step 2 return to editing business info even
+  // though the server already has businessInfoSaved=true — cleared again as
+  // soon as the user re-saves, so the step then advances off server truth.
+  const [stepOverride, setStepOverride] = useState<number | null>(null)
+
+  const currentStep = stepOverride ?? (() => {
     if (!status) return 1
     if (!status.businessInfoSaved) return 1
     if (!status.metaConnected)     return 2
@@ -107,15 +131,15 @@ export default function WhatsAppSetup() {
       { num: 4, label: 'Get started',  done: status?.setupComplete     ?? false },
     ]
     return (
-      <div className="flex items-center gap-6 justify-center">
+      <div className="flex items-center gap-4 sm:gap-6 justify-start sm:justify-center overflow-x-auto no-scrollbar">
         {stepFlags.map(({ num, label, done }) => {
           const active = num === currentStep
           return (
-            <div key={label} className="flex flex-col items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${done || active ? 'bg-[#1a5c3a] text-white' : 'bg-white border-2 border-[#e8ebe8] text-gray-400'}`}>
-                {done ? <Check size={16} /> : <span className={active ? 'font-semibold text-white' : 'text-sm'}>{num}</span>}
+            <div key={label} className="flex flex-col items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${done || active ? 'bg-[#1a5c3a] text-white' : 'bg-white border-2 border-[#e8ebe8] text-gray-400'}`}>
+                {done ? <Check size={15} /> : <span className={active ? 'font-semibold text-white text-xs sm:text-sm' : 'text-xs sm:text-sm'}>{num}</span>}
               </div>
-              <div className={`text-xs ${active ? 'text-[#1a5c3a] font-medium' : 'text-gray-500'}`}>{label}</div>
+              <div className={`text-2xs sm:text-xs whitespace-nowrap ${active ? 'text-[#1a5c3a] font-medium' : 'text-gray-500'}`}>{label}</div>
             </div>
           )
         })}
@@ -137,6 +161,7 @@ export default function WhatsAppSetup() {
       {
         onSuccess: () => {
           toast.success('Business info saved!')
+          setStepOverride(null)
           refetchStatus()
         },
       }
@@ -175,37 +200,64 @@ export default function WhatsAppSetup() {
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] dark:bg-[#0f1724] w-full">
-      <div className="bg-white border-b border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-300 rounded-full flex items-center justify-center shrink-0 text-current font-semibold text-sm">
-            {(watched.businessName || connectedWaba?.displayName || 'B').charAt(0).toUpperCase()}
+      <div className="bg-white border-b border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-10 flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-0 lg:justify-between">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-300 rounded-full flex items-center justify-center shrink-0 text-current font-semibold text-sm">
+              {(watched.businessName || connectedWaba?.displayName || 'B').charAt(0).toUpperCase()}
+            </div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[160px] sm:max-w-[200px]">
+              {watched.businessName || connectedWaba?.displayName || 'Your Business'}
+            </div>
           </div>
-          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">
-            {watched.businessName || connectedWaba?.displayName || 'Your Business'}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 lg:hidden">
+            <button onClick={() => navigate('/help')} className="text-xs sm:text-sm text-gray-500 hover:text-[#1a5c3a] whitespace-nowrap">Need help?</button>
+            <button onClick={() => useUIStore.getState().openHelpChat()} className="btn-outline text-xs h-8 px-3 whitespace-nowrap">Chat with us</button>
           </div>
         </div>
-        <div className="flex-1 px-6">{renderProgress()}</div>
-        <div className="flex items-center gap-3">
+        <div className="lg:flex-1 lg:px-6">{renderProgress()}</div>
+        <div className="hidden lg:flex items-center gap-3 shrink-0">
           <button onClick={() => navigate('/help')} className="text-sm text-gray-500 hover:text-[#1a5c3a]">Need help?</button>
           <button onClick={() => useUIStore.getState().openHelpChat()} className="btn-outline text-xs h-8 px-3">Chat with us</button>
         </div>
       </div>
 
-      <div className="w-full px-6 py-10">
-        <div className="grid lg:grid-cols-3 gap-6">
+      <div className="w-full px-4 sm:px-6 pt-5">
+        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl px-4 py-3">
+          <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+            <CreditCard size={14} className="text-amber-600 dark:text-amber-400" />
+          </div>
+          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+            <strong className="font-semibold">Add a payment method to your Meta Business Portfolio.</strong>{' '}
+            Meta requires an active payment method on file to deliver WhatsApp messages — without one, your messages
+            will fail to send if your payment method is not added in Meta Business Portfolio. Add it in Meta Business Manager under Business Settings → Payments, or{' '}
+            <a
+              href="https://business.facebook.com/billing_hub/payment_settings/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
+            >
+              go there directly
+            </a>.
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full px-4 sm:px-6 py-6 sm:py-10">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2 w-full">
             {currentStep === 1 && (
               <div className="grid grid-cols-1 gap-8 items-start">
                 <div className="lg:col-span-3">
                   <div className="mb-4">
                     <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 1 of 4</div>
-                    <h2 className="text-2xl font-bold text-gray-900">Tell us about your business</h2>
-                    <p className="text-sm text-gray-500 mt-1 mb-8">This information will appear on your WhatsApp Business profile and is shown to your customers.</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Tell us about your business</h2>
+                    <p className="text-sm text-gray-500 mt-1 mb-6 sm:mb-8">This information will appear on your WhatsApp Business profile and is shown to your customers.</p>
                   </div>
 
-                  <form onSubmit={handleSubmit(onSubmit)} className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="bg-white border border-[var(--card-border)] dark:bg-[#0b1220] dark:border-white/5 rounded-2xl p-4 sm:p-6">
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium">Business display name *</label>
                           <input {...register('businessName')} placeholder="e.g. Sharma Electronics" className={`input mt-2 ${errors.businessName ? 'border-red-400' : ''}`} aria-invalid={errors.businessName ? 'true' : 'false'} />
@@ -243,7 +295,7 @@ export default function WhatsAppSetup() {
                         {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium">Website URL</label>
                           <input {...register('website')} placeholder="https://yourbusiness.com" className={`input mt-2 ${errors.website ? 'border-red-400' : ''}`} aria-invalid={errors.website ? 'true' : 'false'} />
@@ -260,24 +312,6 @@ export default function WhatsAppSetup() {
                         <label className="block text-sm font-medium">Business address</label>
                         <textarea {...register('address')} rows={2} className={`input mt-2 resize-none h-28 py-3 ${errors.address ? 'border-red-400' : ''}`} placeholder="123 MG Road, Bangalore, Karnataka 560001" />
                         {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address.message}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium">Business profile photo</label>
-                        <div className="border-dashed border-2 border-[#e8ebe8] rounded-2xl p-6 text-center mt-2">
-                          <div className="text-gray-300 text-3xl">📷</div>
-                          <div className="text-sm font-medium text-gray-700 mt-2">Upload your business logo</div>
-                          <div className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB · Recommended 640×640px</div>
-                          <div className="mt-3">
-                            <input
-                              type="file"
-                              id="logoFile"
-                              className="hidden"
-                              onChange={(e) => setValue('logoFile', e.target.files?.[0] ?? null)}
-                            />
-                            <label htmlFor="logoFile" className="inline-flex items-center cursor-pointer btn-outline text-xs h-8 px-4">Choose file</label>
-                          </div>
-                        </div>
                       </div>
 
                       {saveError && (
@@ -301,11 +335,14 @@ export default function WhatsAppSetup() {
                         </div>
                       )}
 
-                      <div className="mt-2 flex items-center justify-between">
-                        <button type="button" className="text-sm text-gray-400">Cancel setup</button>
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xs text-gray-400">{(watched.businessName||'').length}/60</div>
-                          <button type="submit" disabled={saving} className="btn-primary h-10 px-6 flex items-center gap-2">
+                      <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center justify-between sm:contents">
+                          <button type="button" className="text-sm text-gray-400">Cancel setup</button>
+                          <div className="text-2xs text-gray-400 sm:hidden">{(watched.businessName||'').length}/60</div>
+                        </div>
+                        <div className="flex items-center gap-3 justify-end">
+                          <div className="hidden sm:block text-2xs text-gray-400">{(watched.businessName||'').length}/60</div>
+                          <button type="submit" disabled={saving} className="btn-primary h-10 px-6 flex items-center justify-center gap-2 w-full sm:w-auto">
                             {saving ? <><Loader2 size={16} className="animate-spin" />Saving...</> : 'Continue to Meta Connection →'}
                           </button>
                         </div>
@@ -336,8 +373,6 @@ export default function WhatsAppSetup() {
                             website={watch('website')}
                             email={watch('email')}
                             address={watch('address')}
-                            logoFile={watch('logoFile') ?? null}
-                            onRemoveLogo={() => setValue('logoFile', null)}
                             phone={"+91 98765 43210"}
                           />
                         </div>
@@ -354,7 +389,7 @@ export default function WhatsAppSetup() {
               <div className="animate-fade-in space-y-6">
                 <div>
                   <div className="inline-block bg-[#e8f5ee] text-[#1a5c3a] text-xs rounded-full px-3 py-1 font-medium mb-3">Step 2 of 4</div>
-                  <h2 className="text-2xl font-bold text-gray-900">Connect your Meta Business Account</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Connect your Meta Business Account</h2>
                   <p className="text-sm text-gray-500 mt-1">This authorises Macropage Connect to send and receive WhatsApp messages on behalf of your business.</p>
                 </div>
 
@@ -385,12 +420,12 @@ export default function WhatsAppSetup() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-2">
-                  <button onClick={() => {}} className="btn-ghost h-9 px-4">← Back</button>
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                  <button onClick={() => setStepOverride(1)} className="btn-ghost h-9 px-4 w-full sm:w-auto justify-center">← Back</button>
                   <button
                     onClick={() => { refetchStatus() }}
                     disabled={!isMetaConnected}
-                    className="btn-primary h-12 px-5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary h-12 px-5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   >
                     Continue to Verification
                     <ArrowRight size={16} />
@@ -424,8 +459,6 @@ export default function WhatsAppSetup() {
                   website={watched.website}
                   email={watched.email}
                   address={watched.address}
-                  logoFile={watch('logoFile') ?? null}
-                  onRemoveLogo={() => setValue('logoFile', null)}
                   phone={connectedWaba?.phoneNumber || '+91 98765 43210'}
                   isVerified={false}
                 />
@@ -436,7 +469,7 @@ export default function WhatsAppSetup() {
       </div>
 
       {currentStep === 4 && (
-        <div className="w-full px-6 pb-10">
+        <div className="w-full px-4 sm:px-6 pb-10">
           <div className="max-w-2xl mx-auto">
             <WhatsAppCompletionStep
               connectedWaba={connectedWaba}

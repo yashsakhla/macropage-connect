@@ -90,6 +90,63 @@ const TYPE_META: Record<SearchResult['type'], { icon: typeof HelpCircle; bg: str
   video:   { icon: BookOpen,   bg: 'bg-purple-50', text: 'text-purple-500' },
 }
 
+// ── Draggable position ────────────────────
+// The launcher bubble is anchored to the bottom-right corner by default but
+// can be dragged anywhere on screen so it stops sitting on top of buttons —
+// position persists across sessions via localStorage.
+
+const POSITION_KEY = 'support-chat-position'
+const BUBBLE_SIZE  = 56
+const EDGE_MARGIN  = 8
+
+type Pos = { bottom: number; right: number }
+
+function loadPosition(): Pos {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore malformed/unavailable storage */ }
+  return { bottom: 24, right: 24 }
+}
+
+function clampPosition(pos: Pos): Pos {
+  const maxRight  = Math.max(EDGE_MARGIN, window.innerWidth - BUBBLE_SIZE - EDGE_MARGIN)
+  const maxBottom = Math.max(EDGE_MARGIN, window.innerHeight - BUBBLE_SIZE - EDGE_MARGIN)
+  return {
+    right:  Math.min(Math.max(pos.right, EDGE_MARGIN), maxRight),
+    bottom: Math.min(Math.max(pos.bottom, EDGE_MARGIN), maxBottom),
+  }
+}
+
+// The chat window (380 × up to 600) opens anchored to whichever corner the
+// bubble is currently near. If the bubble has been dragged close to the left
+// or top edge, right/bottom-anchoring it the same way the bubble is anchored
+// would push the window off-screen — so clamp its offsets to whatever keeps
+// the whole panel on screen instead of just mirroring the bubble's position.
+const WINDOW_WIDTH      = 380
+const WINDOW_MAX_HEIGHT = 600
+
+function getChatWindowStyle(pos: Pos): { bottom: number; right: number } {
+  const desiredBottom = pos.bottom + BUBBLE_SIZE + 12
+  const maxRight  = Math.max(EDGE_MARGIN, window.innerWidth - WINDOW_WIDTH - EDGE_MARGIN)
+  const maxBottom = Math.max(EDGE_MARGIN, window.innerHeight - WINDOW_MAX_HEIGHT - EDGE_MARGIN)
+  return {
+    right:  Math.min(Math.max(pos.right, EDGE_MARGIN), maxRight),
+    bottom: Math.min(Math.max(desiredBottom, EDGE_MARGIN), maxBottom),
+  }
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 640px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 640px)')
+    const onChange = () => setIsDesktop(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return isDesktop
+}
+
 // ── Main component ────────────────────────
 
 export default function SupportChat() {
@@ -118,6 +175,47 @@ export default function SupportChat() {
 
   const inputRef  = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const isDesktop = useIsDesktop()
+  const [pos, setPos] = useState<Pos>(loadPosition)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef<{ startX: number; startY: number; startPos: Pos; moved: boolean } | null>(null)
+
+  const handleDragStart = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPos: pos, moved: false }
+    setIsDragging(true)
+  }
+
+  const handleDragMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag) return
+    const dx = e.clientX - drag.startX
+    const dy = e.clientY - drag.startY
+    if (!drag.moved && Math.hypot(dx, dy) > 4) drag.moved = true
+    if (!drag.moved) return
+    setPos(clampPosition({ right: drag.startPos.right - dx, bottom: drag.startPos.bottom - dy }))
+  }
+
+  const handleDragEnd = () => {
+    const drag = dragRef.current
+    setIsDragging(false)
+    dragRef.current = null
+    if (drag?.moved) {
+      setPos(prev => {
+        const clamped = clampPosition(prev)
+        try { localStorage.setItem(POSITION_KEY, JSON.stringify(clamped)) } catch { /* ignore */ }
+        return clamped
+      })
+    }
+  }
+
+  // Keep the bubble on-screen if the window is resized (e.g. rotating a device).
+  useEffect(() => {
+    const onResize = () => setPos(prev => clampPosition(prev))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -226,8 +324,12 @@ export default function SupportChat() {
 
   return (
     <>
-      {/* Floating bubble */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      {/* Floating bubble — draggable anywhere on screen so it never sits on
+          top of other actions; position persists across sessions */}
+      <div
+        className="fixed z-50 flex flex-col items-end gap-3"
+        style={{ bottom: pos.bottom, right: pos.right }}
+      >
         {!isOpen && showNudge && (
           <div
             className="bg-white border border-[#e8ebe8] rounded-2xl shadow-lg px-4 py-3 max-w-xs cursor-pointer animate-bounce-once"
@@ -239,11 +341,17 @@ export default function SupportChat() {
         )}
 
         <button
-          onClick={() => setOpen(!isOpen)}
+          onClick={() => { if (!dragRef.current?.moved) setOpen(!isOpen) }}
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          style={{ touchAction: 'none' }}
           className={cn(
             'relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center',
-            'transition-all duration-300 hover:scale-110 active:scale-95',
-            !isOpen && 'animate-chat-float',
+            'transition-all duration-300 active:scale-95 cursor-grab active:cursor-grabbing',
+            !isDragging && 'hover:scale-110',
+            !isOpen && !isDragging && 'animate-chat-float',
             isOpen ? 'bg-gray-700' : 'bg-[#1a5c3a]'
           )}
         >
@@ -258,7 +366,10 @@ export default function SupportChat() {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 w-full h-full sm:w-[380px] sm:h-auto sm:max-h-[600px] bg-white border-0 sm:border border-[#e8ebe8] rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div
+          className="fixed inset-0 sm:inset-auto z-50 w-full h-full sm:w-[380px] sm:h-auto sm:max-h-[600px] bg-white border-0 sm:border border-[#e8ebe8] rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+          style={isDesktop ? getChatWindowStyle(pos) : undefined}
+        >
 
           {/* Header */}
           <div className="bg-[#1a3d2b] px-4 sm:px-5 py-4 flex items-center gap-3 flex-shrink-0">

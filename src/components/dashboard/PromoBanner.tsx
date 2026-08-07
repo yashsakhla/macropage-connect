@@ -24,23 +24,129 @@ const HOLD_AFTER_COMPLETE = 1300
 // Last event (line 4) starts at BASE_DELAY + STEP_DELAY*7 and its draw-in takes ~250ms.
 const CYCLE_DURATION = BASE_DELAY + STEP_DELAY * 7 + 250 + HOLD_AFTER_COMPLETE
 
+// Drives the entrance + looping animation for the quick-actions stepper.
+// Self-contained so the stepper can be dropped anywhere and animate on its
+// own, independent of whatever shows/hides its parent.
+function useStepperAnimation() {
+  const [entered, setEntered] = useState(false)
+  const [cycleKey, setCycleKey] = useState(0)
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setEntered(true))
+    return () => cancelAnimationFrame(t)
+  }, [])
+
+  useEffect(() => {
+    if (!entered) return
+    const interval = setInterval(() => setCycleKey(k => k + 1), CYCLE_DURATION)
+    return () => clearInterval(interval)
+  }, [entered])
+
+  return { entered, cycleKey }
+}
+
+// The animated "quick actions" stepper — reused by the one-time welcome-back
+// banner and the persistent dashboard hero banner.
+export function QuickActionsStepper({ onNavigate }: { onNavigate?: () => void }) {
+  const navigate = useNavigate()
+  const { entered, cycleKey } = useStepperAnimation()
+
+  const go = (action: (typeof QUICK_ACTIONS)[number]) => {
+    navigate(action.to, action.state ? { state: action.state } : undefined)
+    onNavigate?.()
+  }
+
+  return (
+    <>
+      {/* Quick actions — compact icon row on mobile so the animated buttons stay visible */}
+      <div key={cycleKey} className="flex sm:hidden items-center gap-1.5 shrink-0">
+        {QUICK_ACTIONS.map(action => (
+          <button
+            key={action.label}
+            onClick={() => go(action)}
+            aria-label={action.label}
+            style={entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }}
+            className={cn(
+              'relative flex items-center justify-center w-7 h-7 rounded-lg bg-white/15 border border-white/20 backdrop-blur-sm active:scale-90 transition-all',
+              entered && 'animate-stepper-pop'
+            )}
+          >
+            <action.icon size={13} className="text-white" />
+            <span className={cn('absolute -top-1 -left-1 w-3 h-3 rounded-full border border-white/70 text-white text-[7px] font-bold flex items-center justify-center', action.badge)}>
+              {action.step}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Quick actions — S-shaped stepper: 1→2 across, down to 3, 3→4 back across, then 4→1 to loop (desktop) */}
+      <div
+        key={`grid-${cycleKey}`}
+        className="relative hidden sm:grid shrink-0 w-auto items-center justify-items-center"
+        style={{ gridTemplateColumns: 'auto 18px auto', gridTemplateRows: 'auto 18px auto' }}
+      >
+        {/* connectors — each draws in right after the step before it pops in */}
+        {entered && (
+          <>
+            <div
+              className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
+              style={{ gridColumn: 2, gridRow: 1, animationDelay: `${BASE_DELAY + STEP_DELAY * 1}ms` }}
+            />
+            <div
+              className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
+              style={{ gridColumn: 3, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 3}ms` }}
+            />
+            <div
+              className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
+              style={{ gridColumn: 2, gridRow: 3, animationDelay: `${BASE_DELAY + STEP_DELAY * 5}ms` }}
+            />
+            {/* 4 → 1, closing the loop back to the start */}
+            <div
+              className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
+              style={{ gridColumn: 1, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 7}ms` }}
+            />
+          </>
+        )}
+
+        {QUICK_ACTIONS.map(action => (
+          <button
+            key={action.label}
+            onClick={() => go(action)}
+            style={{
+              gridColumn: action.col,
+              gridRow: action.row,
+              ...(entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }),
+            }}
+            className={cn(
+              'inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-semibold pl-1.5 pr-2.5 py-1.5 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all whitespace-nowrap',
+              entered && 'animate-stepper-pop'
+            )}
+          >
+            <span className={cn('relative flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0 backdrop-blur-sm', action.chip)}>
+              <action.icon size={12} />
+              <span className={cn('absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full border border-white/70 text-white text-[8px] font-bold flex items-center justify-center', action.badge)}>
+                {action.step}
+              </span>
+            </span>
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+}
+
 // Shown once, right after a successful login/sign-in, the first time the
 // user lands on the dashboard. useUIStore.justLoggedIn is set by useAuth
 // (useLogin / useGoogleAuth) just before navigating to /dashboard, and is
 // never persisted — so a page refresh or later visit won't bring it back.
 export default function PromoBanner() {
-  const navigate = useNavigate()
-
   // Captured once at mount — not a reactive subscription. Clearing the flag
   // below must not be a dependency of this effect, or the resulting re-render
   // cancels the in-flight entrance animation before it ever completes.
   const [visible, setVisible] = useState(() => useUIStore.getState().justLoggedIn)
   const [entered, setEntered] = useState(false)
   const [closing, setClosing] = useState(false)
-  // Bumped on an interval to remount the stepper subtree, which restarts every
-  // (fill: forwards) entrance animation inside it — the simplest way to loop
-  // a staggered CSS animation sequence indefinitely and in sync.
-  const [cycleKey, setCycleKey] = useState(0)
 
   useEffect(() => {
     if (!visible) return
@@ -48,12 +154,6 @@ export default function PromoBanner() {
     const t = requestAnimationFrame(() => setEntered(true))
     return () => cancelAnimationFrame(t)
   }, [visible])
-
-  useEffect(() => {
-    if (!entered) return
-    const interval = setInterval(() => setCycleKey(k => k + 1), CYCLE_DURATION)
-    return () => clearInterval(interval)
-  }, [entered])
 
   const handleClose = () => {
     setClosing(true)
@@ -117,80 +217,7 @@ export default function PromoBanner() {
           </p>
         </div>
 
-        {/* Quick actions — compact icon row on mobile so the animated buttons stay visible */}
-        <div key={cycleKey} className="flex sm:hidden items-center gap-1.5 shrink-0">
-          {QUICK_ACTIONS.map(action => (
-            <button
-              key={action.label}
-              onClick={() => { navigate(action.to, action.state ? { state: action.state } : undefined); handleClose() }}
-              aria-label={action.label}
-              style={entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }}
-              className={cn(
-                'relative flex items-center justify-center w-7 h-7 rounded-lg bg-white/15 border border-white/20 backdrop-blur-sm active:scale-90 transition-all',
-                entered && 'animate-stepper-pop'
-              )}
-            >
-              <action.icon size={13} className="text-white" />
-              <span className={cn('absolute -top-1 -left-1 w-3 h-3 rounded-full border border-white/70 text-white text-[7px] font-bold flex items-center justify-center', action.badge)}>
-                {action.step}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Quick actions — S-shaped stepper: 1→2 across, down to 3, 3→4 back across, then 4→1 to loop (desktop) */}
-        <div
-          key={`grid-${cycleKey}`}
-          className="relative hidden sm:grid shrink-0 w-auto items-center justify-items-center"
-          style={{ gridTemplateColumns: 'auto 18px auto', gridTemplateRows: 'auto 18px auto' }}
-        >
-          {/* connectors — each draws in right after the step before it pops in */}
-          {entered && (
-            <>
-              <div
-                className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
-                style={{ gridColumn: 2, gridRow: 1, animationDelay: `${BASE_DELAY + STEP_DELAY * 1}ms` }}
-              />
-              <div
-                className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
-                style={{ gridColumn: 3, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 3}ms` }}
-              />
-              <div
-                className="animate-stepper-line-h border-t border-dashed border-white/40 w-full"
-                style={{ gridColumn: 2, gridRow: 3, animationDelay: `${BASE_DELAY + STEP_DELAY * 5}ms` }}
-              />
-              {/* 4 → 1, closing the loop back to the start */}
-              <div
-                className="animate-stepper-line-v border-l border-dashed border-white/40 h-full"
-                style={{ gridColumn: 1, gridRow: 2, animationDelay: `${BASE_DELAY + STEP_DELAY * 7}ms` }}
-              />
-            </>
-          )}
-
-          {QUICK_ACTIONS.map(action => (
-            <button
-              key={action.label}
-              onClick={() => { navigate(action.to, action.state ? { state: action.state } : undefined); handleClose() }}
-              style={{
-                gridColumn: action.col,
-                gridRow: action.row,
-                ...(entered ? { animationDelay: `${BASE_DELAY + STEP_DELAY * 2 * (action.step - 1)}ms` } : { opacity: 0 }),
-              }}
-              className={cn(
-                'inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-semibold pl-1.5 pr-2.5 py-1.5 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all whitespace-nowrap',
-                entered && 'animate-stepper-pop'
-              )}
-            >
-              <span className={cn('relative flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0 backdrop-blur-sm', action.chip)}>
-                <action.icon size={12} />
-                <span className={cn('absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full border border-white/70 text-white text-[8px] font-bold flex items-center justify-center', action.badge)}>
-                  {action.step}
-                </span>
-              </span>
-              {action.label}
-            </button>
-          ))}
-        </div>
+        <QuickActionsStepper onNavigate={handleClose} />
       </div>
     </div>
   )

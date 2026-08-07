@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   X, Bell, MessageSquare, Megaphone, FileCheck,
   Settings, CreditCard, Users, CheckCheck, Trash2,
-  AlertCircle, RefreshCw,
+  AlertCircle, RefreshCw, Radio,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
@@ -23,6 +23,7 @@ function toKind(type: string): NotificationKind {
   if (type === 'template_approved' || type === 'template_rejected') return 'template'
   if (type === 'team_invite_accepted') return 'team'
   if (type === 'payment_failed' || type === 'payment_success' || type === 'trial_ending' || type === 'plan_changed') return 'billing'
+  if (type === 'admin_broadcast') return 'broadcast'
   return 'system'
 }
 
@@ -47,6 +48,7 @@ function kindMeta(kind: NotificationKind): { Icon: React.ElementType; bg: string
     case 'team':      return { Icon: Users,         bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-500' }
     case 'billing':   return { Icon: CreditCard,    bg: 'bg-amber-50 dark:bg-amber-900/20',   color: 'text-amber-500' }
     case 'system':    return { Icon: Settings,      bg: 'bg-gray-100 dark:bg-gray-800',        color: 'text-gray-500' }
+    case 'broadcast': return { Icon: Radio,         bg: 'bg-pink-50 dark:bg-pink-900/20',      color: 'text-pink-500' }
   }
 }
 
@@ -61,6 +63,7 @@ function inferNotifUrl(kind: NotificationKind): string {
     case 'team':     return '/team'
     case 'billing':  return '/settings/billing'
     case 'system':   return '/settings'
+    case 'broadcast': return '/dashboard'
   }
 }
 
@@ -91,6 +94,7 @@ function groupByDay(items: AppNotification[]) {
 export default function NotificationPanel() {
   const { notificationPanelOpen, setNotificationPanelOpen } = useUIStore()
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [activeBroadcast, setActiveBroadcast] = useState<AppNotification | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
@@ -137,6 +141,10 @@ export default function NotificationPanel() {
 
   function handleRead(notif: AppNotification) {
     if (!notif.isRead) markRead(notif.id)
+    if (notif.kind === 'broadcast') {
+      setActiveBroadcast(notif)
+      return
+    }
     navigate(notif.actionUrl || inferNotifUrl(notif.kind))
     setNotificationPanelOpen(false)
   }
@@ -294,6 +302,44 @@ export default function NotificationPanel() {
           </button>
         </div>
       </div>
+
+      {/* Broadcast full-message modal */}
+      {activeBroadcast && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setActiveBroadcast(null)}>
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl max-h-[80vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-pink-50 dark:bg-pink-900/20">
+                <Radio size={16} className="text-pink-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{activeBroadcast.title}</p>
+                <p className="text-2xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {formatDistanceToNow(new Date(activeBroadcast.createdAt), { addSuffix: true })}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveBroadcast(null)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="px-5 py-4 overflow-y-auto">
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                {activeBroadcast.body}
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
+              <button onClick={() => setActiveBroadcast(null)} className="btn btn-primary w-full h-9">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

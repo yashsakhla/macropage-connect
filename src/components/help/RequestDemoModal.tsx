@@ -131,7 +131,7 @@ export default function RequestDemoModal() {
                     type="date"
                     min={minDate}
                     max={maxDate}
-                    className="input w-full"
+                    className="input w-full [color-scheme:light] dark:[color-scheme:dark]"
                   />
                   {errors.date && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.date.message}</p>}
                 </div>
@@ -139,7 +139,7 @@ export default function RequestDemoModal() {
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
                     <Clock size={12} /> Time
                   </label>
-                  <input {...register('time')} type="time" className="input w-full" />
+                  <input {...register('time')} type="time" className="input w-full [color-scheme:light] dark:[color-scheme:dark]" />
                   {errors.time && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.time.message}</p>}
                 </div>
               </div>

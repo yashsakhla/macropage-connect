@@ -20,6 +20,7 @@ import type {
 import CampaignWizard from '@/components/campaigns/CampaignWizard'
 import WelcomePopup from '@/components/onboarding/WelcomePopup'
 import PromoBanner from '@/components/dashboard/PromoBanner'
+import ChatColumnsMarquee from '@/components/dashboard/ChatColumnsMarquee'
 import WhatsAppQRCard from '@/components/dashboard/WhatsAppQRCard'
 import AdBanner, { type AdItem } from '@/components/dashboard/AdBanner'
 import dashboardBanner from '@/assets/dashboard/dashboard-banner.svg'
@@ -183,45 +184,89 @@ function inferStepUrl(title: string): string {
   return '/dashboard'
 }
 
+const STEP_DESCRIPTIONS: Record<string, string> = {
+  'Create your account': 'Sign up for Macropage Connect',
+  'Verify your email': 'Confirm your email address',
+  'Connect WhatsApp Business': 'Link your WhatsApp number',
+  'Import your contacts': 'Upload your contact list',
+  'Create your first template': 'Set up a message template',
+  'Launch your first campaign': 'Send your first broadcast',
+}
+
 function OnboardingChecklist({ steps, progressPercent, completedCount, totalSteps }: ChecklistData) {
   const navigate = useNavigate()
+  const firstIncompleteId = steps.find(s => !s.completed)?.id
+
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Getting started</h3>
-        <span className="text-xs text-gray-400">{completedCount}/{totalSteps} done</span>
+    <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-4 sm:px-6 py-4 flex items-center justify-between gap-2">
+        <div>
+          <p className="text-base font-semibold text-white">Get started with Macropage Connect 🚀</p>
+          <p className="text-sm text-white/70 mt-0.5">{completedCount} of {totalSteps} steps complete</p>
+        </div>
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+          <circle
+            cx="20" cy="20" r="16" fill="none"
+            stroke="white" strokeWidth="3"
+            strokeDasharray={`${2 * Math.PI * 16}`}
+            strokeDashoffset={`${2 * Math.PI * 16 * (1 - progressPercent / 100)}`}
+            strokeLinecap="round"
+            transform="rotate(-90 20 20)"
+          />
+          <text x="20" y="25" textAnchor="middle" fontSize="9" fill="white" fontWeight="bold">{progressPercent}%</text>
+        </svg>
       </div>
-      <div className="h-2 bg-gray-100 rounded-full mb-5 overflow-hidden">
-        <div
-          className="h-full bg-[#1a5c3a] rounded-full transition-all duration-500"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-      <div className="space-y-3">
-        {steps.map(step => {
-          const targetUrl = step.actionUrl || inferStepUrl(step.title)
-          return (
-            <div key={step.id} className="flex items-center gap-3">
-              {step.completed
-                ? <CheckCircle2 size={20} className="text-[#1a5c3a] flex-shrink-0" />
-                : <Circle size={20} className="text-gray-300 flex-shrink-0" />
-              }
-              <span className={cn('text-sm', step.completed ? 'line-through text-gray-400' : 'text-gray-700')}>
-                {step.title}
-              </span>
-              {!step.completed && (
-                <button
-                  onClick={() => navigate(targetUrl)}
-                  className="text-xs text-[#1a5c3a] hover:underline flex items-center gap-0.5 flex-shrink-0"
-                >
-                  Go <ExternalLink size={10} />
-                </button>
+
+      {/* Steps */}
+      {steps.map(step => {
+        const active = step.id === firstIncompleteId
+        const targetUrl = step.actionUrl || inferStepUrl(step.title)
+        return (
+          <div
+            key={step.id}
+            onClick={() => active && navigate(targetUrl)}
+            className={cn(
+              'flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 border-b border-[#f5f5f5] dark:border-white/5 last:border-0',
+              active && 'cursor-pointer hover:bg-[#fafffe] dark:hover:bg-white/5',
+            )}
+          >
+            {/* Status circle */}
+            <div className="flex-shrink-0">
+              {step.completed ? (
+                <div className="w-7 h-7 bg-[#1a5c3a] rounded-full flex items-center justify-center">
+                  <CheckCircle2 size={16} className="text-white" strokeWidth={3} />
+                </div>
+              ) : active ? (
+                <div className="w-7 h-7 bg-white dark:bg-[#0b1220] border-2 border-[#1a5c3a] rounded-full flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 bg-[#1a5c3a] rounded-full" />
+                </div>
+              ) : (
+                <Circle size={28} className="text-[#e8ebe8] dark:text-white/10" strokeWidth={2} />
               )}
-              <span className="flex-1" />
             </div>
-          )
-        })}
-      </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{step.title}</p>
+              {STEP_DESCRIPTIONS[step.title] && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{STEP_DESCRIPTIONS[step.title]}</p>
+              )}
+              {active && (
+                <p className="text-xs text-[#1a5c3a] font-medium mt-1 flex items-center gap-1">Continue <ExternalLink size={10} /></p>
+              )}
+            </div>
+
+            {/* Done badge */}
+            {step.completed && (
+              <span className="bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] text-[0.625rem] rounded-full px-2 py-0.5 flex-shrink-0">
+                Done
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -401,6 +446,13 @@ export default function Dashboard() {
           <p className="text-xs sm:text-sm text-[#1a5c3a]/80 mt-2 leading-relaxed">
             Reach customers instantly, run campaigns, and track results — all in one place.
           </p>
+        </div>
+
+        {/* A single chat-bubble column drifting upward — kept here
+            permanently, unlike the welcome-back banner above which only
+            shows once after login */}
+        <div className="hidden sm:flex absolute right-0 inset-y-0 items-center">
+          <ChatColumnsMarquee />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CheckCircle, CreditCard, Download, Info, Loader2, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -23,6 +24,7 @@ const NON_MESSAGE_METERS = [
 ]
 
 export default function BillingSettings() {
+  const navigate = useNavigate()
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
@@ -90,7 +92,12 @@ export default function BillingSettings() {
               }
             </p>
           </div>
-          <button className="bg-white/20 hover:bg-white/30 rounded-xl px-4 h-9 text-sm font-medium text-white transition-colors w-full sm:w-auto">Change plan</button>
+          <button
+            onClick={() => navigate('/plans')}
+            className="bg-white/20 hover:bg-white/30 rounded-xl px-4 h-9 text-sm font-medium text-white transition-colors w-full sm:w-auto"
+          >
+            Change plan
+          </button>
         </div>
 
         <div className="px-4 sm:px-6 py-5">

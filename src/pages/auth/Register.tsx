@@ -2,14 +2,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, Navigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2, Mail, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import toast from 'react-hot-toast'
+import type { AxiosError } from 'axios'
 import { useRegister, useFinalizeSignup, useVerifyOtp, useResendVerification, useGoogleAuth } from '@/hooks/useAuth'
 import { useElementWidth } from '@/hooks/useElementWidth'
 import { cn, stripEmojis } from '@/lib/utils'
-import type { RegisterFormPayload, RawAuthResponseDTO, ApiResponse } from '@/types'
+import type { RegisterFormPayload, RawAuthResponseDTO, ApiResponse, ApiErrorResponse } from '@/types'
 import FormError from '@/components/shared/FormError'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -30,7 +31,11 @@ const companyNameRegex = /^[A-Za-z0-9][A-Za-z0-9&.,'\- ]*$/;
 const schema = z.object({
   firstName: z.string().min(2, 'First name is required').max(50, 'First name must be at most 50 characters').regex(nameRegex, 'First name can only contain letters, spaces, hyphens and apostrophes'),
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name must be at most 50 characters').regex(nameRegex, 'Last name can only contain letters, spaces, hyphens and apostrophes'),
-  email: z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email'),
+  email: z.string().min(1, 'Email is required').max(254, 'Email must be at most 254 characters').email('Enter a valid email')
+    .refine((v) => {
+      const tld = v.split('.').pop() ?? ''
+      return !/^com+$/i.test(tld) || tld.toLowerCase() === 'com'
+    }, 'Enter a valid email'),
   companyName: z.string().min(2, 'Company name is required').max(100, 'Company name must be at most 100 characters').regex(companyNameRegex, 'Company name contains invalid characters'),
   phone: z.string().optional().refine((v) => !v || /^\d{10}$/.test(v), 'Enter a valid 10-digit number'),
   password: z.string().min(8, 'Password must be at least 8 characters').max(64, 'Password must be at most 64 characters').regex(passwordRegex, 'Password must contain uppercase, lowercase, number and special character'),
@@ -61,6 +66,7 @@ export default function Register() {
   const { theme } = useUIStore()
   const logo = theme === 'dark' ? whiteLogo : blackLogo
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [heroImage] = useState(() => signupImages[Math.floor(Math.random() * signupImages.length)])
   const reg = useRegister()
   const googleAuth = useGoogleAuth()
@@ -73,9 +79,9 @@ export default function Register() {
   const verifyOtp = useVerifyOtp()
   const resend = useResendVerification()
 
+  const [registerError, setRegisterError] = useState('')
   const [step, setStep] = useState<'form' | 'otp'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
-  const [pendingAuthData, setPendingAuthData] = useState<RawAuthResponseDTO | null>(null)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [cooldown, setCooldown] = useState(0)
   const otpCode = otpDigits.join('')
@@ -87,13 +93,16 @@ export default function Register() {
   }, [cooldown])
 
   const onSubmitForm = (d: FormData) => {
+    setRegisterError('')
     reg.mutate(d as RegisterFormPayload, {
-      onSuccess: (res: ApiResponse<RawAuthResponseDTO>) => {
+      onSuccess: () => {
         setPendingEmail(d.email)
-        setPendingAuthData(res.data)
         setOtpDigits(['', '', '', '', '', ''])
         setCooldown(30)
         setStep('otp')
+      },
+      onError: (err: AxiosError<ApiErrorResponse>) => {
+        setRegisterError(err.response?.data?.message ?? 'Registration failed. Please try again.')
       },
     })
   }
@@ -117,7 +126,7 @@ export default function Register() {
   const handleVerifyOtp = () => {
     if (otpCode.length !== 6) return
     verifyOtp.mutate({ email: pendingEmail, otp: otpCode }, {
-      onSuccess: () => pendingAuthData && finalizeSignup(pendingAuthData),
+      onSuccess: (res: ApiResponse<RawAuthResponseDTO>) => finalizeSignup(res.data),
     })
   }
 
@@ -259,9 +268,12 @@ export default function Register() {
 
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Confirm password</div>
-              <input {...r('confirmPassword')} type="password" maxLength={64}
-                onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
-                className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full', errors.confirmPassword && 'border-red-400')} />
+              <div className="relative">
+                <input {...r('confirmPassword')} type={showConfirmPassword ? 'text' : 'password'} maxLength={64}
+                  onInput={(e) => { const v = e.currentTarget.value; const s = stripEmojis(v); if (s !== v) e.currentTarget.value = s }}
+                  className={cn('h-10 px-4 bg-[var(--page-bg)] rounded-xl w-full pr-10', errors.confirmPassword && 'border-red-400')} />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+              </div>
               <FormError message={errors.confirmPassword?.message} />
             </div>
 
@@ -278,6 +290,13 @@ export default function Register() {
               <label className="flex items-center gap-2"><input {...r('terms')} type="checkbox" className="w-4 h-4" /> <span className="text-xs">I agree to the <a href="https://www.macropageconnect.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Terms of Service</a> and <a href="https://www.macropageconnect.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)]">Privacy Policy</a></span></label>
               <label className="flex items-center gap-2"><input {...r('updates')} type="checkbox" className="w-4 h-4" /> <span className="text-xs text-gray-600">I'd like to receive product updates and tips via email</span></label>
             </div>
+
+            {registerError && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
+                <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700 leading-snug">{registerError}</p>
+              </div>
+            )}
 
             <button type="submit" disabled={reg.isPending || !isValid} className="w-full h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">{reg.isPending ? <><Loader2 className="animate-spin mr-2" />Creating…</> : 'Create account'}</button>
 
@@ -304,16 +323,16 @@ export default function Register() {
 
             <p className="text-center text-sm text-gray-500 mt-3">Already have an account? <Link to="/login" className="text-[var(--primary)] font-semibold">Sign in →</Link></p>
           </form>
+
+          <div className="mt-6 max-w-xl text-center">
+            <h3 className="font-bold text-gray-900">Reach customers on WhatsApp</h3>
+            <p className="text-gray-500 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
+          </div>
         </div>
       </div>
 
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
         <img src={heroImage} alt="Macropage Connect" className="absolute inset-0 w-full h-full object-cover" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center bg-gradient-to-t from-black/50 to-transparent">
-          <h3 className="font-bold text-lg text-white">Reach customers on WhatsApp</h3>
-          <p className="text-gray-100 mt-2 text-sm">Connect your business number and start sending verified messages that land straight in their inbox.</p>
-        </div>
       </div>
     </div>
   )

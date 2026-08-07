@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MessageSquare, Megaphone, Phone, Mail, Building2, MapPin, Calendar, Eye, BarChart2, Edit2, MoreVertical, Loader2 } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Megaphone, Phone, Mail, Building2, MapPin, Calendar, Eye, BarChart2, Edit2, MoreVertical, Loader2, Trash2 } from 'lucide-react'
 import { cn, formatPhone, fromNow } from '@/lib/utils'
-import { useContact } from '@/hooks/useContacts'
+import { useContact, useDeleteContact } from '@/hooks/useContacts'
 import { useOpenConversation } from '@/hooks/useContactActions'
 import { ContactAvatar } from '@/components/contacts/ContactCard'
 import ContactTimeline from '@/components/contacts/ContactTimeline'
 import ContactForm from '@/components/contacts/ContactForm'
 import ContactChatPanel from '@/components/contacts/ContactChatPanel'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { format } from 'date-fns'
 
 const STATUS_BADGE = {
@@ -22,9 +23,22 @@ export default function ContactDetail() {
   const navigate = useNavigate()
   const { data: contact, isLoading, isError, refetch } = useContact(id)
   const { openConversation, creating } = useOpenConversation()
+  const deleteContact = useDeleteContact()
   const [showEdit, setShowEdit] = useState(false)
   const [editingTags, setEditingTags] = useState(false)
   const [showChatPanel, setShowChatPanel] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+
+  const handleDelete = () => {
+    setMenuOpen(false)
+    setConfirmDeleteOpen(true)
+  }
+
+  const confirmDelete = () => {
+    setConfirmDeleteOpen(false)
+    deleteContact.mutate(id, { onSuccess: () => navigate('/contacts') })
+  }
 
   const handleSendMessage = async () => {
     // Only redirect to the inbox if a conversation already exists. For a contact
@@ -75,7 +89,21 @@ export default function ContactDetail() {
           <button className="btn-ghost h-8 px-3 text-sm flex items-center gap-1" onClick={() => navigate('/contacts')}>
             <ArrowLeft size={15} /> Contacts
           </button>
-          <button className="btn-ghost w-9 h-9 shrink-0 sm:hidden"><MoreVertical size={16} /></button>
+          <div className="relative sm:hidden">
+            <button className="btn-ghost w-9 h-9 shrink-0 p-0" onClick={() => setMenuOpen(v => !v)}>
+              <MoreVertical size={16} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-10 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+                <button className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { setMenuOpen(false); setShowEdit(true) }}>
+                  <Edit2 size={13} /> Edit contact
+                </button>
+                <button className="w-full px-3 py-2 text-left flex items-center gap-2 text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={handleDelete}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
           <button
@@ -95,7 +123,21 @@ export default function ContactDetail() {
           >
             <Megaphone size={15} className="shrink-0" /> <span className="truncate">Add to campaign</span>
           </button>
-          <button className="btn-ghost w-9 h-9 shrink-0 hidden sm:flex"><MoreVertical size={16} /></button>
+          <div className="relative hidden sm:block">
+            <button className="btn-ghost w-9 h-9 shrink-0 p-0 flex" onClick={() => setMenuOpen(v => !v)}>
+              <MoreVertical size={16} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-10 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+                <button className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { setMenuOpen(false); setShowEdit(true) }}>
+                  <Edit2 size={13} /> Edit contact
+                </button>
+                <button className="w-full px-3 py-2 text-left flex items-center gap-2 text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={handleDelete}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -223,6 +265,16 @@ export default function ContactDetail() {
 
       {showChatPanel && (
         <ContactChatPanel contact={contact} onClose={() => setShowChatPanel(false)} />
+      )}
+
+      {confirmDeleteOpen && (
+        <ConfirmDialog
+          title="Delete contact"
+          message={`Delete ${contact.name}? This cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteOpen(false)}
+        />
       )}
     </div>
   )
