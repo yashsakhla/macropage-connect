@@ -18,6 +18,7 @@ import {
 import type { Message, MessageStatus } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import { avatarGradient } from '@/lib/avatarGradient'
+import { useUIStore } from '@/store/uiStore'
 
 function formatTime(d: string | undefined) {
   if (!d) return ''
@@ -188,6 +189,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
   const contactName = senderName ?? 'Contact'
   const [imgError, setImgError] = useState(false)
   const [videoError, setVideoError] = useState(false)
+  const openLightbox = useUIStore((s) => s.openLightbox)
 
   // System event — centered pill
   if (msg.type === 'system') {
@@ -236,7 +238,7 @@ export default function MessageBubble({ msg, senderName }: Props) {
           {!msg.mediaUrl || imgError ? (
             <MediaError label="Image unavailable" inbound={inbound} />
           ) : (
-            <div className="relative group cursor-pointer" onClick={() => window.open(msg.mediaUrl, '_blank')}>
+            <div className="relative group cursor-pointer" onClick={() => msg.mediaUrl && openLightbox(msg.mediaUrl)}>
               <img
                 src={msg.mediaUrl}
                 alt="shared"

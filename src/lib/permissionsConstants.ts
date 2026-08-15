@@ -57,6 +57,9 @@ export const PERMISSIONS = {
   MANAGE_WHATSAPP:          'manage_whatsapp',
   MANAGE_API_KEYS:          'manage_api_keys',
   MANAGE_WEBHOOKS:          'manage_webhooks',
+
+  VIEW_CATALOG:             'view_catalog',
+  MANAGE_CATALOG:           'manage_catalog',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
@@ -76,6 +79,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'view_automation', 'manage_automation',
     'view_settings', 'manage_settings', 'manage_billing',
     'manage_whatsapp', 'manage_api_keys', 'manage_webhooks',
+    'view_catalog', 'manage_catalog',
   ],
   ADMIN: [
     'view_all_conversations', 'manage_conversations', 'reply_to_messages',
@@ -91,6 +95,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'view_automation', 'manage_automation',
     'view_settings', 'manage_settings',
     'manage_whatsapp', 'manage_api_keys', 'manage_webhooks',
+    'view_catalog', 'manage_catalog',
   ],
   MANAGER: [
     'view_all_conversations', 'manage_conversations', 'reply_to_messages',
@@ -104,16 +109,19 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'view_activity_log',
     'view_automation', 'manage_automation',
     'view_settings',
+    'view_catalog', 'manage_catalog',
   ],
   AGENT: [
     'view_assigned_conversations', 'manage_conversations',
     'reply_to_messages', 'resolve_conversations',
     'view_contacts', 'manage_contacts', 'create_contacts', 'edit_contacts',
     'view_campaigns', 'view_templates',
+    'view_catalog',
   ],
 }
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
+// 'BUSINESS' is this plan tier's internal name; sold to customers as "Scale".
 export type Plan = 'TRIAL' | 'STARTER' | 'GROWTH' | 'BUSINESS' | 'ENTERPRISE'
 
 export const PLAN_FEATURES: Record<Plan, string[]> = {
@@ -152,12 +160,14 @@ export const PLAN_LIMITS: Record<Plan, {
   contacts: number
   whatsappNumbers: number
   aiSessions: number
+  // Max projects (accounts) the owner of this plan may create. -1 = unlimited.
+  projects: number
 }> = {
-  TRIAL:      { teamMembers: 10, contacts: 25000,  whatsappNumbers: 2,  aiSessions: 500  },
-  STARTER:    { teamMembers: 3,  contacts: 5000,   whatsappNumbers: 1,  aiSessions: 0    },
-  GROWTH:     { teamMembers: 10, contacts: 25000,  whatsappNumbers: 2,  aiSessions: 500  },
-  BUSINESS:   { teamMembers: 25, contacts: 100000, whatsappNumbers: 5,  aiSessions: 5000 },
-  ENTERPRISE: { teamMembers: -1, contacts: -1,     whatsappNumbers: -1, aiSessions: -1   },
+  TRIAL:      { teamMembers: 10, contacts: 25000,  whatsappNumbers: 2,  aiSessions: 500,  projects: 1 },
+  STARTER:    { teamMembers: 3,  contacts: 5000,   whatsappNumbers: 1,  aiSessions: 0,    projects: 1 },
+  GROWTH:     { teamMembers: 10, contacts: 25000,  whatsappNumbers: 2,  aiSessions: 500,  projects: 3 },
+  BUSINESS:   { teamMembers: 25, contacts: 100000, whatsappNumbers: 5,  aiSessions: 5000, projects: 5 },
+  ENTERPRISE: { teamMembers: -1, contacts: -1,     whatsappNumbers: -1, aiSessions: -1,   projects: -1 },
 }
 
 // ─── Role metadata ────────────────────────────────────────────────────────────
@@ -204,6 +214,25 @@ export function usePlanLimit(limitKey: keyof typeof PLAN_LIMITS.TRIAL): number {
   return PLAN_LIMITS[plan]?.[limitKey] ?? 0
 }
 
+// Only the account OWNER can create new projects, and only up to their plan's
+// project cap (-1 = unlimited). Agents/admins/managers can never create one,
+// regardless of plan.
+export function useCanCreateProject(existingProjectCount: number): {
+  allowed: boolean
+  reason: 'not_owner' | 'limit_reached' | null
+  limit: number
+} {
+  const user = useAuthStore((s) => s.user)
+  const role = normaliseRole(user?.role as string | undefined)
+  const limit = usePlanLimit('projects')
+
+  if (role !== 'OWNER') return { allowed: false, reason: 'not_owner', limit }
+  if (limit !== -1 && existingProjectCount >= limit) {
+    return { allowed: false, reason: 'limit_reached', limit }
+  }
+  return { allowed: true, reason: null, limit }
+}
+
 // ─── Convenience hook (single store read — all permissions computed in one pass)
 export function usePermissions() {
   const user = useAuthStore(s => s.user)
@@ -240,6 +269,8 @@ export function usePermissions() {
     canManageAutomation:       perms.includes(PERMISSIONS.MANAGE_AUTOMATION),
     canManageApiKeys:          perms.includes(PERMISSIONS.MANAGE_API_KEYS),
     canManageWebhooks:         perms.includes(PERMISSIONS.MANAGE_WEBHOOKS),
+    canViewCatalog:            perms.includes(PERMISSIONS.VIEW_CATALOG),
+    canManageCatalog:          perms.includes(PERMISSIONS.MANAGE_CATALOG),
   }
 }
 

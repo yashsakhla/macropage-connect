@@ -1,8 +1,10 @@
-import { Bell, Sun, Moon, LogOut, Zap, Menu } from 'lucide-react'
+import { Bell, Sun, Moon, LogOut, Zap, Menu, ChevronDown, Building2, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/hooks/useAuth'
+import { useMyAccounts, useSelectAccount } from '@/hooks/useAccounts'
 import { useUnreadCount } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 import GlobalSearch from '@/components/search/GlobalSearch'
@@ -12,6 +14,11 @@ export default function Navbar() {
   const { user } = useAuthStore()
   const logout = useLogout()
   const navigate = useNavigate()
+
+  const [showSwitcher, setShowSwitcher] = useState(false)
+  const { data: accounts } = useMyAccounts()
+  const { mutate: selectAccount } = useSelectAccount()
+  const currentProject = useAuthStore((s) => s.currentProject)
 
   const unreadCount = useUnreadCount().data ?? 0
   const showUpgradeTag = user?.plan !== 'ENTERPRISE'
@@ -103,6 +110,47 @@ export default function Navbar() {
         <button onClick={toggleTheme} className="btn-ghost w-9 h-9 p-0 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition">
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setShowSwitcher((s) => !s)}
+            className="flex items-center gap-2 h-9 px-3 rounded-xl bg-[#f7f8f6] hover:bg-[#e8ebe8] transition-colors"
+          >
+            <Building2 size={14} className="text-[#1a5c3a]" />
+            <span className="text-xs font-semibold text-gray-700 max-w-[120px] truncate">
+              {currentProject?.name ?? 'Select account'}
+            </span>
+            <ChevronDown size={12} className="text-gray-400" />
+          </button>
+
+          {showSwitcher && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-[#e8ebe8] rounded-2xl shadow-xl z-50 overflow-hidden">
+              <p className="text-2xs font-semibold text-gray-400 uppercase tracking-wide px-4 py-2.5 border-b border-[#f0f0f0]">
+                Switch account
+              </p>
+              {(accounts ?? []).map((account: any) => (
+                <button
+                  key={account.projectId}
+                  onClick={() => {
+                    selectAccount(account.projectId)
+                    setShowSwitcher(false)
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f7f8f6] text-left transition-colors"
+                >
+                  <div className="w-7 h-7 bg-[#e8f5ee] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xs font-bold text-[#1a5c3a]">
+                      {account.name?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-700 flex-1 truncate">{account.name}</span>
+                  {currentProject?.projectId === account.projectId && (
+                    <Check size={13} className="text-[#1a5c3a]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button onClick={() => logout.mutate()} className="btn-ghost w-9 h-9 p-0 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition">
           <LogOut size={18} />

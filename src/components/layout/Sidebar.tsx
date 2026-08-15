@@ -4,7 +4,7 @@ import {
   LayoutDashboard, MessageSquare, Megaphone, FileText,
   Users, Users2, Settings, ChevronLeft, ChevronRight,
   HelpCircle, ArrowRight, Zap, Lock, Crown, CreditCard, Clock, BookOpen, X,
-  MessageCircle,
+  MessageCircle, Package, ShoppingCart,
 } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -36,6 +36,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/contacts',   label: 'Contacts',   Icon: Users,           permission: 'view_contacts',    feature: null              },
   { to: '/campaigns',  label: 'Campaigns',  Icon: Megaphone,       permission: 'view_campaigns',   feature: null              },
   { to: '/templates',  label: 'Templates',  Icon: FileText,        permission: 'view_templates',   feature: null              },
+  { to: '/catalog/products', label: 'Products', Icon: Package,     permission: 'view_catalog',      feature: null              },
+  { to: '/orders',     label: 'Orders',     Icon: ShoppingCart,    permission: 'view_catalog',      feature: null              },
   { to: '/automation', label: 'Automation', Icon: Zap,             permission: 'view_automation',  feature: 'automation_rules'},
   { to: '/developers', label: 'Developers', Icon: BookOpen,        permission: null,               feature: null              },
   { to: '/team',       label: 'Team',       Icon: Users2,          permission: 'view_team',        feature: null              },
