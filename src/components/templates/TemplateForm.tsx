@@ -7,7 +7,7 @@ import { X, Plus, Trash2, Bold, Italic, Strikethrough, Code2, Tag, Globe, Megaph
 import { cn } from '@/lib/utils'
 import type { CreateTemplatePayload, TemplateCategory, TemplateStatus } from '@/types'
 import TemplatePreview from './TemplatePreview'
-import { useCreateTemplate, useUpdateTemplate, useSaveDraft, useUpdateDraft } from '@/hooks/useTemplates'
+import { useCreateTemplate, useSaveDraft, useUpdateDraft } from '@/hooks/useTemplates'
 import { useUploadImage, useUploadDocument, useDeleteFile } from '@/hooks/useUpload'
 import { useRequireWhatsApp } from '@/hooks/useRequireWhatsApp'
 
@@ -72,7 +72,6 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
   // resubmission) remain editable.
   const isLocked = !!templateId && templateStatus !== 'DRAFT' && templateStatus !== 'REJECTED'
   const createTemplate = useCreateTemplate()
-  const updateTemplate = useUpdateTemplate()
   const { requireConnected } = useRequireWhatsApp()
   const saveDraft = useSaveDraft()
   const updateDraft = useUpdateDraft()
@@ -240,11 +239,10 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
       return
     }
     const payload = buildPayload(data)
-    if (templateId) {
-      updateTemplate.mutate({ id: templateId, data: payload }, { onSuccess: onClose })
-    } else {
-      createTemplate.mutate(payload, { onSuccess: onClose })
-    }
+    // Drafts and rejected templates haven't been submitted to Meta yet, so submitting
+    // them must go through the same create call that does the actual Meta submission —
+    // PATCH /templates/:id only saves fields and never talks to Meta.
+    createTemplate.mutate(templateId ? { ...payload, id: templateId } : payload, { onSuccess: onClose })
   }
 
   const onSaveDraft = () => {
@@ -614,9 +612,9 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
                 type="submit"
                 form="template-form"
                 className="btn-primary h-9 px-5 flex-1 sm:flex-none justify-center"
-                disabled={createTemplate.isPending || updateTemplate.isPending}
+                disabled={createTemplate.isPending}
               >
-                {(createTemplate.isPending || updateTemplate.isPending) ? 'Submitting...' : 'Submit for review'}
+                {createTemplate.isPending ? 'Submitting...' : 'Submit for review'}
               </button>
             )}
           </div>

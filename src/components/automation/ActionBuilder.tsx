@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, X, GripVertical, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFlows } from '@/hooks/useFlows'
+import { useTemplates } from '@/hooks/useTemplates'
 import type { ActionType } from '@/types/automation'
 import type { ConversationFlow } from '@/types/flow'
 
@@ -29,6 +30,7 @@ interface Props {
 }
 
 function ActionConfig({ action, onUpdate, flows }: { action: ActionItem; onUpdate: (config: Record<string, unknown>) => void; flows?: ConversationFlow[] }) {
+  const { data: templates } = useTemplates({ status: 'APPROVED' })
   const [btns, setBtns] = useState<string[]>((action.config.buttons as string[]) ?? [])
   const [tags, setTags] = useState<string[]>((action.config.tags as string[]) ?? [])
   const [tagInput, setTagInput] = useState('')
@@ -98,10 +100,13 @@ function ActionConfig({ action, onUpdate, flows }: { action: ActionItem; onUpdat
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
         <select className="input w-full h-9 text-sm" value={(action.config.templateId as string) ?? ''} onChange={(e) => onUpdate({ ...action.config, templateId: e.target.value })}>
           <option value="">Select template...</option>
-          <option value="tpl-pricing">Pricing inquiry</option>
-          <option value="tpl-welcome">Welcome message</option>
-          <option value="tpl-followup">Follow-up</option>
+          {(templates ?? []).map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
         </select>
+        {templates && templates.length === 0 && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">No approved templates yet — get a template approved by Meta first.</p>
+        )}
       </div>
     )
   }

@@ -54,9 +54,9 @@ export function useCreateRule() {
   return useMutation({
     mutationFn: (data: RulePayload) =>
       api.post('/automation/rules', data).then((r) => r.data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['automation-rules'] })
-      toast.success('Rule created and activated')
+      toast.success(variables.isEnabled === false ? 'Rule saved as draft' : 'Rule created and activated')
     },
     onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to create rule'),
@@ -67,7 +67,7 @@ export function useUpdateRule() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<RulePayload> }) =>
-      api.patch(`/automation/rules/${id}`, data).then((r) => r.data),
+      api.put(`/automation/rules/${id}`, data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['automation-rules'] })
       toast.success('Rule updated')
@@ -81,7 +81,7 @@ export function useToggleRule() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      api.patch(`/automation/rules/${id}/toggle`, { enabled }).then((r) => r.data),
+      api.put(`/automation/rules/${id}/toggle`, { enabled }).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['automation-rules'] }),
     onError: (err: MutationError) =>
       toast.error(err.response?.data?.message ?? 'Failed to toggle rule'),

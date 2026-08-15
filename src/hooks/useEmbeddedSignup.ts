@@ -133,7 +133,16 @@ export function useEmbeddedSignup(): UseEmbeddedSignupReturn {
           cleanupListenerRef.current = null
         }
 
-        if (response.status !== 'connected' || !response.authResponse) {
+        // Meta's WhatsApp Embedded Signup FINISH postMessage (captured above,
+        // before FB.login was even called) is the authoritative signal that
+        // the user completed every step in the popup — business, WABA, phone.
+        // FB.login's own `status` is unreliable here: with third-party
+        // cookies blocked (the default in current Chrome) it commonly comes
+        // back 'unknown' even on a fully successful signup. Only treat this
+        // as an actual cancel when we never received that FINISH event.
+        const embeddedSignupFinished = !!capturedWabaIdRef.current
+
+        if ((response.status !== 'connected' && !embeddedSignupFinished) || !response.authResponse) {
           setState(prev => (prev !== 'cancelled' ? 'cancelled' : prev))
           if (response.status !== 'connected') {
             toast('Connection cancelled', { icon: 'ℹ️' })

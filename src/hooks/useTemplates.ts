@@ -65,8 +65,9 @@ export function useCreateTemplate() {
         if (r.data.success === false) throw r.data
         return r.data
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['templates'] })
+      if (variables.id) qc.invalidateQueries({ queryKey: ['template', variables.id] })
       toast.success('Template submitted for Meta review')
     },
     onError: (err: MutationError) =>

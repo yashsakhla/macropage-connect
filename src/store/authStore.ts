@@ -34,10 +34,21 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
 
+  // The selected project — NOT a separate tenant login. Login issues a single
+  // JWT for the user; selecting/creating a project just scopes subsequent API
+  // calls to /api/v1/{projectId}/... (see the axios request interceptor).
+  // It never triggers a token swap.
+  currentProject: {
+    projectId: string
+    name: string
+    role: string
+  } | null
+
   setAuth: (user: User, token: string, refreshToken: string) => void
   setUser: (user: User) => void
   setToken: (token: string) => void
   setRefreshToken: (refreshToken: string) => void
+  setCurrentProject: (project: { projectId: string; name: string; role: string } | null) => void
   logout: () => void
   setLoading: (loading: boolean) => void
 
@@ -56,6 +67,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      currentProject: null,
 
       setAuth: (user, token, refreshToken) => {
         const resolvedRole = (user.role as string)?.toUpperCase()
@@ -75,8 +87,10 @@ export const useAuthStore = create<AuthState>()(
 
       setRefreshToken: (refreshToken) => set({ refreshToken }),
 
+      setCurrentProject: (project) => set({ currentProject: project }),
+
       logout: () => {
-        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false, currentProject: null })
         // Support chat history is only meant to persist for the logged-in session.
         useSupportChatStore.getState().reset([])
       },
@@ -124,6 +138,7 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        currentProject: state.currentProject,
       }),
     }
   )

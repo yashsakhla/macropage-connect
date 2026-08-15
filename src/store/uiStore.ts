@@ -24,6 +24,13 @@ interface UIState {
   // on screen — AdBanner waits for this to go false before showing its own popup
   welcomePopupOpen: boolean
 
+  // URL of the image currently shown full-screen — set by any "view image"
+  // click anywhere in the app; ImageLightbox (mounted once in MainLayout)
+  // renders it instead of opening a new tab
+  lightboxImage: string | null
+  openLightbox: (url: string) => void
+  closeLightbox: () => void
+
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
   toggleMobileSidebar: () => void
@@ -60,6 +67,7 @@ export const useUIStore = create<UIState>()(
       fullLoader: false,
       justLoggedIn: false,
       welcomePopupOpen: false,
+      lightboxImage: null,
 
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -85,6 +93,8 @@ export const useUIStore = create<UIState>()(
       openDemoModal: () => set({ demoModalOpen: true, helpWidgetOpen: false }),
       setJustLoggedIn: (v) => set({ justLoggedIn: v }),
       setWelcomePopupOpen: (v) => set({ welcomePopupOpen: v }),
+      openLightbox: (url) => set({ lightboxImage: url }),
+      closeLightbox: () => set({ lightboxImage: null }),
     }),
     {
       name: 'macropage-ui',

@@ -388,6 +388,7 @@ export interface CreateTemplateHeader {
 }
 
 export interface CreateTemplatePayload {
+  id?: string
   name: string
   category: TemplateCategory
   language: string
