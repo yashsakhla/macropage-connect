@@ -18,6 +18,7 @@ import FullPageLoader from '@/components/shared/FullPageLoader'
 import SupportChat from '@/components/support/SupportChat'
 import RequestDemoModal from '@/components/help/RequestDemoModal'
 import NotificationPanel from '@/components/notifications/NotificationPanel'
+import ImageLightbox from '@/components/shared/ImageLightbox'
 import { useSocket } from '@/hooks/useSocket'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
 import { useGetMe } from '@/hooks/useAuth'
@@ -113,6 +114,7 @@ export default function MainLayout() {
       <WhatsAppRequiredModal />
       <PaymentVerificationFailedModal />
       {demoModalOpen && <RequestDemoModal />}
+      <ImageLightbox />
     </div>
   )
 }

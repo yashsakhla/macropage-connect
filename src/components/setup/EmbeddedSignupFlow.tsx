@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   Shield, CheckCircle, ExternalLink,
   AlertTriangle, Building2, Phone, Smartphone,
@@ -88,9 +88,19 @@ export default function EmbeddedSignupFlow({ onConnected }: EmbeddedSignupFlowPr
     disconnect,
   } = useEmbeddedSignup()
 
-  // Notify parent when connection completes
+  // Notify parent when connection completes — exactly once per connection.
+  // `onConnected` is typically an inline callback on the caller's side (a new
+  // function reference every render), and it calls refetchStatus() itself,
+  // which re-renders the parent and produces yet another new reference. If
+  // that were in this effect's dependency array, the effect would re-fire on
+  // every one of those renders — since `state`/`wabaAccount` never change
+  // once connected, that's an infinite loop of onConnected() -> refetch ->
+  // re-render -> onConnected() again, hammering /whatsapp/status forever.
+  // Tracking with a ref instead of a dependency makes this fire once.
+  const notifiedRef = useRef(false)
   useEffect(() => {
-    if (state === 'connected' && wabaAccount) {
+    if (state === 'connected' && wabaAccount && !notifiedRef.current) {
+      notifiedRef.current = true
       onConnected({
         wabaId:        capturedWabaId        ?? wabaAccount.wabaId,
         phoneNumberId: capturedPhoneNumberId ?? wabaAccount.phoneNumberId,
@@ -99,7 +109,11 @@ export default function EmbeddedSignupFlow({ onConnected }: EmbeddedSignupFlowPr
         qualityRating: wabaAccount.qualityRating,
       })
     }
-  }, [state, wabaAccount, capturedWabaId, capturedPhoneNumberId, onConnected])
+    if (state !== 'connected') {
+      notifiedRef.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, wabaAccount, capturedWabaId, capturedPhoneNumberId])
 
   if (state === 'connected' && wabaAccount) {
     return <WABADetails account={wabaAccount} onDisconnect={disconnect} />

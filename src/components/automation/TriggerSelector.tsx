@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTemplates } from '@/hooks/useTemplates'
 
 type TriggerTab = 'message' | 'button' | 'event' | 'schedule'
 
@@ -49,6 +50,9 @@ export default function TriggerSelector({ value, onChange }: Props) {
   const [activeTab, setActiveTab] = useState<TriggerTab>(value.type || 'message')
   const [kwInput, setKwInput] = useState('')
   const [exInput, setExInput] = useState('')
+  const { data: templates } = useTemplates({ status: 'APPROVED' })
+  const selectedTemplate = templates?.find((t) => t.id === value.templateId)
+  const templateButtons = selectedTemplate?.buttons ?? []
 
   function setTab(tab: TriggerTab) {
     setActiveTab(tab)
@@ -175,19 +179,23 @@ export default function TriggerSelector({ value, onChange }: Props) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">When contact clicks a button:</label>
-            <select className="input w-full h-9 text-sm" value={value.templateId ?? ''} onChange={(e) => onChange({ ...value, templateId: e.target.value })}>
+            <select className="input w-full h-9 text-sm" value={value.templateId ?? ''} onChange={(e) => onChange({ ...value, templateId: e.target.value, buttonText: undefined })}>
               <option value="">Select template...</option>
-              <option value="tpl-demo-1">Demo template (Yes / No)</option>
-              <option value="tpl-pricing">Pricing inquiry template</option>
+              {(templates ?? []).map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>{tpl.name}{tpl.buttons?.length ? ` (${tpl.buttons.map((b) => b.text).join(' / ')})` : ''}</option>
+              ))}
             </select>
           </div>
           {value.templateId && (
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Select button:</label>
-              {['Yes', 'No', 'Learn more'].map((btn) => (
-                <label key={btn} className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="buttonText" value={btn} checked={value.buttonText === btn} onChange={() => onChange({ ...value, buttonText: btn })} className="accent-[#1a5c3a]" />
-                  <span className="text-xs text-gray-700 dark:text-gray-300">{btn}</span>
+              {templateButtons.length === 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">This template has no buttons.</p>
+              )}
+              {templateButtons.map((btn) => (
+                <label key={btn.text} className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="buttonText" value={btn.text} checked={value.buttonText === btn.text} onChange={() => onChange({ ...value, buttonText: btn.text })} className="accent-[#1a5c3a]" />
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{btn.text}</span>
                 </label>
               ))}
             </div>

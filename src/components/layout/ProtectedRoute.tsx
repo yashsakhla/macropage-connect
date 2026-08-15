@@ -15,11 +15,17 @@ function normalise(s: string | undefined) {
 }
 
 export default function ProtectedRoute({ children, roles, feature }: Props) {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user, currentProject } = useAuthStore()
   const location = useLocation()
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // No project selected yet — covers both the post-login redirect and a
+  // page refresh mid-session, since currentProject persists across refreshes.
+  if (!currentProject) {
+    return <Navigate to="/select-account" replace />
   }
 
   const userRoleUpper = normalise(user.role)

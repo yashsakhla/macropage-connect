@@ -11,6 +11,7 @@ const Register       = lazy(() => import('@/pages/auth/Register'))
 const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
 const ResetPassword  = lazy(() => import('@/pages/auth/ResetPassword'))
 const AuthCallback    = lazy(() => import('@/pages/auth/AuthCallback'))
+const SelectAccount   = lazy(() => import('@/pages/auth/SelectAccount'))
 
 // App pages
 const Dashboard      = lazy(() => import('@/pages/dashboard/Dashboard'))
@@ -25,6 +26,9 @@ const CampaignDetail = lazy(() => import('@/pages/campaigns/CampaignDetail'))
 const Templates      = lazy(() => import('@/pages/campaigns/Templates'))
 const Contacts       = lazy(() => import('@/pages/contacts/Contacts'))
 const ContactDetail  = lazy(() => import('@/pages/contacts/ContactDetail'))
+const Products       = lazy(() => import('@/pages/catalog/Products'))
+const Orders         = lazy(() => import('@/pages/orders/Orders'))
+const OrderDetail    = lazy(() => import('@/pages/orders/OrderDetail'))
 const Team           = lazy(() => import('@/pages/team/Team'))
 const MemberProfile  = lazy(() => import('@/pages/team/MemberProfile'))
 const Settings       = lazy(() => import('@/pages/settings/Settings'))
@@ -55,6 +59,18 @@ const router = createBrowserRouter([
       { path: '/reset-password',  element: <ResetPassword /> },
     ],
   },
+  // Account selection — reached after login, before entering the app;
+  // needs auth (token) but not a selected tenant, so it lives outside
+  // both AuthLayout's public routes and ProtectedRoute's tenant-scoped routes.
+  {
+    path: '/select-account',
+    element: (
+      <Suspense fallback={null}>
+        <SelectAccount />
+      </Suspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
   // Protected app routes
   {
     element: (
@@ -82,6 +98,9 @@ const router = createBrowserRouter([
       { path: '/templates', element: <Templates /> },
       { path: '/contacts',     element: <Contacts /> },
       { path: '/contacts/:id', element: <ContactDetail /> },
+      { path: '/catalog/products', element: <Products /> },
+      { path: '/orders',       element: <Orders /> },
+      { path: '/orders/:id',   element: <OrderDetail /> },
       { path: '/team',             element: <Team /> },
       { path: '/team/:memberId',   element: <MemberProfile /> },
       { path: '/setup/whatsapp', element: <WhatsAppSetup /> },

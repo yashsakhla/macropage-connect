@@ -8,13 +8,59 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? DEFAULT_BASE,
   timeout: 60000,
   headers: { 'Content-Type': 'application/json' },
+  // Treat 304 (Not Modified) as success, not an error. axios's default
+  // validateStatus only accepts 2xx — a conditional GET that gets revalidated
+  // by a cache and comes back 304 would otherwise be rejected as an error,
+  // which is wrong for polled read endpoints (e.g. /whatsapp/status) and was
+  // causing their retry logic to hammer the endpoint in a loop.
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 })
 
-// ── REQUEST — attach access token ────────────────────────────────────────────
+// ── REQUEST — attach access token + project scope ────────────────────────────
+
+// Every controller lives under /projects/:projectId/... (contacts, campaigns,
+// conversations, templates, automation, analytics, whatsapp, catalog/products,
+// settings, onboarding, notifications, qr-message, quick-replies, me, users,
+// team, billing, upload, help, ads, demo-requests) EXCEPT:
+//   - /auth/*  — not project-scoped at all (login, my-accounts, select/create-account…)
+//   - a handful of specific public/platform-admin routes that stay bare even
+//     though their resource is otherwise project-scoped
+const GLOBAL_EXEMPT_PREFIXES = ['/auth']
+
+const PUBLIC_OVERRIDE_PREFIXES = [
+  '/help/docs',
+  '/help/faq',
+  '/help/video-tutorials',
+  '/sample-templates',
+  '/ads/platform',
+  '/team/invite/accept',
+  '/billing/plans',
+  '/billing/webhook',
+]
+
+function isProjectExempt(url: string) {
+  return (
+    GLOBAL_EXEMPT_PREFIXES.some((p) => url.startsWith(p)) ||
+    PUBLIC_OVERRIDE_PREFIXES.some((p) => url.startsWith(p))
+  )
+}
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  const projectId = useAuthStore.getState().currentProject?.projectId
+  const url = config.url ?? ''
+  if (
+    projectId &&
+    url &&
+    !url.startsWith('http') &&
+    !isProjectExempt(url) &&
+    !url.startsWith(`/projects/${projectId}/`)
+  ) {
+    config.url = `/projects/${projectId}${url}`
+  }
+
   return config
 })
 

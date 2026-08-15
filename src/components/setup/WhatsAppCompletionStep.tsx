@@ -45,13 +45,18 @@ export default function WhatsAppCompletionStep({
 }: Props) {
   const navigate = useNavigate()
 
+  const { data: templates = [] } = useTemplates()
+
+  // Once a template is approved (from the templates list, which refetches
+  // instantly on create/edit) there's nothing left for the status poll to
+  // catch — stop it so we don't hit /whatsapp/status every 10s forever.
+  const templatesReady = templates.some(t => t.status === 'APPROVED')
+
   const {
     data: status,
     refetch: refetchStatus,
     isFetching,
-  } = useWhatsAppSetupStatus({ poll: true })
-
-  const { data: templates = [] } = useTemplates()
+  } = useWhatsAppSetupStatus({ poll: !templatesReady })
   const { data: sampleTemplates = [] } = useSampleTemplates()
   const createTemplate = useCreateTemplate()
   const { canCreateTemplate } = usePermissions()
@@ -85,7 +90,7 @@ export default function WhatsAppCompletionStep({
   // whereas `status` only updates on its own 10s poll. Falling back to
   // `status` keeps this working even if the templates list hasn't loaded yet.
   const hasTemplates = templates.length > 0 || (status?.totalTemplates ?? 0) > 0
-  const hasApproved  = templates.some(t => t.status === 'APPROVED') || (status?.approvedTemplates ?? 0) > 0
+  const hasApproved  = templatesReady || (status?.approvedTemplates ?? 0) > 0
   const readyToSend  = hasApproved || (status?.readyToSend ?? false)
 
   const JOURNEY_STEPS: {

@@ -47,19 +47,18 @@ export function useLogin() {
       } else if (!user.whatsappSetupDone && ['OWNER', 'ADMIN'].includes((user.role as string)?.toUpperCase())) {
         navigate('/setup/whatsapp')
       } else {
-        navigate('/dashboard')
+        // ALWAYS go to account selection — never skip straight to dashboard
+        navigate('/select-account')
       }
     },
     onError: (err: AuthError) => {
       const code = err.response?.data?.code ?? err.response?.data?.error?.code
-      if (code === 'TWO_FACTOR_REQUIRED') {
-        // 2FA not yet wired — show generic message
-        toast.error('Two-factor authentication required')
-      } else if (code === 'EMAIL_NOT_VERIFIED') {
+      if (code === 'EMAIL_NOT_VERIFIED') {
         navigate('/verify-otp', { state: { email: err.__email } })
-      } else {
-        toast.error(err.response?.data?.message ?? 'Invalid credentials')
       }
+      // All other errors (invalid credentials, 2FA required, account locked) are
+      // surfaced below the form by Login.tsx's own onError — no toast here to avoid
+      // showing the same error twice.
     },
   })
 }

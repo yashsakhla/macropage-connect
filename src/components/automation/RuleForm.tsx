@@ -8,7 +8,7 @@ import type { ActionItem } from './ActionBuilder'
 interface Props {
   rule?: AutomationRule
   onClose: () => void
-  onSave: (data: { name: string; priority: number; trigger: AutomationRule['trigger']; actions: AutomationRule['actions'] }) => void
+  onSave: (data: { name: string; priority: number; trigger: AutomationRule['trigger']; actions: AutomationRule['actions']; isEnabled: boolean }) => void
 }
 
 interface PreviewMessage {
@@ -43,6 +43,7 @@ export default function RuleForm({ rule, onClose, onSave }: Props) {
       priority,
       trigger: { type: triggerConfig.type as TriggerType, config: triggerConfig },
       actions: actions.map((a) => ({ type: a.type, config: a.config, delay: a.delay })),
+      isEnabled: isActive,
     })
     if (isActive) onClose()
   }

@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriangle, Loader2, Music } from 'lucide-react'
+import { Smile, Paperclip, FileText, MessageSquare, Send, X, Search, AlertTriangle, Loader2, Music, ShoppingBag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTemplates } from '@/hooks/useTemplates'
 import { useQuickReplies, useMarkQuickReplyUsed } from '@/hooks/useQuickReplies'
 import { useUploadImage, useUploadDocument, useUploadAudio, UPLOAD_LIMITS } from '@/hooks/useUpload'
+import { useProducts, useSendCatalogMessage } from '@/hooks/useCatalog'
 import type { Contact, Template, QuickReply } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSocket } from '@/lib/socket'
@@ -69,6 +70,8 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
   const [pendingMedia, setPendingMedia] = useState<PendingMedia | null>(null)
   const [templateToSend, setTemplateToSend] = useState<Template | null>(null)
   const [sendingTemplate, setSendingTemplate] = useState(false)
+  const [showCatalogPicker, setShowCatalogPicker] = useState(false)
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
 
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -81,6 +84,9 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
 
   const { data: quickReplies = [] } = useQuickReplies()
   const { mutate: markUsed } = useMarkQuickReplyUsed()
+
+  const { data: products } = useProducts()
+  const { mutate: sendCatalog, isPending: sendingCatalog } = useSendCatalogMessage()
 
   const uploadImage = useUploadImage()
   const uploadDocument = useUploadDocument()
@@ -254,6 +260,7 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
       setShowQR(false)
       setShowTpl(false)
       setShowEmoji(false)
+      setShowCatalogPicker(false)
       setSlashTriggerPos(null)
       setQuickReplySearch('')
       if (pendingMedia) clearPendingMedia()
@@ -628,6 +635,19 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
                   >
                     <MessageSquare size={16} />
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCatalogPicker(true)
+                      setShowQR(false)
+                      setShowTpl(false)
+                      setShowEmoji(false)
+                    }}
+                    className={iconBtnCls}
+                    title="Send catalog"
+                  >
+                    <ShoppingBag size={16} />
+                  </button>
                 </div>
 
                 <button
@@ -656,6 +676,83 @@ export default function MessageInput({ onSend, onSendTemplate, onSendMedia, mode
           onSend={handleTemplateModalSend}
           sending={sendingTemplate}
         />
+      )}
+
+      {showCatalogPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowCatalogPicker(false)}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md max-h-[70vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ebe8] dark:border-gray-700">
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Send products</p>
+              <button onClick={() => setShowCatalogPicker(false)}>
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {(products ?? []).length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-10">No products in your catalog yet</p>
+              ) : (
+                (products ?? []).map((p: any) => {
+                  const selected = selectedProductIds.includes(p._id)
+                  return (
+                    <div
+                      key={p._id}
+                      onClick={() => {
+                        setSelectedProductIds((prev) =>
+                          selected ? prev.filter((id) => id !== p._id) : [...prev, p._id]
+                        )
+                      }}
+                      className={cn(
+                        'flex items-center gap-3 p-2.5 rounded-xl cursor-pointer border-2 transition-all',
+                        selected
+                          ? 'border-[#1a5c3a] bg-[#e8f5ee] dark:bg-green-900/20'
+                          : 'border-transparent hover:bg-[#f7f8f6] dark:hover:bg-gray-700'
+                      )}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-[#f7f8f6] dark:bg-gray-700 flex-shrink-0 overflow-hidden">
+                        {p.imageUrls?.[0] && (
+                          <img src={p.imageUrls[0]} className="w-full h-full object-cover" alt="" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 truncate">{p.name}</p>
+                        <p className="text-2xs text-gray-400">₹{(p.price / 100).toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-[#f0f0f0] dark:border-gray-700">
+              <button
+                onClick={() => {
+                  if (!selectedConversationId) return
+                  sendCatalog(
+                    { conversationId: selectedConversationId, productIds: selectedProductIds },
+                    {
+                      onSuccess: () => {
+                        setShowCatalogPicker(false)
+                        setSelectedProductIds([])
+                      },
+                    }
+                  )
+                }}
+                disabled={selectedProductIds.length === 0 || sendingCatalog}
+                className="w-full h-10 bg-[#1a5c3a] text-white rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {sendingCatalog ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  `Send ${selectedProductIds.length || ''} product${selectedProductIds.length !== 1 ? 's' : ''}`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

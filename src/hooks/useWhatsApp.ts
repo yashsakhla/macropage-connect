@@ -42,7 +42,19 @@ export function useWhatsAppSetupStatus(options?: { poll?: boolean }) {
   return useQuery<SetupStatus>({
     queryKey: ['whatsapp-setup-status'],
     queryFn: () =>
-      api.get('/whatsapp/status').then(r => {
+      // This is polled every 10s to drive step transitions during setup — it
+      // must always get a fresh body. A `Cache-Control`/`Pragma` header would
+      // do this too, but those trigger a CORS preflight the backend doesn't
+      // allow (Access-Control-Allow-Headers rejects them); a cache-busting
+      // query param achieves the same thing without a preflight. Without it,
+      // a revalidated request can come back as a 304 Not Modified, which
+      // axios treats as an error (its default validateStatus only accepts
+      // 2xx), breaking the poll: `status` drops out, the wizard step flips
+      // back, and the failed request retries immediately — looking like a
+      // request loop in the network tab.
+      api.get('/whatsapp/status', {
+        params: { _: Date.now() },
+      }).then(r => {
         // Handle both response shapes: { data: {...} } or direct {...}
         return r.data?.data ?? r.data
       }),
