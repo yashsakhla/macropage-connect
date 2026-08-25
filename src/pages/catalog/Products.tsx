@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useProducts, useDeleteProduct } from '@/hooks/useCatalog'
+import { useProducts, useDeleteProduct, useCatalogStatus, useReconnectCatalog } from '@/hooks/useCatalog'
 import ProductFormModal from '@/components/catalog/ProductFormModal'
 import {
   Plus, Package, Search, Edit2, Trash2,
-  AlertCircle, CheckCircle2, Clock, XCircle, ImageIcon,
+  AlertCircle, CheckCircle2, Clock, XCircle, ImageIcon, AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePermissions } from '@/lib/permissionsConstants'
@@ -25,6 +25,8 @@ export default function ProductsPage() {
 
   const { data: products, isLoading, isError, refetch } = useProducts()
   const { mutate: deleteProduct } = useDeleteProduct()
+  const { data: catalogStatus } = useCatalogStatus()
+  const { mutate: reconnect, isPending: reconnecting } = useReconnectCatalog()
 
   const filtered = (products ?? []).filter(
     (p: any) =>
@@ -35,6 +37,22 @@ export default function ProductsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      {catalogStatus?.connectionError && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3">
+          <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
+          <p className="text-xs text-amber-700 flex-1">
+            There was an issue with your catalog connection.
+          </p>
+          <button
+            onClick={() => reconnect()}
+            disabled={reconnecting}
+            className="text-xs text-amber-700 font-semibold underline flex-shrink-0"
+          >
+            {reconnecting ? 'Reconnecting...' : 'Reconnect'}
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Products</h1>
