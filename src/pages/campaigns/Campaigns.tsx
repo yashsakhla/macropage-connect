@@ -325,7 +325,7 @@ export default function Campaigns() {
       ) : filtered.length === 0 ? (
         <EmptyState onCreateClick={() => setShowWizard(true)} hasFilter={statusFilter !== 'all' || !!search || dateRange !== 'all'} />
       ) : view === 'list' ? (
-        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden md:overflow-x-auto">
+        <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl">
           <div className="md:min-w-[920px]">
             <div
               className="hidden md:grid items-center gap-3 px-5 py-3 border-b border-[#eef0ee] dark:border-white/10 bg-[#fafbfa] dark:bg-white/5"

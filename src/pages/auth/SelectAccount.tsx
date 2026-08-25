@@ -9,6 +9,7 @@ import {
   Users,
   RefreshCw,
   Sparkles,
+  UserCircle2,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useCanCreateProject } from '@/lib/permissionsConstants'
@@ -28,6 +29,22 @@ const ROLE_BADGE: Record<string, string> = {
   ADMIN: 'badge-green',
   MANAGER: 'badge-yellow',
   AGENT: 'badge-gray',
+}
+
+// Deterministic color per project so each row's avatar looks distinct instead
+// of every account rendering the same flat green square.
+const AVATAR_COLORS = [
+  { bg: '#e8f5ee', text: '#1a5c3a' },
+  { bg: '#eef1fb', text: '#3b4bb8' },
+  { bg: '#fdf0e6', text: '#c2660a' },
+  { bg: '#fbeaf0', text: '#b8305f' },
+  { bg: '#eefaf6', text: '#0f8a6b' },
+  { bg: '#f2edfb', text: '#6b3fc2' },
+]
+function avatarColorFor(seed: string) {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
 }
 
 export default function SelectAccount() {
@@ -124,40 +141,48 @@ export default function SelectAccount() {
 
               {!isLoading && !isError && accountCount > 0 && (
                 <div className="divide-y divide-[#f0f0f0]">
-                  {accounts.map((account: any) => (
-                    <button
-                      key={account.projectId}
-                      onClick={() => selectAccount(account.projectId)}
-                      disabled={isPending}
-                      className="w-full flex items-center gap-4 px-5 py-4 hover:bg-[#f7f8f6] transition-colors text-left disabled:opacity-60"
-                    >
-                      <div className="w-11 h-11 bg-[#e8f5ee] rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {account.logoUrl ? (
-                          <img src={account.logoUrl} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-base font-bold text-[#1a5c3a]">
-                            {account.name?.[0]?.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{account.name}</p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span className={`badge ${ROLE_BADGE[account.role] ?? 'badge-gray'} text-2xs`}>
-                            {ROLE_LABELS[account.role] ?? account.role}
-                          </span>
-                          {account.plan && <span className="text-2xs text-gray-400">{account.plan}</span>}
+                  {accounts.map((account: any) => {
+                    const name = account.projectName ?? account.name ?? 'Untitled account'
+                    const color = avatarColorFor(account.projectId ?? name)
+                    return (
+                      <button
+                        key={account.projectId}
+                        onClick={() => selectAccount(account.projectId)}
+                        disabled={isPending}
+                        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-[#f7f8f6] transition-colors text-left disabled:opacity-60 group"
+                      >
+                        <div
+                          className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden transition-transform group-hover:scale-105"
+                          style={{ backgroundColor: color.bg }}
+                        >
+                          {account.logoUrl ? (
+                            <img src={account.logoUrl} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-base font-bold" style={{ color: color.text }}>
+                              {name[0]?.toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                      </div>
 
-                      {isPending && variables === account.projectId ? (
-                        <Loader2 size={16} className="animate-spin text-[#1a5c3a]" />
-                      ) : (
-                        <ChevronRight size={16} className="text-gray-300" />
-                      )}
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{name}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`badge ${ROLE_BADGE[account.role] ?? 'badge-gray'} text-2xs inline-flex items-center gap-1`}>
+                              <UserCircle2 size={11} />
+                              {ROLE_LABELS[account.role] ?? account.role}
+                            </span>
+                            {account.plan && <span className="text-2xs text-gray-400">{account.plan}</span>}
+                          </div>
+                        </div>
+
+                        {isPending && variables === account.projectId ? (
+                          <Loader2 size={16} className="animate-spin text-[#1a5c3a]" />
+                        ) : (
+                          <ChevronRight size={16} className="text-gray-300 transition-transform group-hover:translate-x-0.5" />
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

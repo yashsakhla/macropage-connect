@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MoreVertical, FileText, Pause, Edit2, Trash2, Users, Eye, Calendar, CheckCircle2, Rocket } from 'lucide-react'
+import { MoreVertical, FileText, Pause, Edit2, Users, Eye, Calendar, CheckCircle2, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Campaign } from '@/types'
 import { format } from 'date-fns'
@@ -62,7 +62,7 @@ interface CampaignCardProps {
 export default function CampaignCard({ campaign, view, onClick, onPause, onEdit, onLaunch }: CampaignCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const { canLaunchCampaign, canDeleteCampaign } = usePermissions()
+  const { canLaunchCampaign } = usePermissions()
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -135,11 +135,6 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onEdit,
                         </button>
                       )}
                     </>
-                  )}
-                  {canDeleteCampaign && (
-                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2">
-                      <Trash2 size={12} /> Delete
-                    </button>
                   )}
                 </div>
               )}
@@ -296,9 +291,6 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onEdit,
               {menuOpen && (
                 <div className="absolute right-0 bottom-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
                   <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onClick(campaign); setMenuOpen(false) }}><Users size={12} /> View recipients</button>
-                  {canDeleteCampaign && (
-                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
-                  )}
                 </div>
               )}
             </div>
@@ -389,11 +381,8 @@ export default function CampaignCard({ campaign, view, onClick, onPause, onEdit,
               <MoreVertical size={14} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
+              <div className="absolute right-0 bottom-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-40 text-sm">
                 <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center gap-2" onClick={() => { onClick(campaign); setMenuOpen(false) }}><Users size={12} /> View recipients</button>
-                {canDeleteCampaign && (
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
-                )}
               </div>
             )}
           </div>
