@@ -1,4 +1,4 @@
-import type { WAEmbeddedSignupEvent, WAEmbeddedSignupFinishData } from '@/types/meta'
+import type { WAEmbeddedSignupEvent, WAEmbeddedSignupFinishData, FBLoginResponse } from '@/types/meta'
 
 let sdkLoaded = false
 let sdkLoading = false
@@ -57,6 +57,39 @@ export function loadFacebookSDK(): Promise<void> {
     }
 
     document.body.appendChild(script)
+  })
+}
+
+/**
+ * Opens the Meta popup for catalog connection and resolves with the auth code.
+ * Reuses the same FB SDK session already loaded for WhatsApp Embedded Signup.
+ */
+export function launchCatalogConnect(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!window.FB) {
+      reject(new Error('Facebook SDK not loaded'))
+      return
+    }
+
+    window.FB.login(
+      (response: FBLoginResponse) => {
+        if (response.authResponse?.code) {
+          resolve(response.authResponse.code)
+        } else {
+          reject(new Error('Catalog connection was cancelled'))
+        }
+      },
+      {
+        config_id: import.meta.env.VITE_META_CATALOG_CONFIG_ID
+          ?? import.meta.env.VITE_META_CONFIG_ID,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          sessionInfoVersion: '3',
+        },
+      }
+    )
   })
 }
 
