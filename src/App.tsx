@@ -4,6 +4,7 @@ import MainLayout from '@/components/layout/MainLayout'
 import AuthLayout from '@/components/layout/AuthLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary'
+import RequireCatalog from '@/components/catalog/RequireCatalog'
 
 // Auth pages
 const Login          = lazy(() => import('@/pages/auth/Login'))
@@ -27,6 +28,8 @@ const Templates      = lazy(() => import('@/pages/campaigns/Templates'))
 const Contacts       = lazy(() => import('@/pages/contacts/Contacts'))
 const ContactDetail  = lazy(() => import('@/pages/contacts/ContactDetail'))
 const Products       = lazy(() => import('@/pages/catalog/Products'))
+const CatalogConnect  = lazy(() => import('@/pages/catalog/CatalogConnect'))
+const OAuthCallback   = lazy(() => import('@/pages/catalog/OAuthCallback'))
 const Orders         = lazy(() => import('@/pages/orders/Orders'))
 const OrderDetail    = lazy(() => import('@/pages/orders/OrderDetail'))
 const Team           = lazy(() => import('@/pages/team/Team'))
@@ -71,6 +74,17 @@ const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorBoundary />,
   },
+  // Facebook OAuth popup redirect target — opened only inside the small
+  // popup window during catalog connect, never needs auth/tenant context
+  {
+    path: '/catalog/oauth-callback',
+    element: (
+      <Suspense fallback={null}>
+        <OAuthCallback />
+      </Suspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
   // Protected app routes
   {
     element: (
@@ -98,7 +112,15 @@ const router = createBrowserRouter([
       { path: '/templates', element: <Templates /> },
       { path: '/contacts',     element: <Contacts /> },
       { path: '/contacts/:id', element: <ContactDetail /> },
-      { path: '/catalog/products', element: <Products /> },
+      { path: '/catalog', element: <CatalogConnect /> },
+      {
+        path: '/catalog/products',
+        element: (
+          <RequireCatalog>
+            <Products />
+          </RequireCatalog>
+        ),
+      },
       { path: '/orders',       element: <Orders /> },
       { path: '/orders/:id',   element: <OrderDetail /> },
       { path: '/team',             element: <Team /> },

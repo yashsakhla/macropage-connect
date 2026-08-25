@@ -73,3 +73,40 @@ export function useSendCatalogMessage() {
     onError: () => toast.error('Could not send catalog'),
   })
 }
+
+export function useCatalogStatus() {
+  return useQuery({
+    queryKey: ['catalog-status'],
+    queryFn: () => api.get('/catalog/status').then((r) => r.data?.data ?? r.data),
+    staleTime: 30000,
+  })
+}
+
+export function useConnectCatalog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (accessToken: string) =>
+      api.post('/catalog/connect', { accessToken }).then((r) => r.data?.data ?? r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalog-status'] })
+      toast.success('Catalog connected successfully!')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Could not connect catalog')
+    },
+  })
+}
+
+export function useReconnectCatalog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post('/catalog/reconnect').then((r) => r.data?.data ?? r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalog-status'] })
+      toast.success('Catalog reconnected')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Reconnect failed')
+    },
+  })
+}
