@@ -1,6 +1,6 @@
 import { Bell, Sun, Moon, LogOut, Zap, Menu, ChevronDown, Building2, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/hooks/useAuth'
@@ -16,9 +16,18 @@ export default function Navbar() {
   const navigate = useNavigate()
 
   const [showSwitcher, setShowSwitcher] = useState(false)
+  const switcherRef = useRef<HTMLDivElement>(null)
   const { data: accounts } = useMyAccounts()
   const { mutate: selectAccount } = useSelectAccount()
   const currentProject = useAuthStore((s) => s.currentProject)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) setShowSwitcher(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const unreadCount = useUnreadCount().data ?? 0
   const showUpgradeTag = user?.plan !== 'ENTERPRISE'
@@ -111,43 +120,50 @@ export default function Navbar() {
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={switcherRef}>
           <button
             onClick={() => setShowSwitcher((s) => !s)}
-            className="flex items-center gap-2 h-9 px-3 rounded-xl bg-[#f7f8f6] hover:bg-[#e8ebe8] transition-colors"
+            className="flex items-center gap-2 h-9 px-3 rounded-xl bg-[#f7f8f6] hover:bg-[#e8ebe8] dark:bg-white/5 dark:hover:bg-white/10 transition-colors"
           >
-            <Building2 size={14} className="text-[#1a5c3a]" />
-            <span className="text-xs font-semibold text-gray-700 max-w-[120px] truncate">
+            <Building2 size={14} className="text-[#1a5c3a] dark:text-[#4ade80]" />
+            <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 max-w-[120px] truncate">
               {currentProject?.name ?? 'Select account'}
             </span>
             <ChevronDown size={12} className="text-gray-400" />
           </button>
 
           {showSwitcher && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-[#e8ebe8] rounded-2xl shadow-xl z-50 overflow-hidden">
-              <p className="text-2xs font-semibold text-gray-400 uppercase tracking-wide px-4 py-2.5 border-b border-[#f0f0f0]">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+              <p className="text-2xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-2.5 border-b border-[#f0f0f0] dark:border-white/10">
                 Switch account
               </p>
-              {(accounts ?? []).map((account: any) => (
-                <button
-                  key={account.projectId}
-                  onClick={() => {
-                    selectAccount(account.projectId)
-                    setShowSwitcher(false)
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f7f8f6] text-left transition-colors"
-                >
-                  <div className="w-7 h-7 bg-[#e8f5ee] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xs font-bold text-[#1a5c3a]">
-                      {account.name?.[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-700 flex-1 truncate">{account.name}</span>
-                  {currentProject?.projectId === account.projectId && (
-                    <Check size={13} className="text-[#1a5c3a]" />
-                  )}
-                </button>
-              ))}
+              {(accounts ?? []).map((account: any) => {
+                const name = account.projectName ?? account.name ?? 'Untitled account'
+                return (
+                  <button
+                    key={account.projectId}
+                    onClick={() => {
+                      selectAccount(account.projectId)
+                      setShowSwitcher(false)
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-left transition-colors"
+                  >
+                    <div className="w-7 h-7 bg-[#e8f5ee] dark:bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {account.logoUrl ? (
+                        <img src={account.logoUrl} alt={name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xs font-bold text-[#1a5c3a] dark:text-[#4ade80]">
+                          {name[0]?.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-700 dark:text-gray-200 flex-1 truncate">{name}</span>
+                    {currentProject?.projectId === account.projectId && (
+                      <Check size={13} className="text-[#1a5c3a] dark:text-[#4ade80]" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
