@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow, format, subDays } from 'date-fns'
 import {
   TrendingUp, MessageSquare, Send, Eye, AlertTriangle,
-  ArrowUpRight, CheckCircle2, Circle, ExternalLink, CalendarClock,
+  ArrowUpRight, CheckCircle2, Circle, ExternalLink, CalendarClock, ChevronDown,
 } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -196,15 +196,22 @@ const STEP_DESCRIPTIONS: Record<string, string> = {
 function OnboardingChecklist({ steps, progressPercent, completedCount, totalSteps }: ChecklistData) {
   const navigate = useNavigate()
   const firstIncompleteId = steps.find(s => !s.completed)?.id
+  const [open, setOpen] = useState(false)
 
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-4 sm:px-6 py-4 flex items-center justify-between gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full bg-gradient-to-r from-[#1a3d2b] to-[#1a5c3a] px-4 sm:px-6 py-4 flex items-center justify-between gap-2 text-left"
+      >
         <div>
           <p className="text-base font-semibold text-white">Get started with Macropage Connect 🚀</p>
           <p className="text-sm text-white/70 mt-0.5">{completedCount} of {totalSteps} steps complete</p>
         </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
         <svg width="40" height="40" viewBox="0 0 40 40">
           <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
           <circle
@@ -217,10 +224,12 @@ function OnboardingChecklist({ steps, progressPercent, completedCount, totalStep
           />
           <text x="20" y="25" textAnchor="middle" fontSize="9" fill="white" fontWeight="bold">{progressPercent}%</text>
         </svg>
-      </div>
+        <ChevronDown size={20} className={cn('text-white/80 transition-transform', !open && '-rotate-90')} />
+        </div>
+      </button>
 
       {/* Steps */}
-      {steps.map(step => {
+      {open && steps.map(step => {
         const active = step.id === firstIncompleteId
         const targetUrl = step.actionUrl || inferStepUrl(step.title)
         return (
