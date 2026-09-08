@@ -138,7 +138,7 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">{template.header.text}</p>
               )}
               {template.header && template.header.type !== 'TEXT' && (() => {
-                const MediaIcon = MEDIA_HEADER_ICON[template.header.type]
+                const MediaIcon = MEDIA_HEADER_ICON[template.header.type] ?? FileText
                 return (
                   <div className="flex items-center gap-1.5 bg-white/60 dark:bg-white/10 rounded-lg px-2 py-1.5 mb-1.5 text-[10px] font-medium text-gray-600 dark:text-gray-300">
                     <MediaIcon size={12} className="flex-shrink-0" />
