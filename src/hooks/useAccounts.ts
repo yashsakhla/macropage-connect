@@ -26,12 +26,21 @@ export function useSelectAccount() {
 
   return useMutation({
     mutationFn: (projectId: string) =>
-      api.post('/auth/select-project', { projectId }).then((r) => r.data?.data ?? r.data),
+      api
+        .post('/auth/select-project', { projectId })
+        .then((r) => ({ ...(r.data?.data ?? r.data), _requestedProjectId: projectId })),
     onSuccess: (data) => {
+      const projectId = data.projectId ?? data.project?.projectId ?? data._requestedProjectId
+      // The select-project response doesn't always echo the project name/role,
+      // so fall back to the cached my-projects list before persisting.
+      const cached = (qc.getQueryData(['my-projects']) as any[] | undefined)?.find(
+        (a) => a.projectId === projectId,
+      )
       setCurrentProject({
-        projectId: data.projectId ?? data.project?.projectId,
-        name: data.name ?? data.project?.name,
-        role: data.role ?? data.project?.role,
+        projectId,
+        name:
+          data.name ?? data.project?.name ?? cached?.projectName ?? cached?.name ?? 'Account',
+        role: data.role ?? data.project?.role ?? cached?.role ?? 'AGENT',
       })
 
       // Clear ALL cached data from any previously selected project
