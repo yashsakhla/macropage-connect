@@ -58,7 +58,7 @@ export default function WhatsAppQRCard({ health }: { health?: DashboardHealthDat
   const updateQrMessage = useUpdateQrMessage()
   const existing = qrMessages?.[0]
 
-  const prebuiltMessage = `Hi, tell us how ${user?.companyName?.trim() || 'your company'} can help you`
+  const prebuiltMessage = `Hi, I'd like to get in touch with ${user?.companyName?.trim() || 'your company'} team. Can someone help me?`
   const prefillText = existing?.message?.trim() ? existing.message : prebuiltMessage
   const isSaving = createQrMessage.isPending || updateQrMessage.isPending
 

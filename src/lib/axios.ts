@@ -30,6 +30,7 @@ const GLOBAL_EXEMPT_PREFIXES = ['/auth']
 const PUBLIC_OVERRIDE_PREFIXES = [
   '/help/docs',
   '/help/faq',
+  '/help/search',
   '/help/video-tutorials',
   '/sample-templates',
   '/ads/platform',
