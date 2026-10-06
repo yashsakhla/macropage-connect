@@ -12,7 +12,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SettingsSection from '@/components/settings/SettingsSection'
-import { useWABADetails, useShareWABADetails } from '@/hooks/useWhatsApp'
+import { formatDistanceToNow } from 'date-fns'
+import WabaStatusBanners from '@/components/whatsapp/WabaStatusBanners'
+import { useWABADetails, useShareWABADetails, useSyncWhatsAppStatus } from '@/hooks/useWhatsApp'
 import { useAccountSettings } from '@/hooks/useSettings'
 import { usePermissions } from '@/lib/permissionsConstants'
 
@@ -34,7 +36,9 @@ export default function WhatsAppSettings() {
     isPending: sharing,
   } = useShareWABADetails()
 
-  const [shareEmail, setShareEmail]       = useState('')
+  const { mutate: syncStatus, isPending: syncing } = useSyncWhatsAppStatus()
+
+  const [shareEmail, setShareEmail]      = useState('')
   const [showShareInput, setShowShareInput] = useState(false)
   const [copied, setCopied]               = useState<string | null>(null)
 
@@ -127,18 +131,44 @@ export default function WhatsAppSettings() {
               )}>
                 {waba.qualityRating}
               </span>
+              {waba.phoneStatus && (
+                <span className={cn(
+                  'text-2xs font-bold px-2 py-0.5 rounded-full',
+                  waba.phoneStatus === 'CONNECTED'
+                    ? 'bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a]'
+                    : waba.phoneStatus === 'FLAGGED'
+                    ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400'
+                )}>
+                  {waba.phoneStatus}
+                </span>
+              )}
             </div>
 
-            {canChangeWhatsAppSettings && (
-              <button
-                onClick={() => setShowShareInput(s => !s)}
-                className="flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] hover:bg-[#d1edd9] transition-colors"
-              >
-                <Share2 size={13} />
-                Share
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {canChangeWhatsAppSettings && (
+                <button
+                  onClick={() => syncStatus()}
+                  disabled={syncing}
+                  className="flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-[#1a5c3a] disabled:opacity-50"
+                >
+                  <RefreshCw size={12} className={cn(syncing && 'animate-spin')} />
+                  Sync status
+                </button>
+              )}
+              {canChangeWhatsAppSettings && (
+                <button
+                  onClick={() => setShowShareInput(s => !s)}
+                  className="flex items-center gap-1.5 text-xs font-semibold h-8 px-3 rounded-xl bg-[#e8f5ee] dark:bg-emerald-950/30 text-[#1a5c3a] hover:bg-[#d1edd9] transition-colors"
+                >
+                  <Share2 size={13} />
+                  Share
+                </button>
+              )}
+            </div>
           </div>
+
+          <WabaStatusBanners />
 
           {/* Share input */}
           {showShareInput && (
@@ -190,7 +220,23 @@ export default function WhatsAppSettings() {
             >
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{row.label}</p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{row.value ?? '—'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{row.value ?? '—'}</p>
+                  {row.key === 'businessName' && (
+                    <span className={cn(
+                      'text-2xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0',
+                      waba.nameStatus === 'APPROVED'
+                        ? 'bg-[#e8f5ee] text-[#1a5c3a]'
+                        : waba.nameStatus === 'DECLINED'
+                        ? 'bg-red-50 text-red-500'
+                        : 'bg-amber-50 text-amber-600'
+                    )}>
+                      {waba.nameStatus === 'APPROVED' ? 'Approved'
+                        : waba.nameStatus === 'DECLINED' ? 'Declined'
+                        : 'Under review'}
+                    </span>
+                  )}
+                </div>
               </div>
               {row.copy && row.value && (
                 <button
@@ -212,6 +258,12 @@ export default function WhatsAppSettings() {
               )}
             </div>
           ))}
+
+          {waba.lastSyncedAt && (
+            <p className="text-2xs text-gray-400">
+              Last synced {formatDistanceToNow(new Date(waba.lastSyncedAt), { addSuffix: true })}
+            </p>
+          )}
 
           {/* Messages today with progress bar */}
           <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-2xl px-4 py-3">

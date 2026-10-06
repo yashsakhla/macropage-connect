@@ -28,6 +28,7 @@ import msgIcon from '@/assets/dashboard/msg-icon.png'
 import rocketIcon from '@/assets/dashboard/rocket-icon.png'
 import peoplesIcon from '@/assets/dashboard/peoples-icon.png'
 import soundIcon from '@/assets/dashboard/sound-icon.png'
+import WabaStatusBanners from '@/components/whatsapp/WabaStatusBanners'
 import MessageUsageCard from '@/components/analytics/MessageUsageCard'
 import {
   StatCardSkeleton, ChartSkeleton, ActivitySkeleton, ChecklistSkeleton,
@@ -506,6 +507,8 @@ export default function Dashboard() {
           />
         ) : null
       )}
+
+      <WabaStatusBanners />
 
       {/* Health Banner */}
       {healthLoading ? (
