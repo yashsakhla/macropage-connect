@@ -19,6 +19,22 @@ export function useWABADetails() {
   })
 }
 
+export function useSyncWhatsAppStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      api.post('/whatsapp/sync-status').then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['waba-details'] })
+      qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
+      toast.success('Status updated')
+    },
+    onError: (err: MutationError) => {
+      toast.error(err?.response?.data?.message ?? 'Could not sync status')
+    },
+  })
+}
+
 export function useShareWABADetails() {
   return useMutation({
     mutationFn: (email?: string) =>
