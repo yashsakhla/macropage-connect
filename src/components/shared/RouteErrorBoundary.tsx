@@ -6,11 +6,31 @@ export default function RouteErrorBoundary() {
   const error = useRouteError()
   const navigate = useNavigate()
 
+  const isChunkError =
+    error instanceof Error &&
+    /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(
+      error.message,
+    )
+
   useEffect(() => {
     console.error('Route crashed:', error)
-  }, [error])
+    // A new deploy removes old hashed chunks — reload once to fetch the new build.
+    if (isChunkError) {
+      try {
+        if (sessionStorage.getItem('chunk-reload') !== '1') {
+          sessionStorage.setItem('chunk-reload', '1')
+          window.location.reload()
+          return
+        }
+      } catch {
+        /* storage unavailable — fall through to the error UI */
+      }
+    }
+  }, [error, isChunkError])
 
-  const message = isRouteErrorResponse(error)
+  const message = isChunkError
+    ? 'A new version of the app is available. Please reload the page.'
+    : isRouteErrorResponse(error)
     ? `${error.status} ${error.statusText}`
     : 'Something went wrong while loading this page.'
 
@@ -22,9 +42,20 @@ export default function RouteErrorBoundary() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{message}</p>
         <button
           className="btn-primary w-full"
-          onClick={() => navigate('/dashboard', { replace: true })}
+          onClick={() => {
+            if (isChunkError) {
+              try {
+                sessionStorage.removeItem('chunk-reload')
+              } catch {
+                /* ignore */
+              }
+              window.location.reload()
+            } else {
+              navigate('/dashboard', { replace: true })
+            }
+          }}
         >
-          Back to dashboard
+          {isChunkError ? 'Reload page' : 'Back to dashboard'}
         </button>
       </div>
     </div>
