@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react'
 import { X, UploadCloud, FileDown, Check, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, downloadContactSampleTemplate } from '@/lib/utils'
+import { autoMapHeaders } from '@/lib/csvMapping'
 import { useImportContacts } from '@/hooks/useContacts'
 import { useUploadDocument, UPLOAD_LIMITS } from '@/hooks/useUpload'
 import type { Contact } from '@/types'
@@ -42,7 +43,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
   const [step, setStep] = useState(1)
   const [parsed, setParsed] = useState<ParsedFile | null>(null)
   const [mapping, setMapping] = useState<Record<string, string>>({})
-  const [dupHandling, setDupHandling] = useState<'skip' | 'update' | 'create'>('skip')
+  const [dupHandling, setDupHandling] = useState<'skip' | 'update'>('skip')
   const [isDragging, setIsDragging] = useState(false)
   const [jobId, setJobId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -65,17 +66,7 @@ export default function ContactImport({ onClose, existingContacts = [] }: Contac
       const text = e.target?.result as string
       const { headers, rows, totalRows } = parseCSV(text)
       setParsed({ file, name: file.name, size: file.size, headers, rows, totalRows, rawText: text })
-      const autoMap: Record<string, string> = {}
-      headers.forEach(h => {
-        const l = h.toLowerCase()
-        if (l.includes('phone') || l.includes('mobile') || l.includes('number')) autoMap[h] = 'phone'
-        else if (l.includes('name')) autoMap[h] = 'name'
-        else if (l.includes('email')) autoMap[h] = 'email'
-        else if (l.includes('tag')) autoMap[h] = 'tags'
-        else if (l.includes('city')) autoMap[h] = 'city'
-        else if (l.includes('company')) autoMap[h] = 'company'
-      })
-      setMapping(autoMap)
+      setMapping(autoMapHeaders(headers, ['phone', 'name', 'email', 'tags', 'city', 'company']))
       setStep(2)
     }
     reader.readAsText(file)

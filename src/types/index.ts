@@ -172,7 +172,7 @@ export interface CreateContactPayload {
 export interface ImportPayload {
   fileUrl: string
   columnMapping: Record<string, string>
-  duplicateHandling: 'skip' | 'update' | 'create'
+  duplicateHandling: 'skip' | 'update'
 }
 
 // ─── Team ─────────────────────────────────────────────────────────────────────
@@ -403,6 +403,14 @@ export interface CreateTemplatePayload {
 // ─── Campaigns ────────────────────────────────────────────────────────────────
 export type CampaignStatus = 'draft' | 'scheduled' | 'running' | 'completed' | 'failed' | 'paused' | 'cancelled'
 
+export interface CampaignCsvStats {
+  totalRows: number
+  invalid: number
+  duplicatesInFile: number
+  optedOut: number
+  newContacts: number
+}
+
 export interface Campaign {
   id: string
   name: string
@@ -412,6 +420,7 @@ export interface Campaign {
   audienceType: 'all' | 'tag' | 'csv' | 'selected'
   audienceTags?: string[]
   totalContacts: number
+  csvStats?: CampaignCsvStats
   validContacts: number
   sent: number
   delivered: number
@@ -447,7 +456,9 @@ export interface CreateCampaignPayload {
   audienceType: 'all' | 'tag' | 'csv' | 'selected'
   audienceTags?: string[]
   contactIds?: string[]
-  csvUploadId?: string
+  csvFileUrl?: string
+  /** { contactField: "CSV column header" } — note: the inverse of the wizard's UI mapping */
+  csvColumnMapping?: Record<string, string>
   variableMapping: Record<string, string>
   scheduledAt?: string
   sendSpeed: 'slow' | 'normal' | 'fast'

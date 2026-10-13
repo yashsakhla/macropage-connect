@@ -73,7 +73,7 @@ export default function TemplatePreview({ template, variables, compact, classNam
       )}
 
       <div className={cn('px-3 pb-1', header ? 'pt-2' : 'pt-3')}>
-        <p className={cn('text-gray-800 dark:text-gray-200 leading-relaxed', compact ? 'text-[11px]' : 'text-xs')}>
+        <p className={cn('text-gray-800 dark:text-gray-200 leading-relaxed break-words [overflow-wrap:anywhere]', compact ? 'text-[11px]' : 'text-xs')}>
           {variables
             ? <span dangerouslySetInnerHTML={{ __html: renderBody(body ?? '', variables) }} />
             : renderBodyWithPills(body ?? '')
@@ -109,8 +109,8 @@ export default function TemplatePreview({ template, variables, compact, classNam
   if (compact) return bubble
 
   return (
-    <div className="flex flex-col items-center bg-[#eae6df] dark:bg-white/10 rounded-2xl p-4 min-h-40">
-      <div className="w-full max-w-[300px]">
+    <div className="flex flex-col items-center shrink-0 bg-[#eae6df] dark:bg-white/10 rounded-2xl p-4 min-h-40">
+      <div className="w-full max-w-[300px] min-w-0">
         {bubble}
       </div>
     </div>

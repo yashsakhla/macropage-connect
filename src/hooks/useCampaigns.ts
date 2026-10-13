@@ -62,16 +62,25 @@ function normalizeRecipient(r: RawCampaignRecipientDTO): CampaignRecipient {
   } as CampaignRecipient
 }
 
-export function useCampaignRecipients(campaignId: string, page = 1) {
-  return useQuery<{ data: CampaignRecipient[] }>({
-    queryKey: ['campaign-recipients', campaignId, page],
-    queryFn: () =>
-      api
-        .get(`/campaigns/${campaignId}/recipients`, { params: { page } })
-        .then((r) => {
-          const raw: RawCampaignRecipientDTO[] = r.data?.data ?? r.data ?? []
-          return { data: raw.map(normalizeRecipient) }
-        }),
+// The API caps each page at `limit` (50) and returns `total`, so walk every
+// page and merge — otherwise only the first 50 recipients are ever shown.
+const MAX_RECIPIENT_PAGES = 200
+
+export function useCampaignRecipients(campaignId: string) {
+  return useQuery<{ data: CampaignRecipient[]; total: number }>({
+    queryKey: ['campaign-recipients', campaignId],
+    queryFn: async () => {
+      const all: CampaignRecipient[] = []
+      let total = 0
+      for (let page = 1; page <= MAX_RECIPIENT_PAGES; page++) {
+        const r = await api.get(`/campaigns/${campaignId}/recipients`, { params: { page } })
+        const raw: RawCampaignRecipientDTO[] = r.data?.data ?? r.data ?? []
+        all.push(...raw.map(normalizeRecipient))
+        total = typeof r.data?.total === 'number' ? r.data.total : all.length
+        if (raw.length === 0 || all.length >= total) break
+      }
+      return { data: all, total }
+    },
     enabled: !!campaignId,
   })
 }

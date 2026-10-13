@@ -557,10 +557,10 @@ export default function TemplateForm({ onClose, initialData, templateId, templat
 
           {/* RIGHT — preview */}
           <div className="w-full md:w-72 shrink-0 border-t md:border-t-0 md:border-l border-[#e8ebe8] dark:border-white/10 p-4 sm:p-5 flex flex-col gap-4 md:overflow-y-auto bg-[#f7f8f6] dark:bg-[#0f1724]">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Live preview</p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0">Live preview</p>
             <TemplatePreview template={previewTemplate} />
 
-            <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-4 space-y-2">
+            <div className="shrink-0 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl p-4 space-y-2">
               <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Character limits</p>
               {values.hasHeader && values.headerType === 'TEXT' && (
                 <div>
