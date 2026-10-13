@@ -49,8 +49,18 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
+  // Delivery stages are cumulative (a read message was also delivered and
+  // sent), matching how campaign-level totals are counted — so the tab badge
+  // and the filtered rows always agree.
+  const matchesStatus = (status: string, filter: string) => {
+    if (filter === 'all') return true
+    if (filter === 'sent') return status === 'sent' || status === 'delivered' || status === 'read'
+    if (filter === 'delivered') return status === 'delivered' || status === 'read'
+    return status === filter
+  }
+
   const filtered = recipients.filter(r => {
-    if (statusFilter !== 'all' && r.status !== statusFilter) return false
+    if (!matchesStatus(r.status, statusFilter)) return false
     if (search) {
       const q = search.toLowerCase()
       if (!r.contactName.toLowerCase().includes(q) && !r.phone.includes(q)) return false
@@ -61,17 +71,13 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  const counts: Record<string, number> = campaignTotals
-    ? {
-        all: recipients.length,
-        sent: campaignTotals.sent,
-        delivered: campaignTotals.delivered,
-        read: campaignTotals.read,
-        replied: campaignTotals.replied,
-        failed: campaignTotals.failed,
-      }
-    : { all: recipients.length }
-  if (!campaignTotals) recipients.forEach(r => { counts[r.status] = (counts[r.status] ?? 0) + 1 })
+  // Counted from the loaded recipients so badges match the table. Replied has
+  // no per-recipient data, so it falls back to the campaign-level total.
+  const counts: Record<string, number> = { all: recipients.length, replied: campaignTotals?.replied ?? 0 }
+  STATUS_TABS.forEach(tab => {
+    if (tab.value === 'all' || tab.value === 'replied') return
+    counts[tab.value] = recipients.filter(r => matchesStatus(r.status, tab.value)).length
+  })
 
   return (
     <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl overflow-hidden">

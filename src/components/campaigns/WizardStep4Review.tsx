@@ -52,7 +52,15 @@ export default function WizardStep4Review({
 }: WizardStep4Props) {
   const hasTemplate = !!selectedTemplate
   const hasAudience = totalContacts > 0
-  const hasMapping = !selectedTemplate || Object.keys(variableMapping).length > 0
+  // Only the variables the template actually uses need a mapping; a template
+  // with none is trivially complete.
+  const templateVars = selectedTemplate
+    ? Array.from(new Set(
+        ((selectedTemplate.body ?? '') + (selectedTemplate.header?.text ?? '') + (selectedTemplate.footer ?? ''))
+          .match(/{{[^}]+}}/g) ?? [],
+      ))
+    : []
+  const hasMapping = templateVars.every(v => !!variableMapping[v])
   const hasSchedule = sendImmediately || (!!scheduledDate && !!scheduledTime)
 
   const cost = selectedTemplate
@@ -193,7 +201,7 @@ export default function WizardStep4Review({
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Final checks</p>
           <ChecklistItem ok={hasTemplate && selectedTemplate?.status === 'APPROVED'} label="Template approved by Meta" />
           <ChecklistItem ok={hasAudience} label={`${totalContacts.toLocaleString()} valid contacts ready`} />
-          <ChecklistItem ok={hasMapping} label="Variable mapping complete" />
+          <ChecklistItem ok={hasMapping} label={templateVars.length === 0 ? 'No variables to map' : 'Variable mapping complete'} />
           <ChecklistItem ok={hasSchedule} label="Send time configured" />
           <ChecklistItem ok={!!campaignName} label="Campaign name set" />
 
