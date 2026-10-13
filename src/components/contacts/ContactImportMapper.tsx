@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CheckCircle, AlertTriangle, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { setHeaderField } from '@/lib/csvMapping'
 
 interface ParsedFile {
   name: string; size: number
@@ -27,15 +28,14 @@ const FIELD_OPTIONS = [
 const DUP_OPTIONS = [
   { value: 'skip',   label: 'Skip duplicates',  desc: "Don't import contacts already in your list" },
   { value: 'update', label: 'Update existing',  desc: 'Update name, tags and fields for existing contacts' },
-  { value: 'create', label: 'Import anyway',    desc: 'Create duplicate entries (not recommended)' },
 ] as const
 
 interface Props {
   parsed: ParsedFile
   mapping: Record<string, string>
   onMappingChange: (m: Record<string, string>) => void
-  dupHandling: 'skip' | 'update' | 'create'
-  onDupHandlingChange: (v: 'skip' | 'update' | 'create') => void
+  dupHandling: 'skip' | 'update'
+  onDupHandlingChange: (v: 'skip' | 'update') => void
   /** Normalized (digits only, no leading +) phone numbers already in the account, for real duplicate detection. */
   existingPhones: Set<string>
 }
@@ -86,7 +86,7 @@ export default function ContactImportMapper({ parsed, mapping, onMappingChange, 
                 <select
                   className={cn('input h-9 text-sm', !hasPhone && isPhoneField === false && mapped === '' && 'border-red-300')}
                   value={mapped}
-                  onChange={e => onMappingChange({ ...mapping, [header]: e.target.value })}
+                  onChange={e => onMappingChange(setHeaderField(mapping, header, e.target.value))}
                 >
                   {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>

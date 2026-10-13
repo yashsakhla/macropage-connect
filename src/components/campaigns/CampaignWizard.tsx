@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, Check, Loader2, AlertCircle, RefreshCw, Lock } from 'lucide-react'
 import { AxiosError } from 'axios'
+import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import { invertMapping } from '@/lib/csvMapping'
+import { uploadDocument } from '@/hooks/useUpload'
 import { usePermissions } from '@/lib/permissionsConstants'
-import type { Campaign, Contact, Template, ApiErrorResponse, DashboardHealthData } from '@/types'
+import type { Campaign, CampaignCsvStats, Contact, Template, ApiErrorResponse, DashboardHealthData } from '@/types'
 import type { AudienceType } from './WizardStep2Audience'
 import type { SendSpeed } from './WizardStep3Schedule'
 import {
@@ -23,6 +26,30 @@ const STEPS = [
   { label: 'Schedule' },
   { label: 'Review' },
 ]
+
+// CSV campaigns are created (and the file validated server-side) before the
+// Review step so it can show the real recipient count.
+interface CsvDraft {
+  id: string
+  totalContacts: number
+  csvStats?: CampaignCsvStats
+  signature: string
+}
+
+// create/update responses are the campaign itself, sometimes wrapped in `data`
+interface CampaignResult {
+  _id?: string
+  id?: string
+  totalContacts?: number
+  csvStats?: CampaignCsvStats
+  data?: CampaignResult
+}
+
+function apiErrorMessage(err: unknown, fallback: string): string {
+  return (err as AxiosError<ApiErrorResponse> | undefined)?.response?.data?.message
+    ?? (err instanceof Error ? err.message : undefined)
+    ?? fallback
+}
 
 interface CampaignWizardProps {
   onClose: () => void
@@ -64,15 +91,21 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvMapping, setCsvMapping] = useState<Record<string, string>>({})
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>(initialContacts ?? [])
+  const [csvDraft, setCsvDraft] = useState<CsvDraft | null>(null)
+  const [preparingCsv, setPreparingCsv] = useState(false)
 
   const {
     data: audienceData,
     isLoading: audienceCountLoading,
     isError: audienceCountError,
   } = useContactsCount(audienceType === 'tag' ? { tags: selectedTags } : {})
+  // For CSV the count comes from the created campaign, never from the
+  // project-wide contacts count.
   const totalContacts = audienceType === 'selected'
     ? (selectedContacts.length || editCampaign?.totalContacts || 0)
-    : (audienceData?.total ?? 0)
+    : audienceType === 'csv'
+      ? (csvDraft?.totalContacts ?? editCampaign?.totalContacts ?? 0)
+      : (audienceData?.total ?? 0)
 
   const { data: healthData } = useDashboardHealth()
   const qualityRating = (healthData as DashboardHealthData | undefined)?.qualityRating
@@ -117,12 +150,18 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
     reset: resetLaunch,
   } = useLaunchCampaign()
 
-  const isPending = creating || updating || launching
+  const isPending = creating || updating || launching || preparingCsv
+
+  const hasCsvPhone = Object.values(csvMapping).includes('phone')
 
   const canProceed = () => {
+    if (preparingCsv) return false
     if (step === 0) return !!campaignName.trim() && !!selectedTemplate
     if (step === 1) {
-      if (audienceType === 'csv') return !!csvFile
+      if (audienceType === 'csv') {
+        if (csvFile) return hasCsvPhone
+        return isEditing && editCampaign?.audienceType === 'csv'
+      }
       if (audienceType === 'selected') return selectedContacts.length > 0
       if (audienceType === 'tag' && selectedTags.length === 0) return false
       if (audienceCountLoading || audienceCountError) return false
@@ -140,37 +179,113 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
     setStep(s => s - 1)
   }
 
+  const buildPayload = (csvFileUrl?: string) => {
+    const scheduledAt = !sendImmediately && scheduledDate && scheduledTime
+      ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
+      : undefined
+
+    return {
+      name: campaignName,
+      templateId: selectedTemplate!.id,
+      audienceType,
+      audienceTags: audienceType === 'tag' ? selectedTags : undefined,
+      contactIds: audienceType === 'selected' && selectedContacts.length
+        ? selectedContacts.map(c => c.id)
+        : undefined,
+      csvFileUrl,
+      csvColumnMapping: csvFileUrl ? invertMapping(csvMapping) : undefined,
+      variableMapping,
+      scheduledAt,
+      sendSpeed,
+      isAbTest,
+      abTestSplit: isAbTest ? abSplit : undefined,
+    }
+  }
+
+  const extractId = (result: CampaignResult | undefined): string =>
+    result?._id ?? result?.id ?? result?.data?._id ?? result?.data?.id ?? ''
+
+  // CSV audiences: upload the file and create the campaign now, right after the
+  // upload (the file URL expires after an hour), so Review can show the real
+  // recipient count from the response instead of a project-wide estimate.
+  const prepareCsvCampaign = async (): Promise<boolean> => {
+    if (!selectedTemplate || !csvFile) return true
+    const signature = JSON.stringify([
+      buildPayload('x'), csvFile.name, csvFile.size, csvFile.lastModified,
+    ])
+    if (csvDraft?.signature === signature) return true
+    if (!requireConnected()) return false
+
+    setPreparingCsv(true)
+    try {
+      const { url } = await uploadDocument(csvFile)
+      const payload = buildPayload(url)
+      const existingId = csvDraft?.id ?? editCampaign?.id
+      const result = existingId
+        ? await updateCampaignAsync({ id: existingId, data: payload })
+        : await createCampaignAsync(payload)
+      const id = extractId(result) || existingId || ''
+      if (!id) throw new Error('Campaign was created but no id was returned')
+      const campaign: CampaignResult | undefined = result?.data ?? result
+      setCsvDraft({
+        id,
+        totalContacts: campaign?.totalContacts ?? 0,
+        csvStats: campaign?.csvStats,
+        signature,
+      })
+      return true
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Could not process the CSV file')
+      toast.error(message)
+      // Download failures are almost always an expired/unreachable upload URL —
+      // send the user back to pick the file again.
+      if ((err as AxiosError)?.response?.status === 400 && /download|expire/i.test(message)) {
+        setCsvFile(null)
+        setCsvMapping({})
+        setCsvDraft(null)
+        setStep(1)
+      }
+      return false
+    } finally {
+      setPreparingCsv(false)
+    }
+  }
+
+  const handleContinue = async () => {
+    if (!canProceed()) return
+    if (step === 2 && audienceType === 'csv') {
+      if (!(await prepareCsvCampaign())) return
+    }
+    setStep(s => s + 1)
+  }
+
   const handleLaunch = async () => {
-    if (!selectedTemplate) return
+    if (!selectedTemplate) {
+      toast.error('Select a template before launching')
+      return
+    }
     if (!requireConnected()) return
     resetCreate()
     resetUpdate()
     resetLaunch()
     try {
-      const scheduledAt = !sendImmediately && scheduledDate && scheduledTime
-        ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
-        : undefined
-
-      const payload = {
-        name: campaignName,
-        templateId: selectedTemplate.id,
-        audienceType,
-        audienceTags: audienceType === 'tag' ? selectedTags : undefined,
-        contactIds: audienceType === 'selected' && selectedContacts.length
-          ? selectedContacts.map(c => c.id)
-          : undefined,
-        variableMapping,
-        scheduledAt,
-        sendSpeed,
-        isAbTest,
-        abTestSplit: isAbTest ? abSplit : undefined,
+      let campaignId: string
+      if (audienceType === 'csv' && csvDraft) {
+        // already created (with the file) when entering Review
+        campaignId = csvDraft.id
+      } else {
+        const payload = buildPayload()
+        const existingId = editCampaign?.id ?? csvDraft?.id
+        const result = existingId
+          ? await updateCampaignAsync({ id: existingId, data: payload })
+          : await createCampaignAsync(payload)
+        campaignId = extractId(result) || existingId || ''
       }
 
-      const result = isEditing
-        ? await updateCampaignAsync({ id: editCampaign!.id, data: payload })
-        : await createCampaignAsync(payload)
-
-      const campaignId: string = result?._id ?? result?.id ?? result?.data?._id ?? result?.data?.id ?? editCampaign?.id ?? ''
+      if (!campaignId) {
+        toast.error('Campaign was saved but no id came back — cannot launch')
+        return
+      }
 
       if (sendImmediately) {
         await launchCampaignAsync(campaignId)
@@ -178,8 +293,9 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
 
       onSuccess?.(campaignId)
       onClose()
-    } catch {
-      // errors surface via isError / error on the mutations — shown inline
+    } catch (err) {
+      // also shown inline on the Review step via the mutations' error state
+      toast.error(apiErrorMessage(err, 'Something went wrong. Please try again.'))
     }
   }
 
@@ -383,6 +499,7 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
                 audienceType={audienceType}
                 selectedTags={selectedTags}
                 totalContacts={totalContacts}
+                csvStats={audienceType === 'csv' ? csvDraft?.csvStats : undefined}
                 sendImmediately={sendImmediately}
                 scheduledDate={scheduledDate}
                 scheduledTime={scheduledTime}
@@ -421,10 +538,10 @@ export default function CampaignWizard({ onClose, onSuccess, initialTemplate, in
             {step < STEPS.length - 1 ? (
               <button
                 className={cn('btn-primary h-10 sm:h-9 px-5 gap-1 flex-1 sm:flex-none justify-center', !canProceed() && 'opacity-50 cursor-not-allowed')}
-                onClick={() => canProceed() && setStep(s => s + 1)}
+                onClick={handleContinue}
                 disabled={!canProceed()}
               >
-                Continue →
+                {preparingCsv ? <><Loader2 size={14} className="animate-spin" /> Preparing CSV...</> : <>Continue →</>}
               </button>
             ) : canLaunchCampaign ? (
               <button

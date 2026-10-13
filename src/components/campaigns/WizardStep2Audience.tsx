@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
-import { Users, Tag, UploadCloud, FileText, AlertTriangle, ShieldCheck, CheckCircle, XCircle, X, AlertCircle, RefreshCw, UserCheck } from 'lucide-react'
+import { Users, Tag, UploadCloud, FileText, AlertTriangle, ShieldCheck, CheckCircle, X, AlertCircle, RefreshCw, UserCheck } from 'lucide-react'
 import { cn, formatINR, calculateEstimatedCost, getInitials } from '@/lib/utils'
 import { useCampaignTags, useContactsCount } from '@/hooks/useCampaigns'
+import { autoMapHeaders, setHeaderField } from '@/lib/csvMapping'
+import toast from 'react-hot-toast'
 import type { Contact, Template } from '@/types'
 
 export type AudienceType = 'all' | 'tag' | 'csv' | 'selected'
@@ -27,9 +29,12 @@ const FIELD_OPTIONS = [
   { value: 'phone', label: 'Phone number (required)' },
   { value: 'name', label: 'Name' },
   { value: 'email', label: 'Email' },
-  { value: 'tag', label: 'Tag' },
-  { value: 'custom1', label: 'Custom field 1' },
-  { value: 'custom2', label: 'Custom field 2' },
+  { value: 'company', label: 'Company' },
+  { value: 'city', label: 'City' },
+  { value: 'state', label: 'State' },
+  { value: 'country', label: 'Country' },
+  { value: 'jobTitle', label: 'Job title' },
+  { value: 'tags', label: 'Tags' },
 ]
 
 function parseCSVHeaders(text: string): { headers: string[]; rows: CsvRow[] } {
@@ -75,7 +80,10 @@ export default function WizardStep2Audience({
   } = useContactsCount(audienceType === 'tag' ? { tags: selectedTags } : {})
 
   const handleFile = (file: File) => {
-    if (!file.name.endsWith('.csv')) return
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast.error('Please choose a .csv file')
+      return
+    }
     onCsvFileChange(file)
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -85,14 +93,7 @@ export default function WizardStep2Audience({
       setCsvHeaders(headers)
       setCsvPreviewRows(rows)
       setCsvRowCount(totalRows)
-      const autoMap: Record<string, string> = {}
-      headers.forEach(h => {
-        const lower = h.toLowerCase()
-        if (lower.includes('phone') || lower.includes('mobile') || lower.includes('number')) autoMap[h] = 'phone'
-        else if (lower.includes('name')) autoMap[h] = 'name'
-        else if (lower.includes('email')) autoMap[h] = 'email'
-      })
-      onCsvMappingChange(autoMap)
+      onCsvMappingChange(autoMapHeaders(headers))
     }
     reader.readAsText(file)
   }
@@ -103,10 +104,6 @@ export default function WizardStep2Audience({
   }
 
   const totalContacts = audienceType === 'selected' ? selectedContacts.length : (audienceData?.total ?? 0)
-
-  const validCount = csvRowCount > 0 ? Math.floor(csvRowCount * 0.975) : 0
-  const dupCount = csvRowCount > 0 ? Math.floor(csvRowCount * 0.008) : 0
-  const invalidCount = csvRowCount > 0 ? csvRowCount - validCount - dupCount : 0
 
   const sourceTabs = [
     ...(selectedContacts.length > 0
@@ -330,7 +327,7 @@ export default function WizardStep2Audience({
                               <select
                                 className="input h-8 text-xs flex-1"
                                 value={mapped}
-                                onChange={e => onCsvMappingChange({ ...csvMapping, [header]: e.target.value })}
+                                onChange={e => onCsvMappingChange(setHeaderField(csvMapping, header, e.target.value))}
                               >
                                 {FIELD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                               </select>
@@ -367,22 +364,14 @@ export default function WizardStep2Audience({
               )}
 
               {csvRowCount > 0 && Object.values(csvMapping).includes('phone') && (
-                <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4 space-y-2">
+                <div className="bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl p-4">
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle size={15} className="text-[#1a5c3a]" />
-                    <span className="text-gray-700 dark:text-gray-300">{validCount.toLocaleString()} valid contacts</span>
+                    <span className="text-gray-700 dark:text-gray-300">Phone column mapped</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400" />
-                    <span className="text-gray-700 dark:text-gray-300">{dupCount.toLocaleString()} duplicates removed</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <XCircle size={15} className="text-red-500 dark:text-red-400" />
-                    <span className="text-gray-700 dark:text-gray-300">{invalidCount.toLocaleString()} invalid numbers removed</span>
-                  </div>
-                  <div className="pt-2 border-t border-[#f7f8f6]">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{validCount.toLocaleString()} contacts will receive this campaign</p>
-                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                    Invalid numbers, duplicates and opted-out contacts are removed when the campaign is prepared — the exact recipient count is shown on the Review step.
+                  </p>
                 </div>
               )}
             </div>
