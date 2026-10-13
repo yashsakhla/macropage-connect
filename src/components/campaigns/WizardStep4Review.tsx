@@ -1,5 +1,5 @@
 import { CheckCircle, AlertTriangle, FileText } from 'lucide-react'
-import type { Template } from '@/types'
+import type { CampaignCsvStats, Template } from '@/types'
 import type { AudienceType } from './WizardStep2Audience'
 import type { SendSpeed } from './WizardStep3Schedule'
 import TemplatePreview from '@/components/templates/TemplatePreview'
@@ -13,6 +13,7 @@ interface WizardStep4Props {
   audienceType: AudienceType
   selectedTags: string[]
   totalContacts: number
+  csvStats?: CampaignCsvStats
   sendImmediately: boolean
   scheduledDate: string
   scheduledTime: string
@@ -44,7 +45,7 @@ function ChecklistItem({ ok, label }: { ok: boolean; label: string }) {
 
 export default function WizardStep4Review({
   campaignName, selectedTemplate, variableMapping,
-  audienceType, selectedTags, totalContacts,
+  audienceType, selectedTags, totalContacts, csvStats,
   sendImmediately, scheduledDate, scheduledTime, timezone,
   sendSpeed, isAbTest, abSplit,
   onConfirmChange, confirmed,
@@ -150,6 +151,22 @@ export default function WizardStep4Review({
               {audienceLabel}
             </span>
           </div>
+          {csvStats && (
+            <div className="bg-[#f7f8f6] dark:bg-[#0f1724] rounded-xl p-3 space-y-1">
+              {[
+                ['Rows in file', csvStats.totalRows],
+                ['Invalid numbers', csvStats.invalid],
+                ['Duplicates in file', csvStats.duplicatesInFile],
+                ['Opted out', csvStats.optedOut],
+                ['New contacts', csvStats.newContacts],
+              ].map(([label, val]) => (
+                <div key={label} className="flex justify-between text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">{Number(val).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <CheckCircle size={12} className="text-[#1a5c3a]" />
             Opted-out contacts automatically excluded
