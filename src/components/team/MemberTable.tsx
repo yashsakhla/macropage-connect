@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Search, User, MoreHorizontal, Send, Link, UserMinus, Trash2, UserCheck, Key, ClipboardList, Edit } from 'lucide-react'
 import { cn, getInitials, fromNow } from '@/lib/utils'
@@ -41,26 +42,52 @@ function WorkloadBar({ open, max = 20 }: { open: number; max?: number }) {
 
 function RowMenu({ member, currentUserId, onEdit }: { member: TeamMember; currentUserId: string; onEdit: (m: TeamMember) => void }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const deactivate = useDeactivateMember()
   const remove = useRemoveMember()
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    if (!open) return
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (ref.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    const close = () => setOpen(false)
     document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', h)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
+
+  const toggleMenu = () => {
+    if (open) { setOpen(false); return }
+    const r = btnRef.current?.getBoundingClientRect()
+    if (r) {
+      const right = window.innerWidth - r.right
+      const openUp = window.innerHeight - r.bottom < 320 && r.top > window.innerHeight - r.bottom
+      setPos(openUp ? { bottom: window.innerHeight - r.top + 4, right } : { top: r.bottom + 4, right })
+    }
+    setOpen(true)
+  }
 
   const isOwn = member.id === currentUserId
 
   return (
     <div className="relative" ref={ref}>
-      <button className="w-8 h-8 rounded-lg hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500" onClick={() => setOpen(v => !v)}>
+      <button ref={btnRef} className="w-8 h-8 rounded-lg hover:bg-[#f7f8f6] dark:hover:bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500" onClick={toggleMenu}>
         <MoreHorizontal size={14} />
       </button>
-      {open && (
-        <div className="absolute right-0 top-9 z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 shadow-lg rounded-xl p-1.5 w-52">
+      {open && pos && createPortal(
+        <div ref={menuRef} style={{ position: 'fixed', ...pos }} className="z-[100] bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 shadow-lg rounded-xl p-1.5 w-52">
           {member.status === 'active' && (
             <>
               <MenuItem icon={User}          label="View profile"   onClick={() => navigate(`/team/${member.id}`)} />
@@ -93,7 +120,8 @@ function RowMenu({ member, currentUserId, onEdit }: { member: TeamMember; curren
               <MenuItem icon={Trash2} label="Delete permanently" danger="red" onClick={() => { if (window.confirm('Delete permanently?')) remove.mutate(member.id) }} />
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
