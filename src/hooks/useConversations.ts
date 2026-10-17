@@ -338,7 +338,7 @@ export function useAssignConversation() {
       conversationId,
       userId,
     }: { conversationId: string; userId: string }) =>
-      api.patch(`/conversations/${conversationId}/assign`, {
+      api.put(`/conversations/${conversationId}/assign`, {
         assignToUserId: userId,
       }).then(r => r.data?.data ?? r.data),
     onSuccess: (data) => {
