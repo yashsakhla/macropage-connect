@@ -171,7 +171,11 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
                 <td colSpan={7} className="text-center text-gray-400 dark:text-gray-500 py-10">No recipients found</td>
               </tr>
             ) : paged.map(r => {
-              const badge = STATUS_BADGE[r.status]
+              const statusKey = String(r.status ?? '').toLowerCase() as keyof typeof STATUS_BADGE
+              const badge = STATUS_BADGE[statusKey] ?? {
+                ...STATUS_BADGE.pending,
+                label: r.status ? String(r.status).charAt(0).toUpperCase() + String(r.status).slice(1).toLowerCase() : 'Unknown',
+              }
               return (
                 <tr key={r.id} className="hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                   <td>

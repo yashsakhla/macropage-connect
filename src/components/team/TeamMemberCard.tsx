@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { MoreVertical, Shield, Users, Headphones, Check } from 'lucide-react'
 import { cn, getInitials, fromNow } from '@/lib/utils'
@@ -35,24 +36,65 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   agent: 'Handles conversations assigned to them',
 }
 
+// Renders in a portal with fixed positioning so the table's overflow-hidden can't clip it.
+// Flips above the anchor when there is no room below (e.g. last row).
+function FloatingMenu({ anchorRef, onClose, align = 'right', className, children }: {
+  anchorRef: React.RefObject<HTMLElement>
+  onClose: () => void
+  align?: 'left' | 'right'
+  className?: string
+  children: React.ReactNode
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [style, setStyle] = useState<React.CSSProperties>({ position: 'fixed', visibility: 'hidden' })
+
+  useLayoutEffect(() => {
+    const a = anchorRef.current?.getBoundingClientRect()
+    const m = ref.current
+    // anchor is display:none (the other breakpoint's copy) — keep hidden
+    if (!a || !m || (a.width === 0 && a.height === 0)) return
+    const { offsetHeight: h, offsetWidth: w } = m
+    const top = window.innerHeight - a.bottom < h + 8 && a.top > h + 8 ? a.top - h - 4 : a.bottom + 4
+    const left = align === 'right' ? a.right - w : a.left
+    setStyle({ position: 'fixed', top, left: Math.max(8, Math.min(left, window.innerWidth - w - 8)) })
+  }, [anchorRef, align])
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (ref.current?.contains(t) || anchorRef.current?.contains(t)) return
+      onClose()
+    }
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('scroll', onClose, true)
+    window.addEventListener('resize', onClose)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      window.removeEventListener('scroll', onClose, true)
+      window.removeEventListener('resize', onClose)
+    }
+  }, [anchorRef, onClose])
+
+  return createPortal(<div ref={ref} style={style} className={className}>{children}</div>, document.body)
+}
+
 export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [roleMenuOpen, setRoleMenuOpen] = useState(false)
   const [pendingRole, setPendingRole] = useState<string | null>(null)
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const mobileActionsRef = useRef<HTMLButtonElement>(null)
+  const mobileRoleRef = useRef<HTMLButtonElement>(null)
+  const desktopActionsRef = useRef<HTMLButtonElement>(null)
+  const desktopRoleRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
   const updateRole = useUpdateMemberRole()
   const removeMember = useRemoveMember()
   const { canChangeTeamRole, canRemoveTeamMember } = usePermissions()
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) { setMenuOpen(false); setRoleMenuOpen(false) }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  const closeMenus = () => { setMenuOpen(false); setRoleMenuOpen(false) }
+  const closeActions = () => setMenuOpen(false)
+  const closeRole = () => setRoleMenuOpen(false)
 
   const role = ROLE_CONFIG[member.role]
   const status = STATUS_CONFIG[member.status]
@@ -70,6 +112,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
   }
 
   const handleRemove = () => {
+    closeMenus()
     setRemoveConfirmOpen(true)
   }
 
@@ -103,14 +146,14 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
           </div>
 
           {!isCurrentUser ? (
-            <div className="relative shrink-0" ref={menuRef}>
-              <button className="btn-ghost w-8 h-8 !px-0" onClick={() => setMenuOpen(v => !v)}>
+            <div className="relative shrink-0">
+              <button ref={mobileActionsRef} className="btn-ghost w-8 h-8 !px-0" onClick={() => setMenuOpen(v => !v)}>
                 <MoreVertical size={14} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
+                <FloatingMenu anchorRef={mobileActionsRef} onClose={closeActions} className="z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
                   {canChangeTeamRole && (
-                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => setRoleMenuOpen(v => !v)}>Change role</button>
+                    <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { closeActions(); setRoleMenuOpen(true) }}>Change role</button>
                   )}
                   {canRemoveTeamMember && (
                     <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400" onClick={handleRemove}>Remove member</button>
@@ -121,7 +164,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
                       <button className="w-full px-3 py-2 text-left text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5">Cancel invitation</button>
                     </>
                   )}
-                </div>
+                </FloatingMenu>
               )}
             </div>
           ) : (
@@ -132,13 +175,14 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
         <div className="flex items-center gap-2 flex-wrap mt-2.5">
           <div className="relative">
             <button
+              ref={mobileRoleRef}
               onClick={() => canChangeTeamRole && !isCurrentUser ? setRoleMenuOpen(v => !v) : undefined}
               className={cn('flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium', role.bg, role.text, canChangeTeamRole && !isCurrentUser && 'cursor-pointer hover:opacity-80 transition-opacity')}
             >
               <RoleIcon size={11} /> {role.label}
             </button>
             {roleMenuOpen && canChangeTeamRole && (
-              <div className="absolute left-0 top-9 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl shadow-[0_20px_40px_-8px_rgba(0,0,0,0.2),0_8px_16px_-6px_rgba(0,0,0,0.1)] py-2 w-60 text-sm overflow-hidden">
+              <FloatingMenu anchorRef={mobileRoleRef} align="left" onClose={closeRole} className="z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-2xl shadow-[0_20px_40px_-8px_rgba(0,0,0,0.2),0_8px_16px_-6px_rgba(0,0,0,0.1)] py-2 w-60 text-sm overflow-hidden">
                 <p className="px-3 pb-1.5 text-2xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Change role to</p>
                 {(['admin', 'manager', 'agent'] as UserRole[]).map(r => {
                   const opt = ROLE_CONFIG[r]
@@ -157,7 +201,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
                     </button>
                   )
                 })}
-              </div>
+              </FloatingMenu>
             )}
           </div>
           <span className={cn('badge text-xs', status.bg, status.text)}>{status.label}</span>
@@ -213,21 +257,22 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
       </div>
 
       {/* role */}
-      <div className="relative" ref={menuRef}>
+      <div className="relative">
         <button
+          ref={desktopRoleRef}
           onClick={() => canChangeTeamRole && !isCurrentUser ? setRoleMenuOpen(v => !v) : undefined}
           className={cn('flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium', role.bg, role.text, canChangeTeamRole && !isCurrentUser && 'cursor-pointer hover:opacity-80 transition-opacity')}
         >
           <RoleIcon size={11} /> {role.label}
         </button>
         {roleMenuOpen && canChangeTeamRole && (
-          <div className="absolute left-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-32 text-sm">
+          <FloatingMenu anchorRef={desktopRoleRef} align="left" onClose={closeRole} className="z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-32 text-sm">
             {(['admin', 'manager', 'agent'] as UserRole[]).map(r => (
               <button key={r} className={cn('w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 capitalize', member.role === r && 'text-[#1a5c3a] font-medium')} onClick={() => handleChangeRole(r)}>
                 {r}
               </button>
             ))}
-          </div>
+          </FloatingMenu>
         )}
       </div>
 
@@ -265,13 +310,13 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
       <div className="flex justify-end">
         {!isCurrentUser && (
           <div className="relative">
-            <button className="btn-ghost w-8 h-8 p-0" onClick={() => setMenuOpen(v => !v)}>
+            <button ref={desktopActionsRef} className="btn-ghost w-8 h-8 p-0" onClick={() => setMenuOpen(v => !v)}>
               <MoreVertical size={14} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
+              <FloatingMenu anchorRef={desktopActionsRef} onClose={closeActions} className="z-50 bg-white dark:bg-[#0b1220] border border-[#e8ebe8] dark:border-white/10 rounded-xl shadow-lg py-1 w-44 text-sm">
                 {canChangeTeamRole && (
-                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => setRoleMenuOpen(v => !v)}>Change role</button>
+                  <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5" onClick={() => { closeActions(); setRoleMenuOpen(true) }}>Change role</button>
                 )}
                 {canRemoveTeamMember && (
                   <button className="w-full px-3 py-2 text-left hover:bg-[#f7f8f6] dark:hover:bg-white/5 text-red-500 dark:text-red-400" onClick={handleRemove}>Remove member</button>
@@ -282,7 +327,7 @@ export default function TeamMemberCard({ member, isCurrentUser }: TeamMemberCard
                     <button className="w-full px-3 py-2 text-left text-red-500 dark:text-red-400 hover:bg-[#f7f8f6] dark:hover:bg-white/5">Cancel invitation</button>
                   </>
                 )}
-              </div>
+              </FloatingMenu>
             )}
           </div>
         )}

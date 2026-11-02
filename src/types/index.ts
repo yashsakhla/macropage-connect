@@ -1141,7 +1141,7 @@ export interface RawFlowDTO {
 export interface RawTemplateDTO {
   id?: string
   _id?: string | { $oid: string }
-  header?: { type?: string; format?: string; text?: string; mediaUrl?: string }
+  header?: { type?: string; format?: string; text?: string; mediaUrl?: string; example?: { header_handle?: string[] } }
   buttons?: TemplateButton[] | { buttons?: TemplateButton[] }
   [key: string]: unknown
 }

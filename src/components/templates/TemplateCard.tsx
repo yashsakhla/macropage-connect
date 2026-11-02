@@ -137,7 +137,10 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
               {template.header?.type === 'TEXT' && template.header.text && (
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">{template.header.text}</p>
               )}
-              {template.header && template.header.type !== 'TEXT' && (() => {
+              {template.header?.type === 'IMAGE' && template.header.mediaUrl && (
+                <img src={template.header.mediaUrl} alt="header" className="w-full h-24 object-cover rounded-lg mb-1.5" />
+              )}
+              {template.header && template.header.type !== 'TEXT' && !(template.header.type === 'IMAGE' && template.header.mediaUrl) && (() => {
                 const MediaIcon = MEDIA_HEADER_ICON[template.header.type] ?? FileText
                 return (
                   <div className="flex items-center gap-1.5 bg-white/60 dark:bg-white/10 rounded-lg px-2 py-1.5 mb-1.5 text-[10px] font-medium text-gray-600 dark:text-gray-300">

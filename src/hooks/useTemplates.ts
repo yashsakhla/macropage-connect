@@ -27,8 +27,14 @@ function normalizeTemplateId(raw: RawTemplateDTO): string {
 // (header.type, buttons as a plain array), so without this every template
 // with a header or buttons silently rendered as body-text-only.
 export function normalizeTemplate(raw: RawTemplateDTO): Template {
+  // Meta's header.type is the literal "HEADER"; the real kind is header.format.
+  // Media URL is either our own upload (mediaUrl) or Meta's hosted sample (example.header_handle[0]).
   const header = raw.header
-    ? { type: raw.header.type ?? raw.header.format, text: raw.header.text, mediaUrl: raw.header.mediaUrl }
+    ? {
+        type: raw.header.format ?? raw.header.type,
+        text: raw.header.text,
+        mediaUrl: raw.header.mediaUrl ?? raw.header.example?.header_handle?.[0],
+      }
     : undefined
   const buttons = Array.isArray(raw.buttons)
     ? raw.buttons

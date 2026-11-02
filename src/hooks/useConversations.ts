@@ -118,10 +118,17 @@ export function useSendMessage() {
         mimeType?: string
         caption?: string
       }
-    }) =>
-      api
-        .post(`/conversations/${conversationId}/messages`, data)
-        .then((r) => r.data.data),
+    }) => {
+      // Template header is held in the read shape ({ type, mediaUrl }); the send API
+      // expects { format, mediaUrl } so media headers (IMAGE/VIDEO/DOCUMENT) go out with the template.
+      const { header, ...rest } = data
+      const body = header
+        ? { ...rest, header: { format: header.type, ...(header.text ? { text: header.text } : {}), ...(header.mediaUrl ? { mediaUrl: header.mediaUrl } : {}) } }
+        : rest
+      return api
+        .post(`/conversations/${conversationId}/messages`, body)
+        .then((r) => r.data.data)
+    },
     onMutate: async ({ conversationId, data }) => {
       await qc.cancelQueries({ queryKey: ['messages', conversationId, 1] })
       const { user } = useAuthStore.getState()
