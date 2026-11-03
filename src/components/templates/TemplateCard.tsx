@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   MoreVertical, XCircle, Clock, PauseCircle, Pencil, RotateCcw, Copy,
   Globe, RotateCw, TrendingUp, CalendarDays,
-  ArrowRight, FileText, Image, Video, File, MousePointerClick,
+  ArrowRight, FileText, Image, Video, File, MousePointerClick, Upload,
 } from 'lucide-react'
+import { useSetTemplateHeaderMedia } from '@/hooks/useTemplates'
 import type { Template } from '@/types'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNowStrict } from 'date-fns'
@@ -57,6 +58,8 @@ interface TemplateCardProps {
 export default function TemplateCard({ template, onUseInCampaign, onEdit, onDelete, onDuplicate, onClick }: TemplateCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const setHeaderMedia = useSetTemplateHeaderMedia()
   const { canCreateTemplate, canDeleteTemplate } = usePermissions()
 
   useEffect(() => {
@@ -137,10 +140,10 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
               {template.header?.type === 'TEXT' && template.header.text && (
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">{template.header.text}</p>
               )}
-              {template.header?.type === 'IMAGE' && template.header.mediaUrl && (
-                <img src={template.header.mediaUrl} alt="header" className="w-full h-24 object-cover rounded-lg mb-1.5" />
+              {template.header?.type === 'IMAGE' && (template.header.mediaUrl ?? template.header.sampleUrl) && (
+                <img src={template.header.mediaUrl ?? template.header.sampleUrl} alt="header" className="w-full h-24 object-cover rounded-lg mb-1.5" />
               )}
-              {template.header && template.header.type !== 'TEXT' && !(template.header.type === 'IMAGE' && template.header.mediaUrl) && (() => {
+              {template.header && template.header.type !== 'TEXT' && !(template.header.type === 'IMAGE' && (template.header.mediaUrl ?? template.header.sampleUrl)) && (() => {
                 const MediaIcon = MEDIA_HEADER_ICON[template.header.type] ?? FileText
                 return (
                   <div className="flex items-center gap-1.5 bg-white/60 dark:bg-white/10 rounded-lg px-2 py-1.5 mb-1.5 text-[10px] font-medium text-gray-600 dark:text-gray-300">
@@ -149,6 +152,32 @@ export default function TemplateCard({ template, onUseInCampaign, onEdit, onDele
                   </div>
                 )
               })()}
+              {template.header && template.header.type !== 'TEXT' && !template.header.mediaUrl && canCreateTemplate && (
+                <>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    hidden
+                    accept={template.header.type === 'IMAGE' ? 'image/*' : template.header.type === 'VIDEO' ? 'video/*' : undefined}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (file && template.header && template.header.type !== 'TEXT') {
+                        setHeaderMedia.mutate({ id: template.id, file, format: template.header.type })
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={setHeaderMedia.isPending}
+                    className="flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-1 mb-1.5 border border-[#c8e6d4] text-[#1a5c3a] bg-white/70 dark:bg-white/10 hover:bg-[#f0faf5] disabled:opacity-60"
+                    onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}
+                  >
+                    <Upload size={10} />
+                    {setHeaderMedia.isPending ? 'Uploading…' : `Set ${template.header.type.toLowerCase()}`}
+                  </button>
+                </>
+              )}
               <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed">
                 {renderBodyWithPills(template.body)}
               </p>

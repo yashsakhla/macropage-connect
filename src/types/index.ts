@@ -365,7 +365,10 @@ export interface Template {
   header?: {
     type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
     text?: string
+    /** Our own uploaded media — the only URL that is safe to send. */
     mediaUrl?: string
+    /** Meta's hosted sample (scontent link) — display-only, never send it. */
+    sampleUrl?: string
   }
   body: string
   footer?: string

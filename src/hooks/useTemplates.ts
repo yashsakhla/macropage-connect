@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/axios'
+import { uploadImage, uploadDocument } from '@/hooks/useUpload'
 import type { AxiosError } from 'axios'
 import type { Template, CreateTemplatePayload, RawTemplateDTO, ApiErrorResponse } from '@/types'
 
@@ -28,12 +29,14 @@ function normalizeTemplateId(raw: RawTemplateDTO): string {
 // with a header or buttons silently rendered as body-text-only.
 export function normalizeTemplate(raw: RawTemplateDTO): Template {
   // Meta's header.type is the literal "HEADER"; the real kind is header.format.
-  // Media URL is either our own upload (mediaUrl) or Meta's hosted sample (example.header_handle[0]).
+  // mediaUrl is only our own upload. Meta's hosted sample (example.header_handle[0]) is
+  // kept separately as sampleUrl for previews — it must never go out in a send payload.
   const header = raw.header
     ? {
         type: raw.header.format ?? raw.header.type,
         text: raw.header.text,
-        mediaUrl: raw.header.mediaUrl ?? raw.header.example?.header_handle?.[0],
+        mediaUrl: raw.header.mediaUrl,
+        sampleUrl: raw.header.example?.header_handle?.[0],
       }
     : undefined
   const buttons = Array.isArray(raw.buttons)
@@ -95,6 +98,23 @@ export function useUpdateTemplate() {
     },
     onError: (err: MutationError) =>
       toast.error(apiError(err, 'Failed to update template')),
+  })
+}
+
+// Uploads the file, then saves its URL on the template so every send (inbox + campaign) uses it.
+export function useSetTemplateHeaderMedia() {
+  const qc = useQueryClient()
+  return useMutation<unknown, MutationError, { id: string; file: File; format: 'IMAGE' | 'VIDEO' | 'DOCUMENT' }>({
+    mutationFn: async ({ id, file, format }) => {
+      const { url } = format === 'IMAGE' ? await uploadImage(file) : await uploadDocument(file)
+      return api.patch(`/templates/${id}/header-media`, { mediaUrl: url }).then((r) => r.data)
+    },
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['template', id] })
+      qc.invalidateQueries({ queryKey: ['templates'] })
+      toast.success('Header media saved')
+    },
+    onError: (err) => toast.error(apiError(err, 'Failed to set header media')),
   })
 }
 
