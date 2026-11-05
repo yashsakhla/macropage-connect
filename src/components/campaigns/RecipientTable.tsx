@@ -49,13 +49,9 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  // Delivery stages are cumulative (a read message was also delivered and
-  // sent), matching how campaign-level totals are counted — so the tab badge
-  // and the filtered rows always agree.
   const matchesStatus = (status: string, filter: string) => {
     if (filter === 'all') return true
-    if (filter === 'sent') return status === 'sent' || status === 'delivered' || status === 'read'
-    if (filter === 'delivered') return status === 'delivered' || status === 'read'
+    // Exact match: each tab counts only recipients currently in that status.
     return status === filter
   }
 
@@ -146,11 +142,11 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
         <div className="overflow-x-auto">
         <table className="data-table w-full table-fixed min-w-[640px]">
           <colgroup>
-            <col style={{ width: '26%' }} />
-            <col style={{ width: '16%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '11%' }} />
+            <col style={{ width: '30%' }} />
+            <col style={{ width: '17%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '10%' }} />
             <col style={{ width: '9%' }} />
             <col style={{ width: '8%' }} />
           </colgroup>
@@ -179,9 +175,9 @@ export default function RecipientTable({ recipients, isLoading, campaignTotals, 
               return (
                 <tr key={r.id} className="hover:bg-[#fafffe] dark:hover:bg-white/5 transition-colors">
                   <td>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Avatar name={r.contactName} />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{r.contactName}</span>
+                      <span title={r.contactName} className="text-sm font-medium text-gray-900 dark:text-white truncate min-w-0">{r.contactName}</span>
                     </div>
                   </td>
                   <td className="text-center">

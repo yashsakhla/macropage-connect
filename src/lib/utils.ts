@@ -195,3 +195,26 @@ export function calculateEstimatedCost(
   const total    = recipientCount * rate
   return { perConversation: rate, total, formatted: formatINR(total), category }
 }
+
+/**
+ * Resolve display text for a message. WhatsApp button / interactive replies
+ * often arrive with empty `content` and the clicked title nested in a payload.
+ */
+export function resolveMessageContent(raw: Record<string, unknown>): string {
+  const direct = raw.content ?? raw.text ?? raw.body
+  if (typeof direct === 'string' && direct.trim()) return direct
+  const str = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v : undefined
+  const obj = (v: unknown): Record<string, unknown> =>
+    v && typeof v === 'object' ? (v as Record<string, unknown>) : {}
+  const interactive = obj(raw.interactive)
+  const button = obj(raw.button)
+  const buttonReply = obj(raw.buttonReply ?? interactive.button_reply ?? interactive.buttonReply)
+  const listReply = obj(raw.listReply ?? interactive.list_reply ?? interactive.listReply)
+  const meta = obj(raw.metadata)
+  return (
+    str(buttonReply.title) ?? str(listReply.title) ?? str(button.text) ??
+    str(button.payload) ?? str(buttonReply.id) ?? str(raw.buttonText) ??
+    str(raw.buttonPayload) ?? str(meta.buttonText) ?? str(meta.title) ?? ''
+  )
+}

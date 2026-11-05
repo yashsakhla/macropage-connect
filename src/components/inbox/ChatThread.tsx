@@ -1,3 +1,4 @@
+import { resolveMessageContent } from '@/lib/utils'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Search,
@@ -430,6 +431,7 @@ export default function ChatThread({ mobileBack }: Props) {
         // the way socket.io's message:new normalizes them — without this, past
         // media messages (type "IMAGE" etc.) fall through to the text bubble.
         type,
+        content: resolveMessageContent(m as unknown as Record<string, unknown>),
         templateData,
       }
     })

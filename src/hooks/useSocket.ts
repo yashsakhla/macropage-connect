@@ -1,3 +1,4 @@
+import { resolveMessageContent } from '@/lib/utils'
 import { useEffect }       from 'react'
 import { useQueryClient }   from '@tanstack/react-query'
 import { useNavigate }      from 'react-router-dom'
@@ -96,7 +97,7 @@ export function useSocket() {
         // id — prefer string id, fall back to _id
         id:        raw.id        ?? raw._id,
         // content — backends sometimes use text / body instead of content
-        content:   raw.content   ?? raw.text ?? raw.body ?? '',
+        content:   resolveMessageContent(raw),
         // direction / type must be lowercase for filters & bubble rendering
         direction: (raw.direction ?? 'inbound').toLowerCase(),
         type:      (raw.type     ?? 'text').toLowerCase(),

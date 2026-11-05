@@ -46,9 +46,9 @@ export function useContacts(filters?: ContactFilters) {
       api
         .get('/contacts', {
           params: {
-            search: filters?.search || undefined,
+            search: filters?.search?.trim() || undefined,
             page: filters?.page ?? 1,
-            limit: filters?.limit ?? 500,
+            limit: filters?.limit ?? 100,
           },
         })
         .then((r) => ({

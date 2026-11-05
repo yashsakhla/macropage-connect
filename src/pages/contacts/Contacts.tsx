@@ -13,6 +13,7 @@ import {
   useBulkDeleteContacts, useBulkTagContacts, useCreateSegment, useSegments,
   useAddContactsToSegment, useUpdateContact,
 } from '@/hooks/useContacts'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import ContactsTable from '@/components/contacts/ContactsTable'
 import ContactCard from '@/components/contacts/ContactCard'
 import ContactForm from '@/components/contacts/ContactForm'
@@ -134,7 +135,7 @@ export default function Contacts() {
   const navigate = useNavigate()
   const location = useLocation()
   // Only search/page/limit drive API calls; everything else is client-side
-  const [filters, setFilters] = useState<ContactFilters>({ page: 1, limit: 500 })
+  const [filters, setFilters] = useState<ContactFilters>({ page: 1, limit: 100 })
   const [view, setView] = useState<View>('list')
   const [showFilters, setShowFilters] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -168,19 +169,23 @@ export default function Contacts() {
     if (state.openImport) setShowImport(true)
   }, [location.key, location.state])
 
-  const { data: contactsData } = useContacts(filters)
+  // Debounce the search term so each keystroke doesn't fire a request
+  const debouncedSearch = useDebouncedValue(filters.search ?? '', 400)
+  const queryFilters = useMemo(() => ({ ...filters, search: debouncedSearch }), [filters, debouncedSearch])
+  const { data: contactsData } = useContacts(queryFilters)
   const allContacts: Contact[] = useMemo(() => (contactsData as { data?: Contact[] } | undefined)?.data ?? [], [contactsData])
+  const serverTotal = (contactsData as { total?: number } | undefined)?.total ?? allContacts.length
   const stats = useMemo(() => {
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
     return {
-      total:          allContacts.length,
+      total:          serverTotal,
       active:         allContacts.filter(c => c.status === 'active').length,
       optedOut:       allContacts.filter(c => c.isOptedOut || c.status === 'opted_out').length,
       addedThisMonth: allContacts.filter(c => new Date(c.createdAt) >= startOfMonth).length,
     }
-  }, [allContacts])
+  }, [allContacts, serverTotal])
 
   const bulkDelete = useBulkDeleteContacts()
   const bulkTag = useBulkTagContacts()
@@ -472,7 +477,7 @@ export default function Contacts() {
               filters={filters}
               onFiltersChange={setFilters}
               onEdit={setEditContact}
-              totalCount={contacts.length}
+              totalCount={serverTotal}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
